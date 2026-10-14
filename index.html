@@ -16,11 +16,19 @@
             font-family: 'Georgia', serif;
         }
 
+        /* Управление видимостью интерфейса до авторизации */
+        body:not(.logged-in) .filter-panel,
+        body:not(.logged-in) .diplomacy-panel,
+        body:not(.logged-in) .info-panel,
+        body:not(.logged-in) .bottom-left-controls {
+            display: none !important;
+        }
+
         /* Модальные окна */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 3000;
             display: flex;
             align-items: center;
@@ -204,13 +212,13 @@
 </head>
 <body>
 
-    <!-- Модальное окно входа по нику и паролю -->
+    <!-- Модальное окно входа по нику и паролю (работает Enter) -->
     <div id="auth-modal" class="auth-overlay">
         <div class="auth-card">
             <h3>Вход на карту</h3>
             <p style="font-size: 12px;">Введите ваш никнейм и пароль (если установлен):</p>
-            <input type="text" id="user-nickname-input" placeholder="Ваш ник..." />
-            <input type="password" id="user-password-input" placeholder="Пароль (опционально)..." />
+            <input type="text" id="user-nickname-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
+            <input type="password" id="user-password-input" placeholder="Пароль (опционально)..." onkeydown="checkEnter(event)" />
             <button onclick="loginUser()">Войти</button>
             <p id="auth-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 8px;"></p>
         </div>
@@ -300,6 +308,13 @@
             return str.replace(/[\.\#\$\[\]]/g, "_").toLowerCase().trim();
         }
 
+        // Обработка клавиши Enter в форме входа
+        window.checkEnter = function(event) {
+            if (event.key === "Enter") {
+                loginUser();
+            }
+        };
+
         window.loginUser = function() {
             let inputVal = document.getElementById('user-nickname-input').value;
             let inputPass = document.getElementById('user-password-input').value;
@@ -323,7 +338,6 @@
 
                 if (users[key]) {
                     let userRecord = users[key];
-                    // Проверяем пароль, если он задан в базе
                     if (userRecord.password && userRecord.password !== inputPass) {
                         errElem.textContent = "Неверный пароль!";
                         errElem.style.display = "block";
@@ -352,12 +366,14 @@
 
         function initUserSession() {
             if (!currentUser) {
+                document.body.classList.remove('logged-in');
                 document.getElementById('auth-modal').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'none';
                 document.getElementById('admin-panel-btn').style.display = 'none';
                 return;
             }
 
+            document.body.classList.add('logged-in');
             document.getElementById('auth-modal').style.display = 'none';
             document.getElementById('logout-btn').style.display = 'block';
 
@@ -434,18 +450,31 @@
             }
         };
 
-        // Инициализация карты Leaflet
+        // Инициализация карты Leaflet с жесткими границами и буферной зоной (~300 пикселей)
         var mapWidth = 2000, mapHeight = 1125;
-        var map = L.map('map', { crs: L.CRS.Simple, minZoom: -2, maxZoom: 3, zoomSnap: 0.5 });
+        var buffer = 300; 
+        var maxBounds = [[-buffer, -buffer], [mapHeight + buffer, mapWidth + buffer]];
+
+        var map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: -2,
+            maxZoom: 3,
+            zoomSnap: 0.5,
+            maxBounds: maxBounds,
+            maxBoundsViscosity: 1.0
+        });
+
         var bounds = [[0, 0], [mapHeight, mapWidth]];
         L.imageOverlay('skyrim_map.webp', bounds).addTo(map);
-        map.fitBounds(bounds); map.setZoom(-1);
+
+        map.fitBounds(bounds);
+        map.setZoom(-1);
 
         const citiesList = [
             { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.svg' },
             { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath_undiscovered.svg' },
             { type: 'markarth', name: 'Маркарт', icon: 'Markarth.svg' },
-            { type: 'morthal', name: 'Морфал', icon: 'Morthal.svg' },
+            { type: 'morthal', name: 'Мортал', icon: 'Morthal.svg' },
             { type: 'riften', name: 'Рифтен', icon: 'Riften_undiscovered.svg' },
             { type: 'solitude', name: 'Солитьюд', icon: 'Solitude_undiscovered.svg' },
             { type: 'whiterun', name: 'Вайтран', icon: 'Whiterun.svg' },
