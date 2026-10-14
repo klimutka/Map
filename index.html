@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивная карта Скайрима (Общая)</title>
+    <!-- Подключаем стили Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            font-family: 'Georgia', serif;
+        }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: #f4ebd0;
+            border: 2px solid #5a4521;
+            padding: 10px 15px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 280px;
+            font-size: 13px;
+            color: #2c221e;
+        }
+        .info-panel h4 {
+            margin: 0 0 5px 0;
+            font-size: 15px;
+            border-bottom: 1px solid #5a4521;
+            padding-bottom: 3px;
+        }
+        .leaflet-popup-content-wrapper {
+            background: #f4ebd0;
+            border: 2px solid #5a4521;
+            border-radius: 4px;
+            color: #2c221e;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .leaflet-popup-tip {
+            background: #f4ebd0;
+        }
+        .popup-title {
+            font-weight: bold;
+            font-size: 15px;
+            border-bottom: 1px solid #5a4521;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            color: #3b2a1a;
+        }
+        .popup-form input, .popup-form select {
+            width: 100%;
+            margin-bottom: 6px;
+            padding: 4px;
+            box-sizing: border-box;
+            font-family: 'Georgia', serif;
+        }
+        .popup-form button {
+            background: #5a4521;
+            color: #f4ebd0;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .popup-form button:hover {
+            background: #73592c;
+        }
+        .btn-delete {
+            background: #a83232 !important;
+            margin-top: 5px;
+        }
+        .btn-delete:hover {
+            background: #c94040 !important;
+        }
+        .custom-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid #2c221e;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            font-size: 14px;
+            text-align: center;
+        }
+        .icon-herb { background: #4a7c59; color: white; }
+        .icon-city { background: #d4a373; color: #2c221e; }
+        .icon-quest { background: #b05753; color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- Скрипт проверки пароля -->
+    <script>
+        const MAP_PASSWORD = "Kliment6531"; 
+        
+        let userPassword = prompt("Введите пароль для доступа к карте Скайрима:");
+
+        while (userPassword !== MAP_PASSWORD) {
+            if (userPassword === null) {
+                document.body.innerHTML = "<h1 style='color: white; text-align: center; margin-top: 20vh; font-family: Arial;'>⛔ Доступ запрещен. Вход отменен.</h1>";
+                throw new Error("Access denied");
+            }
+            userPassword = prompt("Неверный пароль! Попробуйте еще раз:");
+        }
+    </script>
+
+    <div class="info-panel">
+        <h4>Общая карта Скайрима</h4>
+        <p>• Метки синхронизируются в реальном времени у всех участников.</p>
+        <p>• Кликните на карту, чтобы добавить новую метку.</p>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Подключаем Firebase SDK (v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- Подключаем Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSh4ZeZdHa70PxzIuO84hvC-MUK1LRvPi",
+            authDomain: "skyrimmap-6a376.firebaseapp.com",
+            databaseURL: "https://skyrimmap-6a376-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skyrimmap-6a376",
+            storageBucket: "skyrimmap-6a376.firebasestorage.app",
+            messagingSenderId: "836868606277",
+            appId: "1:836868606277:web:fca99b310846f035e4d62c"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        var mapWidth = 2000;
+        var mapHeight = 1125;
+
+        var map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: -2,
+            maxZoom: 3,
+            zoomSnap: 0.5
+        });
+
+        var bounds = [[0, 0], [mapHeight, mapWidth]];
+        L.imageOverlay('skyrim_map.jpg', bounds).addTo(map);
+
+        map.fitBounds(bounds);
+        map.setZoom(-1);
+
+        function getCustomIcon(type) {
+            let className = 'custom-icon ';
+            let html = '📍';
+            if (type === 'herb') {
+                className += 'icon-herb';
+                html = '🌿';
+            } else if (type === 'city') {
+                className += 'icon-city';
+                html = '🏰';
+            } else if (type === 'quest') {
+                className += 'icon-quest';
+                html = '⭐';
+            }
+            return L.divIcon({
+                className: className,
+                html: html,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14],
+                popupAnchor: [0, -14]
+            });
+        }
+
+        var defaultLocations = [
+            { id: 1, name: "Солитьюд", type: "city", lat: 925, lng: 450, desc: "Столица владения Хаафингер." },
+            { id: 2, name: "Вайтран", type: "city", lat: 575, lng: 950, desc: "Крупный торговый центр." },
+            { id: 3, name: "Виндхельм", type: "city", lat: 675, lng: 1550, desc: "Оплот Братьев Бури." }
+        ];
+
+        var markersData = [];
+        var leafletMarkers = {};
+
+        var markersRef = database.ref('skyrim_markers');
+
+        // Если база пустая, записываем стартовые города
+        markersRef.once('value', function(snapshot) {
+            if (!snapshot.exists()) {
+                defaultLocations.forEach(function(loc) {
+                    database.ref('skyrim_markers/' + loc.id).set(loc);
+                });
+            }
+        });
+
+        // Слушаем изменения в базе в реальном времени
+        markersRef.on('value', function(snapshot) {
+            var data = snapshot.val();
+            markersData = data ? Object.values(data) : [];
+            renderMarkers();
+        });
+
+        function renderMarkers() {
+            Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
+            leafletMarkers = {};
+
+            markersData.forEach(function(loc) {
+                var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type) }).addTo(map);
+                
+                var popupContent = `
+                    <div class='popup-title'>${loc.name}</div>
+                    <p>${loc.desc || ''}</p>
+                    <button class="btn-delete" onclick="deleteMarker(${loc.id})">Удалить метку</button>
+                `;
+                marker.bindPopup(popupContent);
+                leafletMarkers[loc.id] = marker;
+            });
+        }
+
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            var formContent = `
+                <div class='popup-title'>Новая метка</div>
+                <div class='popup-form'>
+                    <label>Название:</label>
+                    <input type='text' id='new-name' placeholder='Напр: Корень Нирна' />
+                    <label>Категория:</label>
+                    <select id='new-type'>
+                        <option value='herb'>🌿 Травы / Сбор</option>
+                        <option value='city'>🏰 Город / Поселение</option>
+                        <option value='quest'>⭐ Интересное / Квест</option>
+                    </select>
+                    <label>Описание:</label>
+                    <input type='text' id='new-desc' placeholder='Примечания...' />
+                    <button onclick='addNewMarker(${lat}, ${lng})'>Сохранить метку</button>
+                </div>
+            `;
+
+            L.popup()
+                .setLatLng([lat, lng])
+                .setContent(formContent)
+                .openOn(map);
+        });
+
+        window.addNewMarker = function(lat, lng) {
+            var name = document.getElementById('new-name').value;
+            var type = document.getElementById('new-type').value;
+            var desc = document.getElementById('new-desc').value;
+
+            if (!name) {
+                alert('Пожалуйста, введите название!');
+                return;
+            }
+
+            var newId = Date.now();
+            var newObj = {
+                id: newId,
+                name: name,
+                type: type,
+                lat: lat,
+                lng: lng,
+                desc: desc
+            };
+
+            // Отправляем в облако Firebase
+            database.ref('skyrim_markers/' + newId).set(newObj);
+            map.closePopup();
+        };
+
+        window.deleteMarker = function(id) {
+            // Удаляем из облака Firebase
+            database.ref('skyrim_markers/' + id).remove();
+            map.closePopup();
+        };
+    </script>
+</body>
+</html>
