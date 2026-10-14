@@ -86,11 +86,11 @@
             border-radius: 50%;
             border: 2px solid #2c221e;
             box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-            font-size: 14px;
+            font-size: 11px;
+            font-weight: bold;
             text-align: center;
         }
         .icon-herb { background: #4a7c59; color: white; }
-        .icon-city { background: #d4a373; color: #2c221e; }
         .icon-quest { background: #b05753; color: white; }
     </style>
 </head>
@@ -114,7 +114,7 @@
     <div class="info-panel">
         <h4>Общая карта Скайрима</h4>
         <p>• Метки синхронизируются в реальном времени у всех участников.</p>
-        <p>• Кликните на карту, чтобы добавить новую метку.</p>
+        <p>• Кликните на карту, чтобы добавить новую метку (повторный клик закроет окно).</p>
     </div>
 
     <div id="map"></div>
@@ -153,6 +153,7 @@
         });
 
         var bounds = [[0, 0], [mapHeight, mapWidth]];
+        // Загружаем оптимизированную веб-версию карты
         L.imageOverlay('skyrim_map.webp', bounds).addTo(map);
 
         map.fitBounds(bounds);
@@ -161,27 +162,28 @@
         function getCustomIcon(type) {
             let className = 'custom-icon ';
             let html = '📍';
-            if (type === 'herb') {
+            
+            if (type && type.startsWith('herb')) {
                 className += 'icon-herb';
-                html = '🌿';
-            } else if (type === 'city') {
-                className += 'icon-city';
-                html = '🏰';
+                let level = type.replace('herb', '');
+                html = '🌿' + level;
             } else if (type === 'quest') {
                 className += 'icon-quest';
                 html = '⭐';
             }
+            
             return L.divIcon({
                 className: className,
                 html: html,
-                iconSize: [28, 28],
-                iconAnchor: [14, 14],
-                popupAnchor: [0, -14]
+                iconSize: [30, 30],
+                iconAnchor: [15, 15],
+                popupAnchor: [0, -15]
             });
         }
 
         var markersData = [];
         var leafletMarkers = {};
+        var currentCreationPopup = null;
 
         var markersRef = database.ref('skyrim_markers');
 
@@ -209,7 +211,14 @@
             });
         }
 
+        // Клик по карте для создания метки с возможностью закрытия по повторному клику
         map.on('click', function(e) {
+            if (currentCreationPopup) {
+                map.closePopup(currentCreationPopup);
+                currentCreationPopup = null;
+                return;
+            }
+
             var lat = e.latlng.lat;
             var lng = e.latlng.lng;
 
@@ -220,9 +229,12 @@
                     <input type='text' id='new-name' placeholder='Напр: Корень Нирна' />
                     <label>Категория:</label>
                     <select id='new-type'>
-                        <option value='herb'>🌿 Травы / Сбор</option>
-                        <option value='city'>🏰 Город / Поселение</option>
-                        <option value='quest'>⭐ Интересное / Квест</option>
+                        <option value='herb1'>🌿 Травы 1 ур</option>
+                        <option value='herb2'>🌿 Травы 2 ур</option>
+                        <option value='herb3'>🌿 Травы 3 ур</option>
+                        <option value='herb4'>🌿 Травы 4 ур</option>
+                        <option value='herb5'>🌿 Травы 5 ур</option>
+                        <option value='quest'>⭐ Квест / Интересное</option>
                     </select>
                     <label>Описание:</label>
                     <input type='text' id='new-desc' placeholder='Примечания...' />
@@ -230,10 +242,17 @@
                 </div>
             `;
 
-            L.popup()
+            currentCreationPopup = L.popup()
                 .setLatLng([lat, lng])
                 .setContent(formContent)
                 .openOn(map);
+        });
+
+        // Сбрасываем ссылку на попап, когда он закрывается стандартным крестиком
+        map.on('popupclose', function(e) {
+            if (e.popup === currentCreationPopup) {
+                currentCreationPopup = null;
+            }
         });
 
         window.addNewMarker = function(lat, lng) {
@@ -259,6 +278,7 @@
             // Отправляем в облако Firebase
             database.ref('skyrim_markers/' + newId).set(newObj);
             map.closePopup();
+            currentCreationPopup = null;
         };
 
         window.deleteMarker = function(id) {
