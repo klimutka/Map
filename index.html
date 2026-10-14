@@ -15,11 +15,126 @@
             background-color: #1a1a1a;
             font-family: 'Georgia', serif;
         }
-        /* Панель информации и инструкций (справа сверху) */
+
+        /* Модальные окна */
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-card {
+            background: #f4ebd0;
+            border: 3px solid #5a4521;
+            padding: 25px;
+            border-radius: 8px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            color: #2c221e;
+        }
+        .auth-card h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #5a4521;
+            padding-bottom: 8px;
+        }
+        .auth-card input, .auth-card select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #5a4521;
+            border-radius: 4px;
+            font-family: 'Georgia', serif;
+            background: #fff;
+        }
+        .auth-card button {
+            background: #5a4521;
+            color: #f4ebd0;
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .auth-card button:hover {
+            background: #73592c;
+        }
+        .btn-secondary {
+            background: #8c7355 !important;
+            margin-top: 8px !important;
+        }
+        .btn-secondary:hover {
+            background: #5a4521 !important;
+        }
+
+        /* Кнопки управления в левом нижнем углу */
+        .bottom-left-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .map-control-btn {
+            background: #5a4521;
+            color: #f4ebd0;
+            border: 2px solid #3b2a1a;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-size: 13px;
+            text-align: left;
+        }
+        .map-control-btn:hover {
+            background: #73592c;
+        }
+
+        /* Список пользователей в админке */
+        .users-list {
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            background: #e8dbbc;
+            padding: 6px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        .user-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            border-bottom: 1px dashed #5a4521;
+        }
+        .user-row:last-child {
+            border-bottom: none;
+        }
+        .del-user-btn {
+            background: #a83232;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        /* Панель информации (справа сверху) */
         .info-panel {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 10px; right: 10px;
             z-index: 1000;
             background: #f4ebd0;
             border: 2px solid #5a4521;
@@ -31,349 +146,119 @@
             color: #2c221e;
         }
         .info-panel .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #5a4521;
-            padding-bottom: 3px;
-            margin-bottom: 5px;
-        }
-        .info-panel h4 {
-            margin: 0;
-            font-size: 15px;
-            border: none;
-            padding: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #5a4521; padding-bottom: 3px; margin-bottom: 5px;
         }
         .close-btn {
-            background: #5a4521;
-            color: #f4ebd0;
-            border: none;
-            border-radius: 3px;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .close-btn:hover {
-            background: #a83232;
+            background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
+            width: 20px; height: 20px; cursor: pointer; font-weight: bold;
         }
 
-        /* Общие стили для заголовков боковых панелей */
+        /* Боковые панели */
         .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #5a4521;
-            padding-bottom: 3px;
-            margin-bottom: 8px;
-        }
-        .panel-header h4 {
-            margin: 0;
-            font-size: 15px;
-            border: none;
-            padding: 0;
-            white-space: nowrap;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #5a4521; padding-bottom: 3px; margin-bottom: 8px;
         }
         .collapse-btn {
-            background: #5a4521;
-            color: #f4ebd0;
-            border: none;
-            border-radius: 3px;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .collapse-btn:hover {
-            background: #73592c;
+            background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
+            width: 20px; height: 20px; cursor: pointer; font-weight: bold;
         }
 
-        /* --- Левая панель (Фильтры) с компактным сворачиванием --- */
-        .filter-panel {
-            position: absolute;
-            top: 10px;
-            left: 60px;
-            z-index: 1000;
-            background: #f4ebd0;
-            border: 2px solid #5a4521;
-            padding: 10px 15px;
-            border-radius: 6px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 240px;
-            max-height: 90vh;
-            overflow-y: auto;
-            font-size: 13px;
-            color: #2c221e;
-            transition: width 0.2s, padding 0.2s;
+        .filter-panel, .diplomacy-panel {
+            position: absolute; z-index: 1000; background: #f4ebd0;
+            border: 2px solid #5a4521; padding: 10px 15px; border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 13px; color: #2c221e;
+            transition: width 0.2s, padding 0.2s; overflow-y: auto;
         }
-        .filter-panel.collapsed {
-            width: 35px;
-            padding: 10px 6px;
-            overflow: hidden;
-        }
-        .filter-panel.collapsed .panel-content,
-        .filter-panel.collapsed .panel-header h4 {
-            display: none;
-        }
-        .filter-panel.collapsed .panel-header {
-            border: none;
-            margin: 0;
-            padding: 0;
-            justify-content: center;
-        }
+        .filter-panel { top: 10px; left: 60px; width: 240px; max-height: 90vh; }
+        .diplomacy-panel { top: 160px; right: 10px; width: 270px; max-height: 70vh; }
 
-        /* --- Правая панель (Отношения с городами) с компактным сворачиванием вправо --- */
-        .diplomacy-panel {
-            position: absolute;
-            top: 160px;
-            right: 10px;
-            z-index: 1000;
-            background: #f4ebd0;
-            border: 2px solid #5a4521;
-            padding: 10px 15px;
-            border-radius: 6px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 270px;
-            max-height: 70vh;
-            overflow-y: auto;
-            font-size: 13px;
-            color: #2c221e;
-            transition: width 0.2s, padding 0.2s;
+        .filter-panel.collapsed, .diplomacy-panel.collapsed {
+            width: 35px; padding: 10px 6px; overflow: hidden;
         }
-        .diplomacy-panel.collapsed {
-            width: 35px;
-            padding: 10px 6px;
-            overflow: hidden;
-        }
-        .diplomacy-panel.collapsed .panel-content,
-        .diplomacy-panel.collapsed .panel-header h4 {
-            display: none;
-        }
-        .diplomacy-panel.collapsed .panel-header {
-            border: none;
-            margin: 0;
-            padding: 0;
-            justify-content: center;
-        }
+        .filter-panel.collapsed .panel-content, .diplomacy-panel.collapsed .panel-content,
+        .filter-panel.collapsed h4, .diplomacy-panel.collapsed h4 { display: none; }
 
         .city-diplo-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            background: #e8dbbc;
-            padding: 5px 8px;
-            border-radius: 4px;
-        }
-        .city-info {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .city-diplo-item select {
-            font-family: 'Georgia', serif;
-            font-size: 12px;
-            padding: 2px;
-            background: #f4ebd0;
-            border: 1px solid #5a4521;
-            cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 6px; background: #e8dbbc; padding: 5px 8px; border-radius: 4px;
         }
 
-        .filter-group {
-            margin-bottom: 8px;
-            border-bottom: 1px dashed #5a4521;
-            padding-bottom: 6px;
-        }
-        .filter-group-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-weight: bold;
-            cursor: pointer;
-            user-select: none;
-            padding: 2px 0;
-        }
-        .toggle-arrow {
-            font-size: 10px;
-            transition: transform 0.2s;
-            display: inline-block;
-        }
-        .filter-sublist {
-            margin-left: 18px;
-            margin-top: 4px;
-            display: block;
-        }
-        .filter-sublist.collapsed {
-            display: none;
-        }
-        .filter-panel label {
-            display: flex;
-            align-items: center;
-            margin-bottom: 4px;
-            cursor: pointer;
-            user-select: none;
-            font-size: 12px;
-        }
-        .filter-icon {
-            width: 18px;
-            height: 18px;
-            margin-right: 6px;
-            vertical-align: middle;
-            object-fit: contain;
-        }
-        .leaflet-popup-content-wrapper {
-            background: #f4ebd0;
-            border: 2px solid #5a4521;
-            border-radius: 4px;
-            color: #2c221e;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        .leaflet-popup-tip {
-            background: #f4ebd0;
-        }
-        .popup-title {
-            font-weight: bold;
-            font-size: 15px;
-            border-bottom: 1px solid #5a4521;
-            margin-bottom: 6px;
-            padding-bottom: 4px;
-            color: #3b2a1a;
-        }
-        .popup-form input, .popup-form select {
-            width: 100%;
-            margin-bottom: 6px;
-            padding: 5px;
-            box-sizing: border-box;
-            font-family: 'Georgia', serif;
-            background: #fff;
-            border: 1px solid #5a4521;
-            border-radius: 3px;
-        }
-        .popup-form button {
-            background: #5a4521;
-            color: #f4ebd0;
-            border: none;
-            padding: 6px 10px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            border-radius: 3px;
-        }
-        .popup-form button:hover {
-            background: #73592c;
-        }
-        .btn-delete {
-            background: #a83232 !important;
-            margin-top: 5px;
-        }
-        .btn-delete:hover {
-            background: #c94040 !important;
-        }
+        /* Свечение карточек */
+        @keyframes pulse-card-ally { 0% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } 50% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.85); } 100% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } }
+        @keyframes pulse-card-neutral { 0% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } 50% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.85); } 100% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } }
+        @keyframes pulse-card-enemy { 0% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } 50% { box-shadow: 0 0 10px rgba(231, 76, 60, 0.85); } 100% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } }
 
-        /* --- Стили перекрашивания иконок городов --- */
-        .color-ally {
-            filter: invert(48%) sepia(79%) saturate(382%) hue-rotate(86deg) brightness(98%) contrast(92%); /* Зелёный */
-        }
-        .color-neutral {
-            filter: invert(74%) sepia(85%) saturate(848%) hue-rotate(359deg) brightness(103%) contrast(93%); /* Жёлтый */
-        }
-        .color-enemy {
-            filter: invert(27%) sepia(85%) saturate(2284%) hue-rotate(345deg) brightness(97%) contrast(92%); /* Красный */
-        }
+        .diplo-card-ally { animation: pulse-card-ally 2.5s infinite; border: 1px solid #2ecc71; }
+        .diplo-card-neutral { animation: pulse-card-neutral 2.5s infinite; border: 1px solid #f1c40f; }
+        .diplo-card-enemy { animation: pulse-card-enemy 2.5s infinite; border: 1px solid #e74c3c; }
+
+        .filter-icon { width: 20px; height: 20px; margin-right: 6px; vertical-align: middle; object-fit: contain; }
+        .color-ally { filter: invert(48%) sepia(79%) saturate(382%) hue-rotate(86deg) brightness(98%) contrast(92%); }
+        .color-neutral { filter: invert(74%) sepia(85%) saturate(848%) hue-rotate(359deg) brightness(103%) contrast(93%); }
+        .color-enemy { filter: invert(27%) sepia(85%) saturate(2284%) hue-rotate(345deg) brightness(97%) contrast(92%); }
+
+        .popup-title { font-weight: bold; font-size: 15px; border-bottom: 1px solid #5a4521; margin-bottom: 6px; }
+        .btn-delete { background: #a83232 !important; color: #fff; border: none; padding: 5px; cursor: pointer; width: 100%; border-radius: 3px; }
     </style>
 </head>
 <body>
 
-    <!-- Скрипт проверки пароля -->
-    <script>
-        const MAP_PASSWORD = "Kliment6531"; 
-        
-        if (sessionStorage.getItem('skyrim_map_auth') !== 'true') {
-            let userPassword = prompt("Введите пароль для доступа к карте Скайрима:");
+    <!-- Модальное окно входа по нику -->
+    <div id="auth-modal" class="auth-overlay">
+        <div class="auth-card">
+            <h3>Вход на карту</h3>
+            <p style="font-size: 12px;">Введите ваш никнейм для доступа:</p>
+            <input type="text" id="user-nickname-input" placeholder="Ваш ник..." />
+            <button onclick="loginUser()">Войти</button>
+            <p id="auth-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 8px;"></p>
+        </div>
+    </div>
 
-            while (userPassword !== MAP_PASSWORD) {
-                if (userPassword === null) {
-                    document.body.innerHTML = "<h1 style='color: white; text-align: center; margin-top: 20vh; font-family: Arial;'>⛔ Доступ запрещен. Вход отменен.</h1>";
-                    throw new Error("Access denied");
-                }
-                userPassword = prompt("Неверный пароль! Попробуйте еще раз:");
-            }
-            sessionStorage.setItem('skyrim_map_auth', 'true');
-        }
-    </script>
+    <!-- Модальное окно управления пользователями (для админов) -->
+    <div id="admin-users-modal" class="auth-overlay" style="display: none;">
+        <div class="auth-card" style="width: 360px;">
+            <h3>Управление доступом</h3>
+            <p style="font-size: 12px; margin-bottom: 6px;">Список одобренных пользователей:</p>
+            <div class="users-list" id="users-list-container"></div>
+            
+            <hr style="border: 0; border-top: 1px solid #5a4521; margin: 10px 0;">
+            <p style="font-size: 12px; font-weight: bold;">Добавить нового пользователя:</p>
+            <input type="text" id="new-user-name" placeholder="Никнейм..." />
+            <select id="new-user-role">
+                <option value="reader">Читатель</option>
+                <option value="admin">Администратор</option>
+            </select>
+            <button onclick="addNewUser()">Добавить в список</button>
+            <button class="btn-secondary" onclick="closeAdminModal()">Закрыть</button>
+        </div>
+    </div>
 
-    <!-- Меню фильтров слева -->
+    <!-- Кнопки управления внизу слева -->
+    <div class="bottom-left-controls">
+        <button id="admin-panel-btn" class="map-control-btn" style="display: none;" onclick="openAdminModal()">🛡️ Управление доступом</button>
+        <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
+    </div>
+
+    <!-- Левая панель фильтров -->
     <div class="filter-panel" id="filter-panel-box">
         <div class="panel-header">
             <h4>Фильтры</h4>
             <button class="collapse-btn" onclick="toggleLeftPanel()">−</button>
         </div>
-        <div class="panel-content" id="filter-content">
-            <!-- Травы (Группа со сворачиванием) -->
-            <div class="filter-group">
-                <div class="filter-group-header">
-                    <label style="margin:0; font-weight:bold; cursor:pointer;">
-                        <input type="checkbox" id="filter-all-herbs" checked onchange="toggleGroup('herb', 5, this.checked)"> 🌿 Травы
-                    </label>
-                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
-                </div>
-                <div class="filter-sublist" id="sublist-herbs">
-                    <label><input type="checkbox" id="filter-herb1" class="sub-herb" checked> <img src="Herbs1.png" class="filter-icon"> Травы 1 ур</label>
-                    <label><input type="checkbox" id="filter-herb2" class="sub-herb" checked> <img src="Herbs2.png" class="filter-icon"> Травы 2 ур</label>
-                    <label><input type="checkbox" id="filter-herb3" class="sub-herb" checked> <img src="Herbs3.png" class="filter-icon"> Травы 3 ур</label>
-                    <label><input type="checkbox" id="filter-herb4" class="sub-herb" checked> <img src="Herbs4.png" class="filter-icon"> Травы 4 ур</label>
-                    <label><input type="checkbox" id="filter-herb5" class="sub-herb" checked> <img src="Herbs5.png" class="filter-icon"> Травы 5 ур</label>
-                </div>
-            </div>
-
-            <!-- Животные (Группа со сворачиванием) -->
-            <div class="filter-group">
-                <div class="filter-group-header">
-                    <label style="margin:0; font-weight:bold; cursor:pointer;">
-                        <input type="checkbox" id="filter-all-animals" checked onchange="toggleGroup('animal', 4, this.checked)"> 🐾 Животные
-                    </label>
-                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
-                </div>
-                <div class="filter-sublist" id="sublist-animals">
-                    <label><input type="checkbox" id="filter-animal1" class="sub-animal" checked> <img src="Animals1.png" class="filter-icon"> Животные 1 ур</label>
-                    <label><input type="checkbox" id="filter-animal2" class="sub-animal" checked> <img src="Animals2.png" class="filter-icon"> Животные 2 ур</label>
-                    <label><input type="checkbox" id="filter-animal3" class="sub-animal" checked> <img src="Animals3.png" class="filter-icon"> Животные 3 ур</label>
-                    <label><input type="checkbox" id="filter-animal4" class="sub-animal" checked> <img src="Animals4.png" class="filter-icon"> Животные 4 ур</label>
-                </div>
-            </div>
-
-            <!-- Разное -->
-            <div class="filter-group" style="border: none; margin-bottom: 0; padding-bottom: 0;">
-                <div class="filter-group-header" style="margin-bottom: 4px;">
-                    <span style="font-weight:bold; color: #3b2a1a;">📦 Разное</span>
-                </div>
-                <div class="filter-sublist" style="margin-left: 0;">
-                    <label><input type="checkbox" id="filter-anomaly" checked> <img src="Magical Anomaly.png" class="filter-icon"> Магические аномалии</label>
-                    <label><input type="checkbox" id="filter-ruins" checked> <img src="Nord Ruins.png" class="filter-icon"> Нордские руины</label>
-                    <label><input type="checkbox" id="filter-dwarven_ruins" checked> <img src="Ruins.png" class="filter-icon"> Двемерские руины</label>
-                </div>
-            </div>
+        <div class="panel-content">
+            <div id="filter-list"></div>
         </div>
     </div>
 
-    <!-- Информационная панель с возможностью закрытия -->
+    <!-- Информационная панель -->
     <div class="info-panel" id="info-panel-box">
         <div class="panel-header">
             <h4>Карта Скайрима</h4>
             <button class="close-btn" onclick="closeInfoPanel()">×</button>
         </div>
-        <p>• Метки и отношения с городами синхронизируются в реальном времени.</p>
-        <p>• Клик по карте — создание метки.</p>
+        <p>• Пользователь: <b id="current-user-name">-</b></p>
+        <p>• Доступ: <b id="current-user-role">-</b></p>
     </div>
 
     <!-- Правая панель отношений с городами -->
@@ -382,20 +267,17 @@
             <h4>Отношения с городами</h4>
             <button class="collapse-btn" onclick="toggleRightPanel()">−</button>
         </div>
-        <div class="panel-content" id="diplomacy-content">
+        <div class="panel-content">
             <div id="diplomacy-list"></div>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <!-- Подключаем Firebase SDK (v8) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-    <!-- Подключаем Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBSh4ZeZdHa70PxzIuO84hvC-MUK1LRvPi",
@@ -410,27 +292,144 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        var mapWidth = 2000;
-        var mapHeight = 1125;
+        let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
 
-        var map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: -2,
-            maxZoom: 3,
-            zoomSnap: 0.5
-        });
+        function sanitizeKey(str) {
+            return str.replace(/[\.\#\$\[\]]/g, "_").toLowerCase().trim();
+        }
 
+        window.loginUser = function() {
+            let inputVal = document.getElementById('user-nickname-input').value;
+            let key = sanitizeKey(inputVal);
+            let errElem = document.getElementById('auth-error');
+
+            if (!key) {
+                errElem.textContent = "Пожалуйста, введите никнейм.";
+                errElem.style.display = "block";
+                return;
+            }
+
+            database.ref('allowed_users').once('value').then(snapshot => {
+                let users = snapshot.val();
+
+                // Автоматическое создание первого админа (Арунин), если база пустая
+                if (!users) {
+                    database.ref('allowed_users/арунин').set({ name: "Арунин", role: "admin" });
+                    users = { "арунин": { name: "Арунин", role: "admin" } };
+                }
+
+                if (users[key]) {
+                    currentUser = {
+                        key: key,
+                        name: users[key].name || inputVal,
+                        role: users[key].role || 'reader'
+                    };
+                    sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
+                    initUserSession();
+                } else {
+                    errElem.textContent = "Вашего ника нет в списке одобренных лиц!";
+                    errElem.style.display = "block";
+                }
+            });
+        };
+
+        window.logoutUser = function() {
+            sessionStorage.removeItem('skyrim_active_user');
+            currentUser = null;
+            location.reload();
+        };
+
+        function initUserSession() {
+            if (!currentUser) {
+                document.getElementById('auth-modal').style.display = 'flex';
+                document.getElementById('logout-btn').style.display = 'none';
+                document.getElementById('admin-panel-btn').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'block';
+
+            document.getElementById('current-user-name').textContent = currentUser.name;
+            document.getElementById('current-user-role').textContent = currentUser.role === 'admin' ? 'Администратор' : 'Читатель';
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('admin-panel-btn').style.display = 'block';
+            } else {
+                document.getElementById('admin-panel-btn').style.display = 'none';
+            }
+
+            renderDiplomacyPanel();
+            renderMarkers();
+        }
+
+        window.openAdminModal = function() {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            loadUsersList();
+            document.getElementById('admin-users-modal').style.display = 'flex';
+        };
+
+        window.closeAdminModal = function() {
+            document.getElementById('admin-users-modal').style.display = 'none';
+        };
+
+        function loadUsersList() {
+            database.ref('allowed_users').once('value').then(snapshot => {
+                let users = snapshot.val() || {};
+                let container = document.getElementById('users-list-container');
+                container.innerHTML = '';
+
+                Object.keys(users).forEach(key => {
+                    let u = users[key];
+                    let roleBadge = u.role === 'admin' ? '🛡️ Админ' : '📖 Читатель';
+                    let row = document.createElement('div');
+                    row.className = 'user-row';
+                    row.innerHTML = `
+                        <span><b>${u.name}</b> (${roleBadge})</span>
+                        ${key !== currentUser.key ? `<button class="del-user-btn" onclick="removeUser('${key}')">Удалить</button>` : ''}
+                    `;
+                    container.appendChild(row);
+                });
+            });
+        }
+
+        window.addNewUser = function() {
+            let nameInput = document.getElementById('new-user-name').value.trim();
+            let roleInput = document.getElementById('new-user-role').value;
+            if (!nameInput) {
+                alert("Введите никнейм!");
+                return;
+            }
+            let key = sanitizeKey(nameInput);
+            database.ref('allowed_users/' + key).set({
+                name: nameInput,
+                role: roleInput
+            }).then(() => {
+                document.getElementById('new-user-name').value = '';
+                loadUsersList();
+            });
+        };
+
+        window.removeUser = function(key) {
+            if (confirm("Точно удалить этого пользователя?")) {
+                database.ref('allowed_users/' + key).remove().then(() => {
+                    loadUsersList();
+                });
+            }
+        };
+
+        // Инициализация карты Leaflet
+        var mapWidth = 2000, mapHeight = 1125;
+        var map = L.map('map', { crs: L.CRS.Simple, minZoom: -2, maxZoom: 3, zoomSnap: 0.5 });
         var bounds = [[0, 0], [mapHeight, mapWidth]];
         L.imageOverlay('skyrim_map.webp', bounds).addTo(map);
-
-        map.fitBounds(bounds);
-        map.setZoom(-1);
+        map.fitBounds(bounds); map.setZoom(-1);
 
         const citiesList = [
             { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.svg' },
             { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath_undiscovered.svg' },
             { type: 'markarth', name: 'Маркарт', icon: 'Markarth.svg' },
-            { type: 'morthal', name: 'Морфал', icon: 'Morthal.svg' },
+            { type: 'morthal', name: 'Мортал', icon: 'Morthal.svg' },
             { type: 'riften', name: 'Рифтен', icon: 'Riften_undiscovered.svg' },
             { type: 'solitude', name: 'Солитьюд', icon: 'Solitude_undiscovered.svg' },
             { type: 'whiterun', name: 'Вайтран', icon: 'Whiterun.svg' },
@@ -438,168 +437,53 @@
             { type: 'winterhold', name: 'Винтерхолд', icon: 'Winterhold.svg' }
         ];
 
-        const categoriesList = [
-            { type: 'herb1', name: '🌿 Травы 1 ур', icon: 'Herbs1.png' },
-            { type: 'herb2', name: '🌿 Травы 2 ур', icon: 'Herbs2.png' },
-            { type: 'herb3', name: '🌿 Травы 3 ур', icon: 'Herbs3.png' },
-            { type: 'herb4', name: '🌿 Травы 4 ур', icon: 'Herbs4.png' },
-            { type: 'herb5', name: '🌿 Травы 5 ур', icon: 'Herbs5.png' },
-            { type: 'animal1', name: '🐾 Животные 1 ур', icon: 'Animals1.png' },
-            { type: 'animal2', name: '🐾 Животные 2 ур', icon: 'Animals2.png' },
-            { type: 'animal3', name: '🐾 Животные 3 ур', icon: 'Animals3.png' },
-            { type: 'animal4', name: '🐾 Животные 4 ур', icon: 'Animals4.png' },
-            { type: 'anomaly', name: '✨ Магические аномалии', icon: 'Magical Anomaly.png' },
-            { type: 'ruins', name: '🏛️ Нордские руины', icon: 'Nord Ruins.png' },
-            { type: 'dwarven_ruins', name: '⚙️ Двемерские руины', icon: 'Ruins.png' }
-        ];
-
         var cityStatuses = {};
-
-        function getCustomIcon(type, status) {
-            let iconUrl = 'Herbs1.png';
-
-            if (type && type.startsWith('herb')) {
-                let level = type.replace('herb', '');
-                iconUrl = 'Herbs' + level + '.png';
-            } else if (type && type.startsWith('animal')) {
-                let level = type.replace('animal', '');
-                iconUrl = 'Animals' + level + '.png';
-            } else if (type === 'anomaly') {
-                iconUrl = 'Magical Anomaly.png';
-            } else if (type === 'ruins') {
-                iconUrl = 'Nord Ruins.png';
-            } else if (type === 'dwarven_ruins') {
-                iconUrl = 'Ruins.png';
-            } else {
-                let foundCity = citiesList.find(c => c.type === type);
-                if (foundCity) iconUrl = foundCity.icon;
-            }
-
-            let currentStatus = status;
-            if (citiesList.some(c => c.type === type)) {
-                currentStatus = cityStatuses[type] || 'neutral';
-            }
-
-            let className = currentStatus ? 'color-' + currentStatus : '';
-
-            let currentZoom = map.getZoom(); 
-            let baseSize = 36 + (currentZoom * 10); 
-            if (baseSize < 20) baseSize = 20; 
-            if (baseSize > 80) baseSize = 80; 
-
-            let anchor = Math.round(baseSize / 2);
-
-            return L.icon({
-                iconUrl: iconUrl,
-                className: className,
-                iconSize: [baseSize, baseSize],      
-                iconAnchor: [anchor, anchor],    
-                popupAnchor: [0, -anchor]    
-            });
-        }
-
         var markersData = [];
         var leafletMarkers = {};
-        var currentCreationPopup = null;
 
-        database.ref('skyrim_markers').on('value', function(snapshot) {
-            var data = snapshot.val();
-            markersData = data ? Object.values(data) : [];
+        database.ref('skyrim_markers').on('value', snapshot => {
+            markersData = snapshot.val() ? Object.values(snapshot.val()) : [];
             renderMarkers();
         });
 
-        database.ref('city_statuses').on('value', function(snapshot) {
+        database.ref('city_statuses').on('value', snapshot => {
             cityStatuses = snapshot.val() || {};
             renderDiplomacyPanel();
-            renderMarkers(); 
-        });
-
-        map.on('zoomend', function() {
             renderMarkers();
         });
-
-        // Функция закрытия информационной панели
-        window.closeInfoPanel = function() {
-            var panel = document.getElementById('info-panel-box');
-            if (panel) {
-                panel.style.display = 'none';
-            }
-        };
-
-        // Сворачивание левой панели влево
-        window.toggleLeftPanel = function() {
-            var panel = document.getElementById('filter-panel-box');
-            var btn = panel.querySelector('.collapse-btn');
-            if (panel.classList.contains('collapsed')) {
-                panel.classList.remove('collapsed');
-                btn.textContent = '−';
-            } else {
-                panel.classList.add('collapsed');
-                btn.textContent = '+';
-            }
-        };
-
-        // Сворачивание правой панели вправо
-        window.toggleRightPanel = function() {
-            var panel = document.getElementById('diplomacy-panel-box');
-            var btn = panel.querySelector('.collapse-btn');
-            if (panel.classList.contains('collapsed')) {
-                panel.classList.remove('collapsed');
-                btn.textContent = '−';
-            } else {
-                panel.classList.add('collapsed');
-                btn.textContent = '+';
-            }
-        };
-
-        // Сворачивание подпунктов (Травы / Животные)
-        window.toggleSublist = function(arrowElement) {
-            var sublist = arrowElement.parentElement.nextElementSibling;
-            if (sublist.classList.contains('collapsed')) {
-                sublist.classList.remove('collapsed');
-                arrowElement.textContent = '▼';
-            } else {
-                sublist.classList.add('collapsed');
-                arrowElement.textContent = '▶';
-            }
-        };
-
-        // Массовое переключение подгрупп
-        window.toggleGroup = function(prefix, count, isChecked) {
-            for (let i = 1; i <= count; i++) {
-                let cb = document.getElementById('filter-' + prefix + i);
-                if (cb) {
-                    cb.checked = isChecked;
-                }
-            }
-            renderMarkers();
-        };
 
         function renderDiplomacyPanel() {
             var container = document.getElementById('diplomacy-list');
             container.innerHTML = '';
 
-            citiesList.forEach(function(city) {
+            citiesList.forEach(city => {
                 var currentStatus = cityStatuses[city.type] || 'neutral';
+                let cardGlowClass = 'diplo-card-' + currentStatus;
+                let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
 
-                var div = document.createElement('div');
-                div.className = 'city-diplo-item';
-                div.innerHTML = `
-                    <div class="city-info">
-                        <img src="${city.icon}" class="filter-icon">
-                        <span><b>${city.name}</b></span>
-                    </div>
+                let controlHTML = (currentUser && currentUser.role === 'admin') ? `
                     <select onchange="updateCityStatus('${city.type}', this.value)">
                         <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
                         <option value='neutral' ${currentStatus === 'neutral' ? 'selected' : ''}>🟡 Нейтрал</option>
                         <option value='enemy' ${currentStatus === 'enemy' ? 'selected' : ''}>🔴 Враг</option>
                     </select>
+                ` : `<span style="font-size: 12px; font-weight: bold;">${statusText}</span>`;
+
+                var div = document.createElement('div');
+                div.className = 'city-diplo-item ' + cardGlowClass;
+                div.innerHTML = `
+                    <div class="city-info">
+                        <img src="${city.icon}" class="filter-icon">
+                        <span><b>${city.name}</b></span>
+                    </div>
+                    ${controlHTML}
                 `;
                 container.appendChild(div);
             });
         }
 
         window.updateCityStatus = function(cityType, newStatus) {
+            if (!currentUser || currentUser.role !== 'admin') return;
             database.ref('city_statuses/' + cityType).set(newStatus);
         };
 
@@ -607,104 +491,39 @@
             Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
             leafletMarkers = {};
 
-            markersData.forEach(function(loc) {
-                var filterCheckbox = document.getElementById('filter-' + loc.type);
-                if (filterCheckbox && !filterCheckbox.checked) {
-                    return;
-                }
-
-                var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
-                
+            markersData.forEach(loc => {
+                var marker = L.marker([loc.lat, loc.lng]).addTo(map);
                 var popupContent = `
                     <div class='popup-title'>${loc.name}</div>
                     <p>${loc.desc || ''}</p>
-                    <button class="btn-delete" onclick="deleteMarker(${loc.id})">Удалить метку</button>
+                    ${(currentUser && currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id})">Удалить метку</button>` : ''}
                 `;
                 marker.bindPopup(popupContent);
                 leafletMarkers[loc.id] = marker;
             });
         }
 
-        const categoryTypes = [
-            'herb1', 'herb2', 'herb3', 'herb4', 'herb5', 
-            'animal1', 'animal2', 'animal3', 'animal4', 
-            'anomaly', 'ruins', 'dwarven_ruins'
-        ];
-
-        categoryTypes.forEach(function(type) {
-            var cb = document.getElementById('filter-' + type);
-            if (cb) {
-                cb.addEventListener('change', renderMarkers);
-            }
-        });
-
         map.on('click', function(e) {
-            if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
-                map.closePopup(currentCreationPopup);
-                currentCreationPopup = null;
-                return;
-            }
-
-            var lat = e.latlng.lat;
-            var lng = e.latlng.lng;
-
-            let optionsHTML = '';
-            categoriesList.forEach(cat => {
-                optionsHTML += `<option value="${cat.type}" data-name="${cat.name}">${cat.name}</option>`;
-            });
-
-            var formContent = `
-                <div class='popup-title'>Новая метка</div>
-                <div class='popup-form'>
-                    <label>Категория:</label>
-                    <select id='new-type'>
-                        ${optionsHTML}
-                    </select>
-
-                    <label>Описание:</label>
-                    <input type='text' id='new-desc' placeholder='Примечания...' />
-                    <button onclick='addNewMarker(${lat}, ${lng})'>Сохранить метку</button>
-                </div>
-            `;
-
-            currentCreationPopup = L.popup({ closeOnClick: false })
-                .setLatLng([lat, lng])
-                .setContent(formContent)
-                .openOn(map);
-        });
-
-        map.on('popupclose', function(e) {
-            if (e.popup === currentCreationPopup) {
-                currentCreationPopup = null;
+            if (!currentUser || currentUser.role !== 'admin') return;
+            var lat = e.latlng.lat, lng = e.latlng.lng;
+            var name = prompt("Имя метки:");
+            if (name) {
+                var newId = Date.now();
+                database.ref('skyrim_markers/' + newId).set({ id: newId, name: name, lat: lat, lng: lng });
             }
         });
-
-        window.addNewMarker = function(lat, lng) {
-            var selectElement = document.getElementById('new-type');
-            var type = selectElement.value;
-            var selectedOption = selectElement.options[selectElement.selectedIndex];
-            var name = selectedOption.getAttribute('data-name');
-            var desc = document.getElementById('new-desc').value;
-
-            var newId = Date.now();
-            var newObj = {
-                id: newId,
-                name: name,
-                type: type,
-                lat: lat,
-                lng: lng,
-                desc: desc
-            };
-
-            database.ref('skyrim_markers/' + newId).set(newObj);
-            map.closePopup();
-            currentCreationPopup = null;
-        };
 
         window.deleteMarker = function(id) {
+            if (!currentUser || currentUser.role !== 'admin') return;
             database.ref('skyrim_markers/' + id).remove();
             map.closePopup();
         };
+
+        window.closeInfoPanel = () => document.getElementById('info-panel-box').style.display = 'none';
+        window.toggleLeftPanel = () => document.getElementById('filter-panel-box').classList.toggle('collapsed');
+        window.toggleRightPanel = () => document.getElementById('diplomacy-panel-box').classList.toggle('collapsed');
+
+        initUserSession();
     </script>
 </body>
 </html>
