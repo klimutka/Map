@@ -650,7 +650,7 @@
         };
 
         function renderDiplomacyPanel() {
-            if (!currentUser) return; // Скрываем данные до авторизации
+            if (!currentUser) return;
 
             var container = document.getElementById('diplomacy-list');
             container.innerHTML = '';
@@ -731,7 +731,7 @@
             Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
             leafletMarkers = {};
 
-            if (!currentUser) return; // Не рисуем метки до авторизации
+            if (!currentUser) return;
 
             markersData.forEach(loc => {
                 var filterCheckbox = document.getElementById('filter-' + loc.type);
