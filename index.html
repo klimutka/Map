@@ -153,7 +153,6 @@
         });
 
         var bounds = [[0, 0], [mapHeight, mapWidth]];
-        // Загружаем оптимизированную веб-версию карты
         L.imageOverlay('skyrim_map.webp', bounds).addTo(map);
 
         map.fitBounds(bounds);
@@ -211,9 +210,9 @@
             });
         }
 
-        // Клик по карте для создания метки с возможностью закрытия по повторному клику
+        // Клик по карте для создания метки (с закрытием по повторному клику)
         map.on('click', function(e) {
-            if (currentCreationPopup) {
+            if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
                 map.closePopup(currentCreationPopup);
                 currentCreationPopup = null;
                 return;
@@ -242,13 +241,13 @@
                 </div>
             `;
 
-            currentCreationPopup = L.popup()
+            currentCreationPopup = L.popup({ closeOnClick: false })
                 .setLatLng([lat, lng])
                 .setContent(formContent)
                 .openOn(map);
         });
 
-        // Сбрасываем ссылку на попап, когда он закрывается стандартным крестиком
+        // Сбрасываем ссылку при закрытии крестиком
         map.on('popupclose', function(e) {
             if (e.popup === currentCreationPopup) {
                 currentCreationPopup = null;
@@ -275,14 +274,12 @@
                 desc: desc
             };
 
-            // Отправляем в облако Firebase
             database.ref('skyrim_markers/' + newId).set(newObj);
             map.closePopup();
             currentCreationPopup = null;
         };
 
         window.deleteMarker = function(id) {
-            // Удаляем из облака Firebase
             database.ref('skyrim_markers/' + id).remove();
             map.closePopup();
         };
