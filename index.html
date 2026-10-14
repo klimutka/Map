@@ -244,3 +244,97 @@
                 }
 
                 var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type) }).addTo(map);
+                
+                var popupContent = `
+                    <div class='popup-title'>${loc.name}</div>
+                    <p>${loc.desc || ''}</p>
+                    <button class="btn-delete" onclick="deleteMarker(${loc.id})">Удалить метку</button>
+                `;
+                marker.bindPopup(popupContent);
+                leafletMarkers[loc.id] = marker;
+            });
+        }
+
+        // Привязываем события изменения фильтров к перерисовке карты
+        ['herb1', 'herb2', 'herb3', 'herb4', 'herb5', 'quest'].forEach(function(type) {
+            var cb = document.getElementById('filter-' + type);
+            if (cb) {
+                cb.addEventListener('change', renderMarkers);
+            }
+        });
+
+        // Клик по карте для создания метки (с закрытием по повторному клику)
+        map.on('click', function(e) {
+            if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
+                map.closePopup(currentCreationPopup);
+                currentCreationPopup = null;
+                return;
+            }
+
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            var formContent = `
+                <div class='popup-title'>Новая метка</div>
+                <div class='popup-form'>
+                    <label>Название:</label>
+                    <input type='text' id='new-name' placeholder='Напр: Корень Нирна' />
+                    <label>Категория:</label>
+                    <select id='new-type'>
+                        <option value='herb1'>🌿 Травы 1 ур</option>
+                        <option value='herb2'>🌿 Травы 2 ур</option>
+                        <option value='herb3'>🌿 Травы 3 ур</option>
+                        <option value='herb4'>🌿 Травы 4 ур</option>
+                        <option value='herb5'>🌿 Травы 5 ур</option>
+                        <option value='quest'>⭐ Квест / Интересное</option>
+                    </select>
+                    <label>Описание:</label>
+                    <input type='text' id='new-desc' placeholder='Примечания...' />
+                    <button onclick='addNewMarker(${lat}, ${lng})'>Сохранить метку</button>
+                </div>
+            `;
+
+            currentCreationPopup = L.popup({ closeOnClick: false })
+                .setLatLng([lat, lng])
+                .setContent(formContent)
+                .openOn(map);
+        });
+
+        map.on('popupclose', function(e) {
+            if (e.popup === currentCreationPopup) {
+                currentCreationPopup = null;
+            }
+        });
+
+        window.addNewMarker = function(lat, lng) {
+            var name = document.getElementById('new-name').value;
+            var type = document.getElementById('new-type').value;
+            var desc = document.getElementById('new-desc').value;
+
+            if (!name) {
+                alert('Пожалуйста, введите название!');
+                return;
+            }
+
+            var newId = Date.now();
+            var newObj = {
+                id: newId,
+                name: name,
+                type: type,
+                lat: lat,
+                lng: lng,
+                desc: desc
+            };
+
+            database.ref('skyrim_markers/' + newId).set(newObj);
+            map.closePopup();
+            currentCreationPopup = null;
+        };
+
+        window.deleteMarker = function(id) {
+            database.ref('skyrim_markers/' + id).remove();
+            map.closePopup();
+        };
+    </script>
+</body>
+</html>
