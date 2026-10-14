@@ -35,6 +35,32 @@
             border-bottom: 1px solid #5a4521;
             padding-bottom: 3px;
         }
+        .filter-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: #f4ebd0;
+            border: 2px solid #5a4521;
+            padding: 10px 15px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 220px;
+            font-size: 13px;
+            color: #2c221e;
+        }
+        .filter-panel h4 {
+            margin: 0 0 5px 0;
+            font-size: 15px;
+            border-bottom: 1px solid #5a4521;
+            padding-bottom: 3px;
+        }
+        .filter-panel label {
+            display: block;
+            margin-bottom: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
         .leaflet-popup-content-wrapper {
             background: #f4ebd0;
             border: 2px solid #5a4521;
@@ -110,6 +136,17 @@
             userPassword = prompt("Неверный пароль! Попробуйте еще раз:");
         }
     </script>
+
+    <!-- Меню фильтров слева -->
+    <div class="filter-panel">
+        <h4>Фильтры</h4>
+        <label><input type="checkbox" id="filter-herb1" checked> 🌿 Травы 1 ур</label>
+        <label><input type="checkbox" id="filter-herb2" checked> 🌿 Травы 2 ур</label>
+        <label><input type="checkbox" id="filter-herb3" checked> 🌿 Травы 3 ур</label>
+        <label><input type="checkbox" id="filter-herb4" checked> 🌿 Травы 4 ур</label>
+        <label><input type="checkbox" id="filter-herb5" checked> 🌿 Травы 5 ур</label>
+        <label><input type="checkbox" id="filter-quest" checked> ⭐ Квесты / Разное</label>
+    </div>
 
     <div class="info-panel">
         <h4>Общая карта Скайрима</h4>
@@ -198,6 +235,12 @@
             leafletMarkers = {};
 
             markersData.forEach(function(loc) {
+                // Проверяем состояние фильтра для конкретного типа метки
+                var filterCheckbox = document.getElementById('filter-' + loc.type);
+                if (filterCheckbox && !filterCheckbox.checked) {
+                    return; // Пропускаем отображение, если чекбокс выключен
+                }
+
                 var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type) }).addTo(map);
                 
                 var popupContent = `
@@ -209,6 +252,14 @@
                 leafletMarkers[loc.id] = marker;
             });
         }
+
+        // Привязываем события изменения фильтров к перерисовке карты
+        ['herb1', 'herb2', 'herb3', 'herb4', 'herb5', 'quest'].forEach(function(type) {
+            var cb = document.getElementById('filter-' + type);
+            if (cb) {
+                cb.addEventListener('change', renderMarkers);
+            }
+        });
 
         // Клик по карте для создания метки (с закрытием по повторному клику)
         map.on('click', function(e) {
@@ -236,53 +287,4 @@
                         <option value='quest'>⭐ Квест / Интересное</option>
                     </select>
                     <label>Описание:</label>
-                    <input type='text' id='new-desc' placeholder='Примечания...' />
-                    <button onclick='addNewMarker(${lat}, ${lng})'>Сохранить метку</button>
-                </div>
-            `;
-
-            currentCreationPopup = L.popup({ closeOnClick: false })
-                .setLatLng([lat, lng])
-                .setContent(formContent)
-                .openOn(map);
-        });
-
-        // Сбрасываем ссылку при закрытии крестиком
-        map.on('popupclose', function(e) {
-            if (e.popup === currentCreationPopup) {
-                currentCreationPopup = null;
-            }
-        });
-
-        window.addNewMarker = function(lat, lng) {
-            var name = document.getElementById('new-name').value;
-            var type = document.getElementById('new-type').value;
-            var desc = document.getElementById('new-desc').value;
-
-            if (!name) {
-                alert('Пожалуйста, введите название!');
-                return;
-            }
-
-            var newId = Date.now();
-            var newObj = {
-                id: newId,
-                name: name,
-                type: type,
-                lat: lat,
-                lng: lng,
-                desc: desc
-            };
-
-            database.ref('skyrim_markers/' + newId).set(newObj);
-            map.closePopup();
-            currentCreationPopup = null;
-        };
-
-        window.deleteMarker = function(id) {
-            database.ref('skyrim_markers/' + id).remove();
-            map.closePopup();
-        };
-    </script>
-</body>
-</html>
+                    <input type='text' id='new-
