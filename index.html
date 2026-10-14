@@ -122,18 +122,21 @@
 </head>
 <body>
 
-    <!-- Скрипт проверки пароля -->
+    <!-- Скрипт проверки пароля (запоминает сессию до закрытия браузера) -->
     <script>
         const MAP_PASSWORD = "Kliment6531"; 
         
-        let userPassword = prompt("Введите пароль для доступа к карте Скайрима:");
+        if (sessionStorage.getItem('skyrim_map_auth') !== 'true') {
+            let userPassword = prompt("Введите пароль для доступа к карте Скайрима:");
 
-        while (userPassword !== MAP_PASSWORD) {
-            if (userPassword === null) {
-                document.body.innerHTML = "<h1 style='color: white; text-align: center; margin-top: 20vh; font-family: Arial;'>⛔ Доступ запрещен. Вход отменен.</h1>";
-                throw new Error("Access denied");
+            while (userPassword !== MAP_PASSWORD) {
+                if (userPassword === null) {
+                    document.body.innerHTML = "<h1 style='color: white; text-align: center; margin-top: 20vh; font-family: Arial;'>⛔ Доступ запрещен. Вход отменен.</h1>";
+                    throw new Error("Access denied");
+                }
+                userPassword = prompt("Неверный пароль! Попробуйте еще раз:");
             }
-            userPassword = prompt("Неверный пароль! Попробуйте еще раз:");
+            sessionStorage.setItem('skyrim_map_auth', 'true');
         }
     </script>
 
@@ -235,10 +238,9 @@
             leafletMarkers = {};
 
             markersData.forEach(function(loc) {
-                // Проверяем состояние фильтра для конкретного типа метки
                 var filterCheckbox = document.getElementById('filter-' + loc.type);
                 if (filterCheckbox && !filterCheckbox.checked) {
-                    return; // Пропускаем отображение, если чекбокс выключен
+                    return;
                 }
 
                 var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type) }).addTo(map);
@@ -287,4 +289,53 @@
                         <option value='quest'>⭐ Квест / Интересное</option>
                     </select>
                     <label>Описание:</label>
-                    <input type='text' id='new-
+                    <input type='text' id='new-desc' placeholder='Примечания...' />
+                    <button onclick='addNewMarker(${lat}, ${lng})'>Сохранить метку</button>
+                </div>
+            `;
+
+            currentCreationPopup = L.popup({ closeOnClick: false })
+                .setLatLng([lat, lng])
+                .setContent(formContent)
+                .openOn(map);
+        });
+
+        // Сбрасываем ссылку при закрытии крестиком
+        map.on('popupclose', function(e) {
+            if (e.popup === currentCreationPopup) {
+                currentCreationPopup = null;
+            }
+        });
+
+        window.addNewMarker = function(lat, lng) {
+            var name = document.getElementById('new-name').value;
+            var type = document.getElementById('new-type').value;
+            var desc = document.getElementById('new-desc').value;
+
+            if (!name) {
+                alert('Пожалуйста, введите название!');
+                return;
+            }
+
+            var newId = Date.now();
+            var newObj = {
+                id: newId,
+                name: name,
+                type: type,
+                lat: lat,
+                lng: lng,
+                desc: desc
+            };
+
+            database.ref('skyrim_markers/' + newId).set(newObj);
+            map.closePopup();
+            currentCreationPopup = null;
+        };
+
+        window.deleteMarker = function(id) {
+            database.ref('skyrim_markers/' + id).remove();
+            map.closePopup();
+        };
+    </script>
+</body>
+</html>
