@@ -115,7 +115,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 3px 0;
+            padding: 4px 0;
             border-bottom: 1px dashed #5a4521;
         }
         .user-row:last-child {
@@ -204,12 +204,13 @@
 </head>
 <body>
 
-    <!-- Модальное окно входа по нику -->
+    <!-- Модальное окно входа по нику и паролю -->
     <div id="auth-modal" class="auth-overlay">
         <div class="auth-card">
             <h3>Вход на карту</h3>
-            <p style="font-size: 12px;">Введите ваш никнейм для доступа:</p>
+            <p style="font-size: 12px;">Введите ваш никнейм и пароль (если установлен):</p>
             <input type="text" id="user-nickname-input" placeholder="Ваш ник..." />
+            <input type="password" id="user-password-input" placeholder="Пароль (опционально)..." />
             <button onclick="loginUser()">Войти</button>
             <p id="auth-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 8px;"></p>
         </div>
@@ -217,19 +218,20 @@
 
     <!-- Модальное окно управления пользователями (для админов) -->
     <div id="admin-users-modal" class="auth-overlay" style="display: none;">
-        <div class="auth-card" style="width: 360px;">
+        <div class="auth-card" style="width: 380px;">
             <h3>Управление доступом</h3>
             <p style="font-size: 12px; margin-bottom: 6px;">Список одобренных пользователей:</p>
             <div class="users-list" id="users-list-container"></div>
             
             <hr style="border: 0; border-top: 1px solid #5a4521; margin: 10px 0;">
-            <p style="font-size: 12px; font-weight: bold;">Добавить нового пользователя:</p>
+            <p style="font-size: 12px; font-weight: bold;">Добавить/Изменить пользователя:</p>
             <input type="text" id="new-user-name" placeholder="Никнейм..." />
+            <input type="password" id="new-user-password" placeholder="Пароль (пусто = без пароля)..." />
             <select id="new-user-role">
                 <option value="reader">Читатель</option>
                 <option value="admin">Администратор</option>
             </select>
-            <button onclick="addNewUser()">Добавить в список</button>
+            <button onclick="addNewUser()">Сохранить пользователя</button>
             <button class="btn-secondary" onclick="closeAdminModal()">Закрыть</button>
         </div>
     </div>
@@ -300,6 +302,7 @@
 
         window.loginUser = function() {
             let inputVal = document.getElementById('user-nickname-input').value;
+            let inputPass = document.getElementById('user-password-input').value;
             let key = sanitizeKey(inputVal);
             let errElem = document.getElementById('auth-error');
 
@@ -314,15 +317,23 @@
 
                 // Автоматическое создание первого админа (Арунин), если база пустая
                 if (!users) {
-                    database.ref('allowed_users/арунин').set({ name: "Арунин", role: "admin" });
-                    users = { "арунин": { name: "Арунин", role: "admin" } };
+                    database.ref('allowed_users/арунин').set({ name: "Арунин", role: "admin", password: "" });
+                    users = { "арунин": { name: "Арунин", role: "admin", password: "" } };
                 }
 
                 if (users[key]) {
+                    let userRecord = users[key];
+                    // Проверяем пароль, если он задан в базе
+                    if (userRecord.password && userRecord.password !== inputPass) {
+                        errElem.textContent = "Неверный пароль!";
+                        errElem.style.display = "block";
+                        return;
+                    }
+
                     currentUser = {
                         key: key,
-                        name: users[key].name || inputVal,
-                        role: users[key].role || 'reader'
+                        name: userRecord.name || inputVal,
+                        role: userRecord.role || 'reader'
                     };
                     sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
                     initUserSession();
@@ -382,10 +393,11 @@
                 Object.keys(users).forEach(key => {
                     let u = users[key];
                     let roleBadge = u.role === 'admin' ? '🛡️ Админ' : '📖 Читатель';
+                    let passStatus = u.password ? '🔒 с паролем' : '🔓 без пароля';
                     let row = document.createElement('div');
                     row.className = 'user-row';
                     row.innerHTML = `
-                        <span><b>${u.name}</b> (${roleBadge})</span>
+                        <span><b>${u.name}</b> (${roleBadge}, ${passStatus})</span>
                         ${key !== currentUser.key ? `<button class="del-user-btn" onclick="removeUser('${key}')">Удалить</button>` : ''}
                     `;
                     container.appendChild(row);
@@ -395,7 +407,9 @@
 
         window.addNewUser = function() {
             let nameInput = document.getElementById('new-user-name').value.trim();
+            let passInput = document.getElementById('new-user-password').value;
             let roleInput = document.getElementById('new-user-role').value;
+            
             if (!nameInput) {
                 alert("Введите никнейм!");
                 return;
@@ -403,9 +417,11 @@
             let key = sanitizeKey(nameInput);
             database.ref('allowed_users/' + key).set({
                 name: nameInput,
+                password: passInput,
                 role: roleInput
             }).then(() => {
                 document.getElementById('new-user-name').value = '';
+                document.getElementById('new-user-password').value = '';
                 loadUsersList();
             });
         };
@@ -429,7 +445,7 @@
             { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.svg' },
             { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath_undiscovered.svg' },
             { type: 'markarth', name: 'Маркарт', icon: 'Markarth.svg' },
-            { type: 'morthal', name: 'Мортал', icon: 'Morthal.svg' },
+            { type: 'morthal', name: 'Морфал', icon: 'Morthal.svg' },
             { type: 'riften', name: 'Рифтен', icon: 'Riften_undiscovered.svg' },
             { type: 'solitude', name: 'Солитьюд', icon: 'Solitude_undiscovered.svg' },
             { type: 'whiterun', name: 'Вайтран', icon: 'Whiterun.svg' },
