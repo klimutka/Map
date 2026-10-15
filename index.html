@@ -396,7 +396,7 @@
         </div>
         <p>• Пользователь: <b id="current-user-name">-</b></p>
         <p>• Доступ: <b id="current-user-role">-</b></p>
-        <p>• Режим чтения: метки и статусы обновляются в реальном времени.</p>
+        <p>• Синхронизация в реальном времени.</p>
     </div>
 
     <!-- Правая панель отношений с городами -->
@@ -413,6 +413,7 @@
     <div id="map"></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -429,8 +430,14 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
 
         let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
+
+        // При загрузке страницы, если пользователь был админом, держим сессию Auth активной
+        if (currentUser && currentUser.role === 'admin') {
+            auth.signInAnonymously().catch(err => console.error("Ошибка Auth:", err));
+        }
 
         function sanitizeKey(str) {
             return str.replace(/[\.\#\$\[\]]/g, "_").toLowerCase().trim();
@@ -489,7 +496,21 @@
                         role: userRecord.role || 'reader'
                     };
                     sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
-                    initUserSession();
+
+                    // Если вошел администратор — авторизуем сессию в Firebase Auth для записи в базу
+                    if (currentUser.role === 'admin') {
+                        auth.signInAnonymously().then(() => {
+                            initUserSession();
+                        }).catch(err => {
+                            console.error("Ошибка авторизации в Firebase:", err);
+                            initUserSession();
+                        });
+                    } else {
+                        // Читатели не авторизуются в Firebase Auth, у них только чтение
+                        auth.signOut();
+                        initUserSession();
+                    }
+
                 } else {
                     errElem.textContent = "Вашего ника нет в списке одобренных лиц!";
                     errElem.style.display = "block";
@@ -501,6 +522,7 @@
         };
 
         window.logoutUser = function() {
+            auth.signOut();
             sessionStorage.removeItem('skyrim_active_user');
             currentUser = null;
             location.reload();
@@ -564,10 +586,7 @@
         }
 
         window.addNewUser = function() {
-            if (!currentUser || currentUser.role !== 'admin') {
-                alert("У вас нет прав администратора!");
-                return;
-            }
+            if (!currentUser || currentUser.role !== 'admin') return;
             let nameInput = document.getElementById('new-user-name').value.trim();
             let passInput = document.getElementById('new-user-password').value;
             let roleInput = document.getElementById('new-user-role').value;
@@ -596,10 +615,7 @@
         };
 
         window.removeUser = function(key) {
-            if (!currentUser || currentUser.role !== 'admin') {
-                alert("У вас нет прав администратора!");
-                return;
-            }
+            if (!currentUser || currentUser.role !== 'admin') return;
             if (confirm("Точно удалить этого пользователя?")) {
                 database.ref('allowed_users/' + key).remove().then(() => {
                     loadUsersList();
@@ -607,7 +623,6 @@
             }
         };
 
-        // Инициализация карты под разрешение 4096x3072
         var mapWidth = 4096, mapHeight = 3072;
         var buffer = 500; 
         var maxBounds = [[-buffer, -buffer], [mapHeight + buffer, mapWidth + buffer]];
@@ -736,7 +751,6 @@
                 let cardGlowClass = 'diplo-card-' + currentStatus;
                 let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
 
-                // Только администратор может менять селектор отношений
                 let controlHTML = (currentUser.role === 'admin') ? `
                     <select onchange="updateCityStatus('${city.type}', this.value)">
                         <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
@@ -759,10 +773,7 @@
         }
 
         window.updateCityStatus = function(cityType, newStatus) {
-            if (!currentUser || currentUser.role !== 'admin') {
-                console.warn("Попытка изменения статуса города без прав администратора пресечена.");
-                return;
-            }
+            if (!currentUser || currentUser.role !== 'admin') return;
             database.ref('city_statuses/' + cityType).set(newStatus).catch(err => console.error("Ошибка обновления статуса города:", err));
         };
 
@@ -819,7 +830,6 @@
 
                 var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
                 
-                // Кнопка удаления метки рендерится в попапе ТОЛЬКО для администратора
                 var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id})">Удалить метку</button>` : '';
 
                 var popupContent = `
@@ -844,7 +854,6 @@
             if (cb) cb.addEventListener('change', renderMarkers);
         });
 
-        // Клик по карте для создания метки доступен ТОЛЬКО администраторам
         map.on('click', function(e) {
             if (!currentUser || currentUser.role !== 'admin') return;
 
@@ -884,10 +893,7 @@
         });
 
         window.addNewMarker = function(lat, lng) {
-            if (!currentUser || currentUser.role !== 'admin') {
-                console.warn("Попытка добавить метку без прав администратора пресечена.");
-                return;
-            }
+            if (!currentUser || currentUser.role !== 'admin') return;
             var selectElement = document.getElementById('new-type');
             var type = selectElement.value;
             var selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -912,10 +918,7 @@
         };
 
         window.deleteMarker = function(id) {
-            if (!currentUser || currentUser.role !== 'admin') {
-                console.warn("Попытка удалить метку без прав администратора пресечена.");
-                return;
-            }
+            if (!currentUser || currentUser.role !== 'admin') return;
             database.ref('skyrim_markers/' + id).remove().then(() => {
                 map.closePopup();
             }).catch(err => console.error("Ошибка удаления метки:", err));
