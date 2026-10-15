@@ -618,7 +618,7 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         var bounds = [[0, 0], [mapHeight, mapWidth]];
-        L.imageOverlay('skyrim_map.png', bounds).addTo(map); // Исправлено на правильное имя файла в нижнем регистре
+        L.imageOverlay('skyrim_map.png', bounds).addTo(map); 
 
         map.fitBounds(bounds);
         map.setZoom(-2);
