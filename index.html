@@ -12,21 +12,27 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
+            /* Тёмно-коричневый фоновый оттенок в стиле кожи и дерева Скайрима */
+            background-color: #241b14;
             font-family: 'Georgia', serif;
             overflow: hidden;
         }
 
-        /* Полноэкранный блок карты без серых границ */
+        /* Полноэкранный блок карты без серых полей */
         #map {
             width: 100vw;
             height: 100vh;
-            background-color: #1a1a1a;
+            background-color: #241b14;
         }
 
         /* Перекрываем стандартный серый фон Leaflet */
         .leaflet-container {
-            background: #1a1a1a !important;
+            background: #241b14 !important;
+        }
+
+        /* Мягкая тень вокруг карты для естественного перехода к фону */
+        .leaflet-image-layer {
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
         }
 
         /* Стилизация кнопок зума Leaflet под стиль Скайрима */
@@ -217,7 +223,7 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
-        /* Левая панель (Фильтры) */
+        /* Левая панель (Фильтры) прижата к левому краю экрана */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 10px 15px;
@@ -411,7 +417,7 @@
     <div id="map"></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -428,8 +434,13 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
 
         let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
+
+        if (currentUser && currentUser.role === 'admin') {
+            auth.signInAnonymously().catch(err => console.error("Ошибка Auth:", err));
+        }
 
         function sanitizeKey(str) {
             return str.replace(/[\.\#\$\[\]]/g, "_").toLowerCase().trim();
@@ -488,7 +499,19 @@
                         role: userRecord.role || 'reader'
                     };
                     sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
-                    initUserSession();
+
+                    if (currentUser.role === 'admin') {
+                        auth.signInAnonymously().then(() => {
+                            initUserSession();
+                        }).catch(err => {
+                            console.error("Ошибка авторизации в Firebase:", err);
+                            initUserSession();
+                        });
+                    } else {
+                        auth.signOut();
+                        initUserSession();
+                    }
+
                 } else {
                     errElem.textContent = "Вашего ника нет в списке одобренных лиц!";
                     errElem.style.display = "block";
@@ -500,6 +523,7 @@
         };
 
         window.logoutUser = function() {
+            auth.signOut();
             sessionStorage.removeItem('skyrim_active_user');
             currentUser = null;
             location.reload();
@@ -617,12 +641,12 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         var bounds = [[0, 0], [mapHeight, mapWidth]];
-        L.imageOverlay('skyrim_map.webp', bounds).addTo(map);
+        L.imageOverlay('skyrim_map.png', bounds).addTo(map);
 
         map.fitBounds(bounds);
         map.setZoom(-2);
 
-        // Перерасчет размеров карты при изменении окна браузера
+        // Корректная подгонка карты при изменении размера окна браузера
         window.addEventListener('resize', function() {
             map.invalidateSize();
         });
