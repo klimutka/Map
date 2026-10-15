@@ -219,7 +219,7 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
-        /* Левая панель (Фильтры) сдвинута к левому краю экрана */
+        /* Левая панель (Фильтры) прижата к левому краю экрана */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 10px 15px;
@@ -599,7 +599,7 @@
             }
         };
 
-        // Инициализация карты под разрешение 4096x3072 с зумом в правом нижнем углу
+        // Инициализация карты под разрешение 4096x3072 с правильным именем файла
         var mapWidth = 4096, mapHeight = 3072;
         var buffer = 500; 
         var maxBounds = [[-buffer, -buffer], [mapHeight + buffer, mapWidth + buffer]];
@@ -617,7 +617,7 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         var bounds = [[0, 0], [mapHeight, mapWidth]];
-        L.imageOverlay('Skyrim_map.png', bounds).addTo(map);
+        L.imageOverlay('skyrim_map.png', bounds).addTo(map); // Исправлено имя на маленькие буквы
 
         map.fitBounds(bounds);
         map.setZoom(-2);
