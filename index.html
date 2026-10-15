@@ -60,7 +60,13 @@
         body:not(.logged-in) .filter-panel,
         body:not(.logged-in) .diplomacy-panel,
         body:not(.logged-in) .info-panel,
+        body:not(.logged-in) .logs-panel,
         body:not(.logged-in) .bottom-left-controls {
+            display: none !important;
+        }
+
+        /* История изменений видна ТОЛЬКО администраторам */
+        body:not(.is-admin) .logs-panel {
             display: none !important;
         }
 
@@ -182,85 +188,101 @@
             z-index: 1000;
             background: #f4ebd0;
             border: 2px solid #5a4521;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 6px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 270px;
-            font-size: 13px;
+            max-width: 240px;
+            font-size: 12px;
             color: #2c221e;
         }
         .info-panel .panel-header {
             display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid #5a4521; padding-bottom: 3px; margin-bottom: 5px;
+            border-bottom: 1px solid #5a4521; padding-bottom: 2px; margin-bottom: 4px;
         }
         .close-btn {
             background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
-            width: 20px; height: 20px; cursor: pointer; font-weight: bold;
+            width: 18px; height: 18px; cursor: pointer; font-weight: bold; font-size: 11px;
         }
 
         .panel-header {
             display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid #5a4521; padding-bottom: 3px; margin-bottom: 8px;
+            border-bottom: 1px solid #5a4521; padding-bottom: 2px; margin-bottom: 6px;
         }
         .panel-header h4 {
-            margin: 0; font-size: 15px; border: none; padding: 0; white-space: nowrap;
+            margin: 0; font-size: 13px; border: none; padding: 0; white-space: nowrap;
         }
         .collapse-btn {
             background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
-            width: 20px; height: 20px; cursor: pointer; font-weight: bold; font-size: 11px;
+            width: 18px; height: 18px; cursor: pointer; font-weight: bold; font-size: 10px;
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .collapse-btn:hover { background: #73592c; }
 
+        /* Компактная панель фильтров (слева) */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
-            background: #f4ebd0; border: 2px solid #5a4521; padding: 10px 15px;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 240px; max-height: 90vh; overflow-y: auto; font-size: 13px; color: #2c221e;
+            width: 200px; max-height: 90vh; overflow-y: auto; font-size: 12px; color: #2c221e;
             transition: width 0.2s, padding 0.2s;
         }
-        .filter-panel.collapsed { width: 35px; padding: 10px 6px; overflow: hidden; }
+        .filter-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
         .filter-panel.collapsed .panel-content, .filter-panel.collapsed .panel-header h4 { display: none; }
         .filter-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
 
+        /* Компактная панель отношений с городами (справа) */
         .diplomacy-panel {
-            position: absolute; top: 160px; right: 10px; z-index: 1000;
-            background: #f4ebd0; border: 2px solid #5a4521; padding: 10px 15px;
+            position: absolute; top: 140px; right: 10px; z-index: 1000;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 270px; max-height: 70vh; overflow-y: auto; font-size: 13px; color: #2c221e;
+            width: 240px; max-height: 65vh; overflow-y: auto; font-size: 12px; color: #2c221e;
             transition: width 0.2s, padding 0.2s;
         }
-        .diplomacy-panel.collapsed { width: 35px; padding: 10px 6px; overflow: hidden; }
+        .diplomacy-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
         .diplomacy-panel.collapsed .panel-content, .diplomacy-panel.collapsed .panel-header h4 { display: none; }
         .diplomacy-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
 
         .city-diplo-item {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 6px; background: #e8dbbc; padding: 5px 8px; border-radius: 4px;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+            margin-bottom: 4px; background: #e8dbbc; padding: 3px 6px; border-radius: 4px;
         }
-        .city-info { display: flex; align-items: center; gap: 6px; }
+        .city-info { display: flex; align-items: center; gap: 4px; }
         .city-diplo-item select {
-            font-family: 'Georgia', serif; font-size: 12px; padding: 2px;
+            font-family: 'Georgia', serif; font-size: 11px; padding: 1px;
             background: #f4ebd0; border: 1px solid #5a4521; cursor: pointer;
         }
 
-        .filter-group { margin-bottom: 8px; border-bottom: 1px dashed #5a4521; padding-bottom: 6px; }
+        .filter-group { margin-bottom: 6px; border-bottom: 1px dashed #5a4521; padding-bottom: 4px; }
         .filter-group-header {
             display: flex; align-items: center; justify-content: space-between;
-            font-weight: bold; cursor: pointer; user-select: none; padding: 2px 0;
+            font-weight: bold; cursor: pointer; user-select: none; padding: 1px 0;
         }
-        .toggle-arrow { font-size: 10px; transition: transform 0.2s; display: inline-block; }
-        .filter-sublist { margin-left: 18px; margin-top: 4px; display: block; }
+        .toggle-arrow { font-size: 9px; transition: transform 0.2s; display: inline-block; }
+        .filter-sublist { margin-left: 14px; margin-top: 3px; display: block; }
         .filter-sublist.collapsed { display: none; }
         .filter-panel label {
-            display: flex; align-items: center; margin-bottom: 4px; cursor: pointer; user-select: none; font-size: 12px;
+            display: flex; align-items: center; margin-bottom: 3px; cursor: pointer; user-select: none; font-size: 11px;
         }
-        .filter-icon { width: 20px; height: 20px; margin-right: 6px; vertical-align: middle; object-fit: contain; }
+        .filter-icon { width: 16px; height: 16px; margin-right: 5px; vertical-align: middle; object-fit: contain; }
 
-        @keyframes pulse-card-ally { 0% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } 50% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.85); } 100% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } }
-        @keyframes pulse-card-neutral { 0% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } 50% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.85); } 100% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } }
-        @keyframes pulse-card-enemy { 0% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } 50% { box-shadow: 0 0 10px rgba(231, 76, 60, 0.85); } 100% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } }
+        /* Компактная панель логов (только для админов) */
+        .logs-panel {
+            position: absolute; bottom: 20px; right: 20px; z-index: 1000;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
+            border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 260px; max-height: 180px; font-size: 11px; color: #2c221e;
+            display: flex; flex-direction: column; transition: width 0.2s, padding 0.2s;
+        }
+        .logs-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
+        .logs-panel.collapsed .logs-content, .logs-panel.collapsed .panel-header h4 { display: none; }
+        .logs-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
+        .logs-content { overflow-y: auto; max-height: 120px; margin-top: 4px; text-align: left; }
+        .log-item { padding: 3px 0; border-bottom: 1px dashed #c2b292; word-break: break-word; }
+        .log-item:last-child { border-bottom: none; }
+
+        @keyframes pulse-card-ally { 0% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } 50% { box-shadow: 0 0 8px rgba(46, 204, 113, 0.85); } 100% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } }
+        @keyframes pulse-card-neutral { 0% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } 50% { box-shadow: 0 0 8px rgba(241, 196, 15, 0.85); } 100% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } }
+        @keyframes pulse-card-enemy { 0% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } 50% { box-shadow: 0 0 8px rgba(231, 76, 60, 0.85); } 100% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } }
 
         .diplo-card-ally { animation: pulse-card-ally 2.5s infinite; border: 1px solid #2ecc71; }
         .diplo-card-neutral { animation: pulse-card-neutral 2.5s infinite; border: 1px solid #f1c40f; }
@@ -272,15 +294,15 @@
 
         .leaflet-popup-content-wrapper { background: #f4ebd0; border: 2px solid #5a4521; border-radius: 4px; color: #2c221e; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .leaflet-popup-tip { background: #f4ebd0; }
-        .popup-title { font-weight: bold; font-size: 15px; border-bottom: 1px solid #5a4521; margin-bottom: 6px; padding-bottom: 4px; color: #3b2a1a; }
+        .popup-title { font-weight: bold; font-size: 14px; border-bottom: 1px solid #5a4521; margin-bottom: 4px; padding-bottom: 3px; color: #3b2a1a; }
         .popup-form input, .popup-form select {
-            width: 100%; margin-bottom: 6px; padding: 5px; box-sizing: border-box; font-family: 'Georgia', serif; background: #fff; border: 1px solid #5a4521; border-radius: 3px;
+            width: 100%; margin-bottom: 5px; padding: 4px; box-sizing: border-box; font-family: 'Georgia', serif; background: #fff; border: 1px solid #5a4521; border-radius: 3px; font-size: 12px;
         }
         .popup-form button {
-            background: #5a4521; color: #f4ebd0; border: none; padding: 6px 10px; cursor: pointer; width: 100%; font-weight: bold; border-radius: 3px;
+            background: #5a4521; color: #f4ebd0; border: none; padding: 5px 8px; cursor: pointer; width: 100%; font-weight: bold; border-radius: 3px; font-size: 12px;
         }
         .popup-form button:hover { background: #73592c; }
-        .btn-delete { background: #a83232 !important; margin-top: 5px; color: #fff; border: none; padding: 5px; cursor: pointer; width: 100%; border-radius: 3px; }
+        .btn-delete { background: #a83232 !important; margin-top: 4px; color: #fff; border: none; padding: 4px; cursor: pointer; width: 100%; border-radius: 3px; font-size: 11px; }
         .btn-delete:hover { background: #c94040 !important; }
     </style>
 </head>
@@ -376,9 +398,9 @@
             <h4>Карта Скайрима</h4>
             <button class="close-btn" onclick="closeInfoPanel()">×</button>
         </div>
-        <p>• Пользователь: <b id="current-user-name">-</b></p>
-        <p>• Доступ: <b id="current-user-role">-</b></p>
-        <p>• Синхронизация в реальном времени.</p>
+        <p style="margin: 3px 0;">• Пользователь: <b id="current-user-name">-</b></p>
+        <p style="margin: 3px 0;">• Доступ: <b id="current-user-role">-</b></p>
+        <p style="margin: 3px 0;">• Синхронизация в реальном времени.</p>
     </div>
 
     <div class="diplomacy-panel" id="diplomacy-panel-box">
@@ -388,6 +410,16 @@
         </div>
         <div class="panel-content" id="diplomacy-content">
             <div id="diplomacy-list"></div>
+        </div>
+    </div>
+
+    <div class="logs-panel" id="logs-panel-box">
+        <div class="panel-header">
+            <h4>📜 История изменений</h4>
+            <button class="collapse-btn" onclick="toggleLogsPanel()">−</button>
+        </div>
+        <div class="logs-content" id="logs-list-container">
+            <div style="color: #666; font-style: italic;">Загрузка истории...</div>
         </div>
     </div>
 
@@ -431,6 +463,17 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        function logAction(text) {
+            if (!currentUser) return;
+            let logId = Date.now();
+            let timeStr = new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow' });
+            database.ref('skyrim_logs/' + logId).set({
+                text: text,
+                author: currentUser.name,
+                time: timeStr
+            });
         }
 
         window.checkEnter = function(event) {
@@ -509,6 +552,7 @@
         function initUserSession() {
             if (!currentUser) {
                 document.body.classList.remove('logged-in');
+                document.body.classList.remove('is-admin');
                 document.getElementById('auth-modal').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'none';
                 document.getElementById('admin-panel-btn').style.display = 'none';
@@ -516,6 +560,7 @@
             }
 
             document.body.classList.add('logged-in');
+            document.body.classList.toggle('is-admin', currentUser.role === 'admin');
             document.getElementById('auth-modal').style.display = 'none';
             document.getElementById('logout-btn').style.display = 'block';
 
@@ -524,6 +569,7 @@
 
             if (currentUser.role === 'admin') {
                 document.getElementById('admin-panel-btn').style.display = 'block';
+                listenLogs();
             } else {
                 document.getElementById('admin-panel-btn').style.display = 'none';
             }
@@ -586,6 +632,7 @@
                 document.getElementById('new-user-name').value = '';
                 document.getElementById('new-user-password').value = '';
                 loadUsersList();
+                logAction(`добавил(а) нового пользователя: ${nameInput} (${roleInput})`);
             }).catch(err => {
                 submitBtn.disabled = false;
                 console.error("Ошибка добавления пользователя:", err);
@@ -597,6 +644,7 @@
             if (confirm("Точно удалить этого пользователя?")) {
                 database.ref('allowed_users/' + key).remove().then(() => {
                     loadUsersList();
+                    logAction(`удалил(а) пользователя с ключом: ${key}`);
                 }).catch(err => console.error("Ошибка удаления пользователя:", err));
             }
         };
@@ -607,7 +655,7 @@
 
         var map = L.map('map', {
             crs: L.CRS.Simple,
-            minZoom: -3,
+            minZoom: -2, // Немного ослабили отдаление карты
             maxZoom: 3,
             zoomSnap: 0.5,
             maxBounds: maxBounds,
@@ -618,10 +666,9 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         var bounds = [[0, 0], [mapHeight, mapWidth]];
-        L.imageOverlay('skyrim_map.webp', bounds).addTo(map); 
+        L.imageOverlay('skyrim_map.webp', bounds).addTo(map);
 
         map.fitBounds(bounds);
-        map.setZoom(-2);
 
         window.addEventListener('resize', function() {
             map.invalidateSize();
@@ -670,6 +717,29 @@
             renderMarkers();
         });
 
+        function listenLogs() {
+            database.ref('skyrim_logs').limitToLast(20).on('value', snapshot => {
+                let logs = snapshot.val() || {};
+                let container = document.getElementById('logs-list-container');
+                container.innerHTML = '';
+
+                let logKeys = Object.keys(logs);
+                if (logKeys.length === 0) {
+                    container.innerHTML = '<div style="color: #666; font-style: italic;">Нет записей в истории</div>';
+                    return;
+                }
+
+                logKeys.sort((a, b) => b - a).forEach(k => {
+                    let log = logs[k];
+                    let div = document.createElement('div');
+                    div.className = 'log-item';
+                    div.innerHTML = `<span style="color: #73592c; font-size: 9px;">[${log.time}]</span> <b>${escapeHTML(log.author)}</b> ${escapeHTML(log.text)}`;
+                    container.appendChild(div);
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
         map.on('zoomend', function() {
             renderMarkers();
         });
@@ -693,6 +763,18 @@
 
         window.toggleRightPanel = function() {
             var panel = document.getElementById('diplomacy-panel-box');
+            var btn = panel.querySelector('.collapse-btn');
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                btn.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                btn.textContent = '+';
+            }
+        };
+
+        window.toggleLogsPanel = function() {
+            var panel = document.getElementById('logs-panel-box');
             var btn = panel.querySelector('.collapse-btn');
             if (panel.classList.contains('collapsed')) {
                 panel.classList.remove('collapsed');
@@ -734,18 +816,18 @@
                 let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
 
                 let controlHTML = (currentUser.role === 'admin') ? `
-                    <select onchange="updateCityStatus('${city.type}', this.value)">
+                    <select onchange="updateCityStatus('${city.type}', this.value, '${city.name}')">
                         <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
                         <option value='neutral' ${currentStatus === 'neutral' ? 'selected' : ''}>🟡 Нейтрал</option>
                         <option value='enemy' ${currentStatus === 'enemy' ? 'selected' : ''}>🔴 Враг</option>
                     </select>
-                ` : `<span style="font-size: 12px; font-weight: bold;">${statusText}</span>`;
+                ` : `<span style="font-size: 11px; font-weight: bold;">${statusText}</span>`;
 
                 var div = document.createElement('div');
                 div.className = 'city-diplo-item ' + cardGlowClass;
                 div.innerHTML = `
                     <div class="city-info">
-                        <img src="${city.icon}" class="filter-icon">
+                        <img src="${city.icon}" class="filter-icon" style="width: 14px; height: 14px;">
                         <span><b>${city.name}</b></span>
                     </div>
                     ${controlHTML}
@@ -754,9 +836,12 @@
             });
         }
 
-        window.updateCityStatus = function(cityType, newStatus) {
+        window.updateCityStatus = function(cityType, newStatus, cityName) {
             if (!currentUser || currentUser.role !== 'admin') return;
-            database.ref('city_statuses/' + cityType).set(newStatus).catch(err => console.error("Ошибка обновления статуса города:", err));
+            database.ref('city_statuses/' + cityType).set(newStatus).then(() => {
+                let statusRu = newStatus === 'ally' ? 'Союзник' : (newStatus === 'enemy' ? 'Враг' : 'Нейтрал');
+                logAction(`изменил(а) статус города "${cityName}" на "${statusRu}"`);
+            }).catch(err => console.error("Ошибка обновления статуса города:", err));
         };
 
         function getCustomIcon(type, status) {
@@ -812,12 +897,12 @@
 
                 var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
                 
-                var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id})">Удалить метку</button>` : '';
+                var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
 
                 var popupContent = `
                     <div class='popup-title'>${escapeHTML(loc.name)}</div>
-                    <p>${escapeHTML(loc.desc || '')}</p>
-                    <p style="font-size: 11px; color: #555; margin-top: 4px;">👤 Поставил: <b>${escapeHTML(loc.author || 'Неизвестно')}</b></p>
+                    <p style="margin: 4px 0;">${escapeHTML(loc.desc || '')}</p>
+                    <p style="font-size: 10px; color: #555; margin: 2px 0 4px 0;">👤 Поставил: <b>${escapeHTML(loc.author || 'Неизвестно')}</b></p>
                     ${deleteBtnHTML}
                 `;
                 marker.bindPopup(popupContent);
@@ -836,15 +921,11 @@
             if (cb) cb.addEventListener('change', renderMarkers);
         });
 
-        // Проверка клика: ставить метки можно строго в пределах разрешения карты (0 до 4096 и 0 до 3072)
         map.on('click', function(e) {
             if (!currentUser || currentUser.role !== 'admin') return;
 
             var lat = e.latlng.lat, lng = e.latlng.lng;
-
-            if (lat < 0 || lat > mapHeight || lng < 0 || lng > mapWidth) {
-                return; // Клик за пределами карты игнорируется
-            }
+            if (lat < 0 || lat > mapHeight || lng < 0 || lng > mapWidth) return;
 
             if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
                 map.closePopup(currentCreationPopup);
@@ -902,13 +983,15 @@
             database.ref('skyrim_markers/' + newId).set(newObj).then(() => {
                 map.closePopup();
                 currentCreationPopup = null;
+                logAction(`поставил(а) метку "${name}"`);
             }).catch(err => console.error("Ошибка сохранения метки:", err));
         };
 
-        window.deleteMarker = function(id) {
+        window.deleteMarker = function(id, markerName) {
             if (!currentUser || currentUser.role !== 'admin') return;
             database.ref('skyrim_markers/' + id).remove().then(() => {
                 map.closePopup();
+                logAction(`удалил(а) метку "${markerName}"`);
             }).catch(err => console.error("Ошибка удаления метки:", err));
         };
 
