@@ -65,7 +65,6 @@
             display: none !important;
         }
 
-        /* История изменений видна ТОЛЬКО администраторам */
         body:not(.is-admin) .logs-panel {
             display: none !important;
         }
@@ -218,7 +217,6 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
-        /* Компактная панель фильтров (слева) */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
@@ -230,7 +228,6 @@
         .filter-panel.collapsed .panel-content, .filter-panel.collapsed .panel-header h4 { display: none; }
         .filter-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
 
-        /* Компактная панель отношений с городами (справа) */
         .diplomacy-panel {
             position: absolute; top: 140px; right: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
@@ -265,9 +262,9 @@
         }
         .filter-icon { width: 16px; height: 16px; margin-right: 5px; vertical-align: middle; object-fit: contain; }
 
-        /* Компактная панель логов (только для админов) */
+        /* Панель логов сдвинута влево (right: 75px), чтобы не перекрывать кнопки зума Leaflet */
         .logs-panel {
-            position: absolute; bottom: 20px; right: 20px; z-index: 1000;
+            position: absolute; bottom: 20px; right: 75px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             width: 260px; max-height: 180px; font-size: 11px; color: #2c221e;
@@ -473,7 +470,7 @@
                 text: text,
                 author: currentUser.name,
                 time: timeStr
-            });
+            }).catch(err => console.error("Ошибка записи лога:", err));
         }
 
         window.checkEnter = function(event) {
@@ -655,7 +652,7 @@
 
         var map = L.map('map', {
             crs: L.CRS.Simple,
-            minZoom: -2, // Немного ослабили отдаление карты
+            minZoom: -2,
             maxZoom: 3,
             zoomSnap: 0.5,
             maxBounds: maxBounds,
@@ -737,6 +734,10 @@
                     container.appendChild(div);
                 });
                 container.scrollTop = container.scrollHeight;
+            }, error => {
+                console.error("Ошибка чтения логов:", error);
+                let container = document.getElementById('logs-list-container');
+                if (container) container.innerHTML = '<div style="color: #a83232;">Ошибка доступа к логам</div>';
             });
         }
 
