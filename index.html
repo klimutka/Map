@@ -509,7 +509,6 @@
                         return;
                     }
 
-                    // Нормализуем роль к нижнему регистру, чтобы избежать ошибок регистров
                     let userRole = (userRecord.role || 'reader').toLowerCase().trim();
                     if (userRole === 'administrator') userRole = 'admin';
 
@@ -971,6 +970,20 @@
                 alert("Отказано в доступе: у вас нет прав администратора для создания меток.");
                 return;
             }
+
+            if (auth.currentUser === null) {
+                auth.signInAnonymously().then(() => {
+                    executeSaveMarker(lat, lng);
+                }).catch(err => {
+                    console.error("Ошибка анонимного входа:", err);
+                    alert("Ошибка авторизации в Firebase. Проверьте настройки.");
+                });
+            } else {
+                executeSaveMarker(lat, lng);
+            }
+        };
+
+        function executeSaveMarker(lat, lng) {
             var selectElement = document.getElementById('new-type');
             var type = selectElement.value;
             var selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -996,7 +1009,7 @@
                 console.error("Ошибка сохранения метки:", err);
                 alert("Не удалось сохранить метку! Проверьте правила Firebase.");
             });
-        };
+        }
 
         window.deleteMarker = function(id, markerName) {
             if (!currentUser || currentUser.role !== 'admin') return;
