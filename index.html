@@ -509,10 +509,14 @@
                         return;
                     }
 
+                    // Нормализуем роль к нижнему регистру, чтобы избежать ошибок регистров
+                    let userRole = (userRecord.role || 'reader').toLowerCase().trim();
+                    if (userRole === 'administrator') userRole = 'admin';
+
                     currentUser = {
                         key: key,
                         name: userRecord.name || inputVal,
-                        role: userRecord.role || 'reader'
+                        role: userRole
                     };
                     sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
 
@@ -592,7 +596,8 @@
 
                 Object.keys(users).forEach(key => {
                     let u = users[key];
-                    let roleBadge = u.role === 'admin' ? '🛡️ Админ' : '📖 Читатель';
+                    let uRole = (u.role || '').toLowerCase();
+                    let roleBadge = uRole === 'admin' ? '🛡️ Админ' : '📖 Читатель';
                     let passStatus = u.password ? '🔒 с паролем' : '🔓 без пароля';
                     let row = document.createElement('div');
                     row.className = 'user-row';
@@ -962,7 +967,10 @@
         });
 
         window.addNewMarker = function(lat, lng) {
-            if (!currentUser || currentUser.role !== 'admin') return;
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert("Отказано в доступе: у вас нет прав администратора для создания меток.");
+                return;
+            }
             var selectElement = document.getElementById('new-type');
             var type = selectElement.value;
             var selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -986,7 +994,7 @@
                 logAction(`поставил(а) метку "${name}"`);
             }).catch(err => {
                 console.error("Ошибка сохранения метки:", err);
-                alert("Отказано в доступе: у вас нет прав администратора для создания меток.");
+                alert("Не удалось сохранить метку! Проверьте правила Firebase.");
             });
         };
 
