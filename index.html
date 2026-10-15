@@ -383,7 +383,7 @@
                 <div class="filter-sublist" style="margin-left: 0;">
                     <label><input type="checkbox" id="filter-anomaly" checked> <img src="Magical Anomaly.png" class="filter-icon"> Магические аномалии</label>
                     <label><input type="checkbox" id="filter-ruins" checked> <img src="Nord Ruins.png" class="filter-icon"> Нордские руины</label>
-                    <label><input type="checkbox" id="filter-dwarven_ruins" checked> <img src="Ruins.png" class="filter-icon"> Двемерские руины</label>
+                    <label><input type="checkbox" id="filter-dwarven_ruins" checked> <img src="Ruins.svg" class="filter-icon"> Двемерские руины</label>
                 </div>
             </div>
         </div>
@@ -698,7 +698,7 @@
             { type: 'animal4', name: '🐾 Животные 4 ур', icon: 'Animals4.png' },
             { type: 'anomaly', name: '✨ Магические аномалии', icon: 'Magical Anomaly.png' },
             { type: 'ruins', name: '🏛️ Нордские руины', icon: 'Nord Ruins.png' },
-            { type: 'dwarven_ruins', name: '⚙️ Двемерские руины', icon: 'Ruins.png' }
+            { type: 'dwarven_ruins', name: '⚙️ Двемерские руины', icon: 'Ruins.svg' }
         ];
 
         var cityStatuses = {};
@@ -862,7 +862,7 @@
             } else if (type === 'ruins') {
                 iconUrl = 'Nord Ruins.png';
             } else if (type === 'dwarven_ruins') {
-                iconUrl = 'Ruins.png';
+                iconUrl = 'Ruins.svg';
             } else {
                 let foundCity = citiesList.find(c => c.type === type);
                 if (foundCity) iconUrl = foundCity.icon;
