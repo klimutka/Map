@@ -975,8 +975,8 @@
                 auth.signInAnonymously().then(() => {
                     executeSaveMarker(lat, lng);
                 }).catch(err => {
-                    console.error("Детали ошибки анонимного входа:", err);
-                    alert("Ошибка Firebase Auth: " + err.message);
+                    console.error("Полная ошибка auth:", err);
+                    alert("Firebase Auth Error: " + (err.message || JSON.stringify(err)));
                 });
             } else {
                 executeSaveMarker(lat, lng);
