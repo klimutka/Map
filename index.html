@@ -12,30 +12,25 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            /* Тёмно-коричневый фоновый оттенок в стиле кожи и дерева Скайрима */
             background-color: #241b14;
             font-family: 'Georgia', serif;
             overflow: hidden;
         }
 
-        /* Полноэкранный блок карты без серых полей */
         #map {
             width: 100vw;
             height: 100vh;
             background-color: #241b14;
         }
 
-        /* Перекрываем стандартный серый фон Leaflet */
         .leaflet-container {
             background: #241b14 !important;
         }
 
-        /* Мягкая тень вокруг карты для естественного перехода к фону */
         .leaflet-image-layer {
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
         }
 
-        /* Стилизация кнопок зума Leaflet под стиль Скайрима */
         .leaflet-control-zoom {
             border: 2px solid #5a4521 !important;
             border-radius: 4px !important;
@@ -62,7 +57,6 @@
             border-bottom: none !important;
         }
 
-        /* Управление видимостью интерфейса до авторизации */
         body:not(.logged-in) .filter-panel,
         body:not(.logged-in) .diplomacy-panel,
         body:not(.logged-in) .info-panel,
@@ -70,7 +64,6 @@
             display: none !important;
         }
 
-        /* Модальные окна */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -127,7 +120,6 @@
             background: #5a4521 !important;
         }
 
-        /* Кнопки управления в левом нижнем углу */
         .bottom-left-controls {
             position: absolute;
             bottom: 20px;
@@ -154,7 +146,6 @@
             background: #73592c;
         }
 
-        /* Список пользователей в админке */
         .users-list {
             max-height: 150px;
             overflow-y: auto;
@@ -185,7 +176,6 @@
             border-radius: 3px;
         }
 
-        /* Панель информации (справа сверху) */
         .info-panel {
             position: absolute;
             top: 10px; right: 10px;
@@ -208,7 +198,6 @@
             width: 20px; height: 20px; cursor: pointer; font-weight: bold;
         }
 
-        /* Боковые панели */
         .panel-header {
             display: flex; align-items: center; justify-content: space-between;
             border-bottom: 1px solid #5a4521; padding-bottom: 3px; margin-bottom: 8px;
@@ -223,7 +212,6 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
-        /* Левая панель (Фильтры) прижата к левому краю экрана */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 10px 15px;
@@ -235,7 +223,6 @@
         .filter-panel.collapsed .panel-content, .filter-panel.collapsed .panel-header h4 { display: none; }
         .filter-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
 
-        /* Правая панель (Отношения с городами) */
         .diplomacy-panel {
             position: absolute; top: 160px; right: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 10px 15px;
@@ -271,7 +258,6 @@
         }
         .filter-icon { width: 20px; height: 20px; margin-right: 6px; vertical-align: middle; object-fit: contain; }
 
-        /* Свечение карточек */
         @keyframes pulse-card-ally { 0% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } 50% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.85); } 100% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } }
         @keyframes pulse-card-neutral { 0% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } 50% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.85); } 100% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } }
         @keyframes pulse-card-enemy { 0% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } 50% { box-shadow: 0 0 10px rgba(231, 76, 60, 0.85); } 100% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } }
@@ -300,7 +286,6 @@
 </head>
 <body>
 
-    <!-- Модальное окно входа по нику и паролю -->
     <div id="auth-modal" class="auth-overlay">
         <div class="auth-card">
             <h3>Вход на карту</h3>
@@ -312,7 +297,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно управления пользователями (для админов) -->
     <div id="admin-users-modal" class="auth-overlay" style="display: none;">
         <div class="auth-card" style="width: 380px;">
             <h3>Управление доступом</h3>
@@ -332,20 +316,17 @@
         </div>
     </div>
 
-    <!-- Кнопки управления внизу слева -->
     <div class="bottom-left-controls">
         <button id="admin-panel-btn" class="map-control-btn" style="display: none;" onclick="openAdminModal()">🛡️ Управление доступом</button>
         <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
     </div>
 
-    <!-- Меню фильтров слева -->
     <div class="filter-panel" id="filter-panel-box">
         <div class="panel-header">
             <h4>Фильтры</h4>
             <button class="collapse-btn" onclick="toggleLeftPanel()">−</button>
         </div>
         <div class="panel-content" id="filter-content">
-            <!-- Травы -->
             <div class="filter-group">
                 <div class="filter-group-header">
                     <label style="margin:0; font-weight:bold; cursor:pointer;">
@@ -362,7 +343,6 @@
                 </div>
             </div>
 
-            <!-- Животные -->
             <div class="filter-group">
                 <div class="filter-group-header">
                     <label style="margin:0; font-weight:bold; cursor:pointer;">
@@ -378,7 +358,6 @@
                 </div>
             </div>
 
-            <!-- Разное -->
             <div class="filter-group" style="border: none; margin-bottom: 0; padding-bottom: 0;">
                 <div class="filter-group-header" style="margin-bottom: 4px;">
                     <span style="font-weight:bold; color: #3b2a1a;">📦 Разное</span>
@@ -392,7 +371,6 @@
         </div>
     </div>
 
-    <!-- Информационная панель -->
     <div class="info-panel" id="info-panel-box">
         <div class="panel-header">
             <h4>Карта Скайрима</h4>
@@ -403,7 +381,6 @@
         <p>• Синхронизация в реальном времени.</p>
     </div>
 
-    <!-- Правая панель отношений с городами -->
     <div class="diplomacy-panel" id="diplomacy-panel-box">
         <div class="panel-header">
             <h4>Отношения с городами</h4>
@@ -641,12 +618,11 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         var bounds = [[0, 0], [mapHeight, mapWidth]];
-        L.imageOverlay('skyrim_map.png', bounds).addTo(map);
+        L.imageOverlay('skyrim_map.png', bounds).addTo(map); // Исправлено на правильное имя файла в нижнем регистре
 
         map.fitBounds(bounds);
         map.setZoom(-2);
 
-        // Корректная подгонка карты при изменении размера окна браузера
         window.addEventListener('resize', function() {
             map.invalidateSize();
         });
@@ -860,8 +836,15 @@
             if (cb) cb.addEventListener('change', renderMarkers);
         });
 
+        // Проверка клика: ставить метки можно строго в пределах разрешения карты (0 до 4096 и 0 до 3072)
         map.on('click', function(e) {
             if (!currentUser || currentUser.role !== 'admin') return;
+
+            var lat = e.latlng.lat, lng = e.latlng.lng;
+
+            if (lat < 0 || lat > mapHeight || lng < 0 || lng > mapWidth) {
+                return; // Клик за пределами карты игнорируется
+            }
 
             if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
                 map.closePopup(currentCreationPopup);
@@ -869,7 +852,6 @@
                 return;
             }
 
-            var lat = e.latlng.lat, lng = e.latlng.lng;
             let optionsHTML = '';
             categoriesList.forEach(cat => {
                 optionsHTML += `<option value="${cat.type}" data-name="${cat.name}">${cat.name}</option>`;
