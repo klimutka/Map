@@ -674,7 +674,6 @@
             map.invalidateSize();
         });
 
-        // Конвертеры координат: Из внутренних Leaflet (latlng) в X/Y друга и обратно
         function latLngToXY(lat, lng) {
             let x = Math.round(lng - (mapWidth / 2));
             let y = Math.round((mapHeight / 2) - lat);
@@ -719,8 +718,18 @@
         var leafletMarkers = {};
         var currentCreationPopup = null;
 
+        // ИЗМЕНЕНИЕ 1: Чтение маркеров из вложенных папок категорий БД
         database.ref('skyrim_markers').on('value', snapshot => {
-            markersData = snapshot.val() ? Object.values(snapshot.val()) : [];
+            let data = snapshot.val();
+            let loadedMarkers = [];
+            if (data) {
+                Object.values(data).forEach(categoryObj => {
+                    if (typeof categoryObj === 'object' && categoryObj !== null) {
+                        loadedMarkers = loadedMarkers.concat(Object.values(categoryObj));
+                    }
+                });
+            }
+            markersData = loadedMarkers;
             renderMarkers();
         });
 
@@ -912,12 +921,12 @@
                 var filterCheckbox = document.getElementById('filter-' + loc.type);
                 if (filterCheckbox && !filterCheckbox.checked) return;
 
-                // Используем x и y из объекта данных и переводим в координаты Leaflet
                 let latLng = xyToLatLng(loc.x, loc.y);
 
                 var marker = L.marker(latLng, { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
                 
-                var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
+                // ИЗМЕНЕНИЕ 2: Передача типа в функцию удаления для поиска по категории
+                var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${loc.type}', '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
 
                 var popupContent = `
                     <div class='popup-title'>${escapeHTML(loc.name)}</div>
@@ -947,7 +956,6 @@
             var lat = e.latlng.lat, lng = e.latlng.lng;
             if (lat < 0 || lat > mapHeight || lng < 0 || lng > mapWidth) return;
 
-            // Конвертируем точку клика в X / Y
             let coords = latLngToXY(lat, lng);
 
             if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
@@ -1014,13 +1022,14 @@
                 id: newId,
                 name: name,
                 type: type,
-                x: x, // Сохраняем в X
-                y: y, // Сохраняем в Y
+                x: x, 
+                y: y, 
                 desc: desc,
                 author: currentUser.name
             };
 
-            database.ref('skyrim_markers/' + newId).set(newObj).then(() => {
+            // ИЗМЕНЕНИЕ 3: Сохранение по пути с учетом категории (skyrim_markers/тип/id)
+            database.ref('skyrim_markers/' + type + '/' + newId).set(newObj).then(() => {
                 map.closePopup();
                 currentCreationPopup = null;
                 logAction(`поставил(а) метку "${name}"`);
@@ -1030,9 +1039,10 @@
             });
         }
 
-        window.deleteMarker = function(id, markerName) {
+        // ИЗМЕНЕНИЕ 4: Удаление маркера по точному пути категории
+        window.deleteMarker = function(id, type, markerName) {
             if (!currentUser || currentUser.role !== 'admin') return;
-            database.ref('skyrim_markers/' + id).remove().then(() => {
+            database.ref('skyrim_markers/' + type + '/' + id).remove().then(() => {
                 map.closePopup();
                 logAction(`удалил(а) метку "${markerName}"`);
             }).catch(err => {
