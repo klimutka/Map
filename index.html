@@ -674,6 +674,19 @@
             map.invalidateSize();
         });
 
+        // Конвертеры координат: Из внутренних Leaflet (latlng) в X/Y друга и обратно
+        function latLngToXY(lat, lng) {
+            let x = Math.round(lng - (mapWidth / 2));
+            let y = Math.round((mapHeight / 2) - lat);
+            return { x: x, y: y };
+        }
+
+        function xyToLatLng(x, y) {
+            let lng = x + (mapWidth / 2);
+            let lat = (mapHeight / 2) - y;
+            return [lat, lng];
+        }
+
         const citiesList = [
             { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.svg' },
             { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath_undiscovered.svg' },
@@ -899,7 +912,10 @@
                 var filterCheckbox = document.getElementById('filter-' + loc.type);
                 if (filterCheckbox && !filterCheckbox.checked) return;
 
-                var marker = L.marker([loc.lat, loc.lng], { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
+                // Используем x и y из объекта данных и переводим в координаты Leaflet
+                let latLng = xyToLatLng(loc.x, loc.y);
+
+                var marker = L.marker(latLng, { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
                 
                 var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
 
@@ -931,6 +947,9 @@
             var lat = e.latlng.lat, lng = e.latlng.lng;
             if (lat < 0 || lat > mapHeight || lng < 0 || lng > mapWidth) return;
 
+            // Конвертируем точку клика в X / Y
+            let coords = latLngToXY(lat, lng);
+
             if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
                 map.closePopup(currentCreationPopup);
                 currentCreationPopup = null;
@@ -943,13 +962,13 @@
             });
 
             var formContent = `
-                <div class='popup-title'>Новая метка</div>
+                <div class='popup-title'>Новая метка (X: ${coords.x}, Y: ${coords.y})</div>
                 <div class='popup-form'>
                     <label>Категория:</label>
                     <select id='new-type'>${optionsHTML}</select>
                     <label>Описание:</label>
                     <input type='text' id='new-desc' placeholder='Примечания...' />
-                    <button onclick='addNewMarker(${lat}, ${lng})'>Сохранить метку</button>
+                    <button onclick='addNewMarker(${coords.x}, ${coords.y})'>Сохранить метку</button>
                 </div>
             `;
 
@@ -965,7 +984,7 @@
             }
         });
 
-        window.addNewMarker = function(lat, lng) {
+        window.addNewMarker = function(x, y) {
             if (!currentUser || currentUser.role !== 'admin') {
                 alert("Отказано в доступе: у вас нет прав администратора для создания меток.");
                 return;
@@ -973,17 +992,17 @@
 
             if (auth.currentUser === null) {
                 auth.signInAnonymously().then(() => {
-                    executeSaveMarker(lat, lng);
+                    executeSaveMarker(x, y);
                 }).catch(err => {
                     console.error("Полная ошибка auth:", err);
                     alert("Firebase Auth Error: " + (err.message || JSON.stringify(err)));
                 });
             } else {
-                executeSaveMarker(lat, lng);
+                executeSaveMarker(x, y);
             }
         };
 
-        function executeSaveMarker(lat, lng) {
+        function executeSaveMarker(x, y) {
             var selectElement = document.getElementById('new-type');
             var type = selectElement.value;
             var selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -995,8 +1014,8 @@
                 id: newId,
                 name: name,
                 type: type,
-                lat: lat,
-                lng: lng,
+                x: x, // Сохраняем в X
+                y: y, // Сохраняем в Y
                 desc: desc,
                 author: currentUser.name
             };
