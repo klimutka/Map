@@ -672,7 +672,7 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И ПРАВИЛЬНЫЙ ОБРАБОТЧИК СЫРЫХ ПУТЕЙ CHAT/RAW GITHUB
+        // НАСТРОЙКИ КАРТЫ И ОТОБРАЖЕНИЕ ТАЙЛОВ
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
@@ -692,7 +692,7 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Используем прямые ссылки на raw.githubusercontent.com с учетом структуры зумов и папок
+        // Относительный путь для GitHub Pages
         L.tileLayer('', {
             minZoom: 0,
             maxZoom: 4,
@@ -703,9 +703,9 @@
             attribution: 'Skyrim Map',
             getTileUrl: function (coords) {
                 if (coords.z === 0) {
-                    return 'https://raw.githubusercontent.com/klimutka/Map/main/tiles/0/0/' + coords.y + '.png';
+                    return 'tiles/0/0/' + coords.y + '.png';
                 }
-                return 'https://raw.githubusercontent.com/klimutka/Map/main/tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
+                return 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
             }
         }).addTo(map);
 
