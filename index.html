@@ -212,7 +212,6 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
-        /* КОМПАКТНАЯ ПАНЕЛЬ ФИЛЬТРОВ СО СКРОЛЛОМ И ВЕРТИКАЛЬНОЙ ПЛАНКОЙ */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
@@ -409,7 +408,6 @@
                 </div>
             </div>
 
-            <!-- БЛОК: Отношения с городами -->
             <div class="filter-group" style="border: none; margin-bottom: 0; padding-bottom: 0;">
                 <div class="filter-group-header" style="margin-bottom: 4px;">
                     <span style="font-weight:bold; color: #3b2a1a;">🏰 Отношения с городами</span>
@@ -591,7 +589,10 @@
 
             setTimeout(function() {
                 map.invalidateSize();
-                map.fitBounds(bounds);
+                map.fitBounds([
+                    crs.unproject(L.point(mapExtent[2], mapExtent[3])),
+                    crs.unproject(L.point(mapExtent[0], mapExtent[1]))
+                ]);
             }, 100);
 
             if (currentUser.role === 'admin') {
@@ -677,33 +678,43 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВ
-        var mapWidth = 4096, mapHeight = 3072;
+        // НАСТРОЙКА КАРТЫ С МАТЕМАТИКОЙ MAPTILER ENGINE
+        var mapExtent = [0.00000000, -3072.00000000, 4096.00000000, 0.00000000];
+        var mapMinZoom = 0;
+        var mapMaxZoom = 4;
+        var mapMaxResolution = 1.00000000;
+        var mapMinResolution = Math.pow(2, mapMaxZoom) * mapMaxResolution;
+        var tileExtent = [0.00000000, -3072.00000000, 4096.00000000, 0.00000000];
+        var crs = L.CRS.Simple;
+        crs.transformation = new L.Transformation(1, -tileExtent[0], -1, tileExtent[3]);
+        crs.scale = function(zoom) {
+            return Math.pow(2, zoom) / mapMinResolution;
+        };
+        crs.zoom = function(scale) {
+            return Math.log(scale * mapMinResolution) / Math.LN2;
+        };
 
-        var map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: 0,
-            maxZoom: 6,
+        var map = new L.Map('map', {
+            maxZoom: mapMaxZoom,
+            minZoom: mapMinZoom,
+            crs: crs,
             zoomControl: false
         });
 
-        // Границы карты в пикселях (4096х3072)
-        var bounds = [[0, 0], [mapHeight, mapWidth]];
-
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Стандартный компактный путь с абсолютным префиксом GitHub Pages и maxNativeZoom: 4
         L.tileLayer('/Map/tiles/{z}/{x}/{y}.png', {
-            minZoom: 0,
-            maxZoom: 6,
-            maxNativeZoom: 4, // Останавливает запросы несуществующих тайлов выше 4-го зума
-            tileSize: 256,
+            minZoom: mapMinZoom, 
+            maxZoom: mapMaxZoom,
+            attribution: 'Skyrim Map',
             noWrap: true,
-            bounds: bounds,
-            attribution: 'Skyrim Map'
+            tms: false
         }).addTo(map);
 
-        map.fitBounds(bounds);
+        map.fitBounds([
+            crs.unproject(L.point(mapExtent[2], mapExtent[3])),
+            crs.unproject(L.point(mapExtent[0], mapExtent[1]))
+        ]);
 
         window.addEventListener('resize', function() {
             map.invalidateSize();
@@ -711,15 +722,11 @@
 
         // ФУНКЦИИ ПЕРЕВОДА КООРДИНАТ ДЛЯ МЕТОК
         function latLngToXY(lat, lng) {
-            let x = Math.round(lng);
-            let y = Math.round(lat);
-            return { x: x, y: y };
+            return { x: Math.round(lng), y: Math.round(lat) };
         }
 
         function xyToLatLng(x, y) {
-            let lng = x;
-            let lat = y;
-            return [lat, lng];
+            return [y, x];
         }
 
         const citiesList = [
