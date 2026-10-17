@@ -672,7 +672,7 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ С АБСОЛЮТНЫМ ПУТЕМ ДЛЯ GITHUB PAGES (/Map/tiles/)
+        // НАСТРОЙКИ КАРТЫ И ПРАВИЛЬНЫЙ ОБРАБОТЧИК СЫРЫХ ПУТЕЙ CHAT/RAW GITHUB
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
@@ -692,15 +692,21 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Явный абсолютный путь с учетом имени репозитория /Map/
-        L.tileLayer('/Map/tiles/{z}/{x}/{y}.png', {
+        // Используем прямые ссылки на raw.githubusercontent.com с учетом структуры зумов и папок
+        L.tileLayer('', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
             noWrap: true,
             bounds: bounds,
             errorTileUrl: '',
-            attribution: 'Skyrim Map'
+            attribution: 'Skyrim Map',
+            getTileUrl: function (coords) {
+                if (coords.z === 0) {
+                    return 'https://raw.githubusercontent.com/klimutka/Map/main/tiles/0/0/' + coords.y + '.png';
+                }
+                return 'https://raw.githubusercontent.com/klimutka/Map/main/tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
+            }
         }).addTo(map);
 
         map.fitBounds(bounds);
