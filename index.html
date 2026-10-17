@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карта Коллегии Винтерхолда</title>
+    <title>Интерактивная карта Скайрима (Общая)</title>
     <!-- Подключаем стили Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -394,21 +394,8 @@
         </div>
     </div>
 
-    <!-- Модальное окно смены никнейма -->
-    <div id="change-name-modal" class="auth-overlay" style="display: none;">
-        <div class="auth-card" style="width: 300px;">
-            <h3>Смена никнейма</h3>
-            <p style="font-size: 11px; margin: 6px 0;">Введите новый ник:</p>
-            <input type="text" id="new-name-input" placeholder="Новый ник..." />
-            <button onclick="submitNewUsername()">Сохранить</button>
-            <button class="btn-secondary" onclick="closeChangeNameModal()" style="margin-top: 5px;">Отмена</button>
-            <p id="change-name-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 6px;"></p>
-        </div>
-    </div>
-
     <div class="bottom-left-controls">
         <button id="admin-panel-btn" class="map-control-btn" style="display: none;" onclick="openAdminModal()">🛡️ Управление доступом</button>
-        <button id="change-name-btn" class="map-control-btn" style="display: none; background: #8c7355;" onclick="openChangeNameModal()">✏️ Сменить ник</button>
         <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
     </div>
 
@@ -737,7 +724,6 @@
                 document.getElementById('auth-modal').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'none';
                 document.getElementById('admin-panel-btn').style.display = 'none';
-                document.getElementById('change-name-btn').style.display = 'none';
                 return;
             }
 
@@ -745,7 +731,6 @@
             document.body.classList.toggle('is-admin', currentUser.role === 'admin');
             document.getElementById('auth-modal').style.display = 'none';
             document.getElementById('logout-btn').style.display = 'block';
-            document.getElementById('change-name-btn').style.display = 'block';
 
             let roleNameRu = 'Читатель';
             if (currentUser.role === 'admin') roleNameRu = 'Администратор';
@@ -778,60 +763,6 @@
 
         window.closeAdminModal = function() {
             document.getElementById('admin-users-modal').style.display = 'none';
-        };
-
-        window.openChangeNameModal = function() {
-            document.getElementById('new-name-input').value = '';
-            document.getElementById('change-name-error').style.display = 'none';
-            document.getElementById('change-name-modal').style.display = 'flex';
-        };
-
-        window.closeChangeNameModal = function() {
-            document.getElementById('change-name-modal').style.display = 'none';
-        };
-
-        window.submitNewUsername = function() {
-            let newName = document.getElementById('new-name-input').value.trim();
-            let errElem = document.getElementById('change-name-error');
-
-            if (!newName) {
-                errElem.textContent = "Введите новый ник!";
-                errElem.style.display = 'block';
-                return;
-            }
-
-            let newKey = sanitizeKey(newName);
-
-            database.ref('allowed_users/' + newKey).once('value').then(snap => {
-                if (snap.exists()) {
-                    errElem.textContent = "Такой ник уже занят!";
-                    errElem.style.display = 'block';
-                    return;
-                }
-
-                let oldKey = currentUser.key;
-                let oldName = currentUser.name;
-
-                database.ref('allowed_users/' + oldKey).once('value').then(userSnap => {
-                    let userData = userSnap.val();
-                    if (!userData) return;
-
-                    userData.name = newName;
-
-                    database.ref('allowed_users/' + newKey).set(userData).then(() => {
-                        database.ref('allowed_users/' + oldKey).remove().then(() => {
-                            currentUser.key = newKey;
-                            currentUser.name = newName;
-                            sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
-
-                            closeChangeNameModal();
-                            logAction(`сменил(а) никнейм с "${oldName}" на "${newName}"`);
-                            initUserSession();
-                            alert("Никнейм успешно изменен!");
-                        });
-                    });
-                });
-            });
         };
 
         function loadUsersLists() {
