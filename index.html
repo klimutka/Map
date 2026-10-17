@@ -216,16 +216,49 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
+        /* ОБНОВЛЕННЫЙ СТИЛЬ ФИЛЬТРОВ И ВЕРТИКАЛЬНОЙ ПЛАНКИ */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 220px; max-height: 90vh; overflow-y: auto; font-size: 12px; color: #2c221e;
-            transition: width 0.2s, padding 0.2s;
+            width: 220px; max-height: 85vh; overflow-y: auto; font-size: 12px; color: #2c221e;
+            transition: all 0.25s ease-in-out;
         }
-        .filter-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
-        .filter-panel.collapsed .panel-content, .filter-panel.collapsed .panel-header h4 { display: none; }
-        .filter-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
+        .filter-panel.collapsed {
+            width: 32px;
+            height: 180px;
+            padding: 8px 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .filter-panel.collapsed .panel-content, 
+        .filter-panel.collapsed .panel-header h4 { 
+            display: none; 
+        }
+        .filter-panel.collapsed .panel-header { 
+            border: none; 
+            margin: 0; 
+            padding: 0; 
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .vertical-title {
+            display: none;
+            writing-mode: vertical-rl;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #5a4521;
+            margin-top: 15px;
+            user-select: none;
+        }
+        .filter-panel.collapsed .vertical-title {
+            display: block;
+        }
 
         .city-diplo-item {
             display: flex; align-items: center; justify-content: space-between;
@@ -327,11 +360,13 @@
         <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
     </div>
 
+    <!-- ПАНЕЛЬ ФИЛЬТРОВ С ВЕРТИКАЛЬНОЙ ПЛАНКОЙ ПРИ СВЕРТЫВАНИИ -->
     <div class="filter-panel" id="filter-panel-box">
         <div class="panel-header">
             <h4>Фильтры</h4>
-            <button class="collapse-btn" onclick="toggleLeftPanel()">−}</button>
+            <button class="collapse-btn" id="filter-collapse-btn" onclick="toggleLeftPanel()">−</button>
         </div>
+        <div class="vertical-title">ФИЛЬТРЫ</div>
         <div class="panel-content" id="filter-content">
             <div class="filter-group">
                 <div class="filter-group-header">
@@ -376,7 +411,7 @@
                 </div>
             </div>
 
-            <!-- ПЕРЕНЕСЕННЫЙ БЛОК: Отношения с городами -->
+            <!-- БЛОК: Отношения с городами -->
             <div class="filter-group" style="border: none; margin-bottom: 0; padding-bottom: 0;">
                 <div class="filter-group-header" style="margin-bottom: 4px;">
                     <span style="font-weight:bold; color: #3b2a1a;">🏰 Отношения с городами</span>
@@ -399,7 +434,6 @@
         <p style="margin: 3px 0;">• Синхронизация в реальном времени.</p>
     </div>
 
-    <!-- ПАНЕЛЬ ИСТОРИИ ИЗМЕНЕНИЙ С ВОЗМОЖНОСТЬЮ СВЕРНУТЬ/РАЗВЕРНУТЬ -->
     <div class="logs-panel" id="logs-panel-box">
         <div class="panel-header">
             <h4>📜 История изменений</h4>
@@ -640,6 +674,7 @@
             }
         };
 
+        // ИНИЦИАЛИЗАЦИЯ КАРТЫ С ТАЙЛАМИ
         var mapWidth = 4096, mapHeight = 3072;
         var buffer = 500; 
         var maxBounds = [[-buffer, -buffer], [mapHeight + buffer, mapWidth + buffer]];
@@ -656,11 +691,12 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Подключаем сетку тайлов из папки tiles
+        // Подключаем нарезку MapTiler из папки tiles
         L.tileLayer('tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
+            tms: false,
             noWrap: true,
             bounds: [[0, 0], [mapHeight, mapWidth]],
             attribution: 'Skyrim Map'
@@ -773,9 +809,10 @@
             if (panel) panel.style.display = 'none';
         };
 
+        // ПЕРЕКЛЮЧАТЕЛЬ ДЛЯ ВЕРТИКАЛЬНОЙ ПЛАНКИ ФИЛЬТРОВ
         window.toggleLeftPanel = function() {
             var panel = document.getElementById('filter-panel-box');
-            var btn = panel.querySelector('.collapse-btn');
+            var btn = document.getElementById('filter-collapse-btn');
             if (panel.classList.contains('collapsed')) {
                 panel.classList.remove('collapsed');
                 btn.textContent = '−';
@@ -785,7 +822,6 @@
             }
         };
 
-        // ФУНКЦИЯ СВЕРТЫВАНИЯ / РАЗВЕРТЫВАНИЯ ИСТОРИИ ИЗМЕНЕНИЙ (БЕЗ ОЧИСТКИ ЛОГОВ)
         window.toggleLogsPanel = function() {
             var panel = document.getElementById('logs-panel-box');
             var btn = document.getElementById('logs-collapse-btn');
