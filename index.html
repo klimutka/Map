@@ -672,7 +672,7 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ С ЖЕСТКИМ ПРЕФИКСКОМ /Map/ ДЛЯ GITHUB PAGES
+        // НАСТРОЙКИ КАРТЫ И ИНИЦИАЛИЗАЦИЯ ВИДА
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
@@ -684,32 +684,25 @@
             zoomControl: false
         });
 
-        var southWest = map.unproject([0, mapHeight], 0);
-        var northEast = map.unproject([mapWidth, 0], 0);
-        var bounds = L.latLngBounds(southWest, northEast);
-
-        map.setMaxBounds(bounds);
+        // Принудительно устанавливаем вид по центру карты, чтобы контейнер получил размеры и запросил тайлы
+        map.setView([mapHeight / 2, mapWidth / 2], 1);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Гарантированный путь с учетом репозитория /Map/
+        // Подключаем тайловый слой с относительным путем (уже проверено, что файлы отдаются корректно)
         L.tileLayer('', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
             noWrap: true,
-            bounds: bounds,
-            errorTileUrl: '',
             attribution: 'Skyrim Map',
             getTileUrl: function (coords) {
                 if (coords.z === 0) {
-                    return '/Map/tiles/0/0/' + coords.y + '.png';
+                    return 'tiles/0/0/' + coords.y + '.png';
                 }
-                return '/Map/tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
+                return 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
             }
         }).addTo(map);
-
-        map.fitBounds(bounds);
 
         window.addEventListener('resize', function() {
             map.invalidateSize();
