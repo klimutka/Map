@@ -677,7 +677,7 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ С ПРАВИЛЬНЫМИ ГРАНИЦАМИ L.CRS.Simple
+        // НАСТРОЙКИ КАРТЫ С СЕТЕВЫМ ШАБЛОНОМ /Map/tiles/{z}/{x}/{y}.png
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
@@ -689,30 +689,19 @@
             zoomControl: false
         });
 
-        // Корректные границы L.CRS.Simple (левый верхний [0,0], правый нижний [-mapHeight, mapWidth])
         var bounds = [[-mapHeight, 0], [0, mapWidth]];
         map.setMaxBounds(bounds);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Тайловый слой с логированием запросов в консоль
-        L.tileLayer('', {
+        // Стандартный надежный тайловый слой с абсолютным путем для GitHub Pages
+        L.tileLayer('/Map/tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
             noWrap: true,
             bounds: bounds,
-            attribution: 'Skyrim Map',
-            getTileUrl: function (coords) {
-                var url = '';
-                if (coords.z === 0) {
-                    url = 'tiles/0/0/' + coords.y + '.png';
-                } else {
-                    url = 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
-                }
-                console.log("ЗАПРОС ТАЙЛА:", url);
-                return url;
-            }
+            attribution: 'Skyrim Map'
         }).addTo(map);
 
         map.fitBounds(bounds);
