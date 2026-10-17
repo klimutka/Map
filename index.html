@@ -672,7 +672,7 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И ОТОБРАЖЕНИЕ ТАЙЛОВ
+        // НАСТРОЙКИ КАРТЫ С ЖЕСТКИМ ПРЕФИКСКОМ /Map/ ДЛЯ GITHUB PAGES
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
@@ -692,7 +692,7 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Относительный путь для GitHub Pages
+        // Гарантированный путь с учетом репозитория /Map/
         L.tileLayer('', {
             minZoom: 0,
             maxZoom: 4,
@@ -703,9 +703,9 @@
             attribution: 'Skyrim Map',
             getTileUrl: function (coords) {
                 if (coords.z === 0) {
-                    return 'tiles/0/0/' + coords.y + '.png';
+                    return '/Map/tiles/0/0/' + coords.y + '.png';
                 }
-                return 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
+                return '/Map/tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
             }
         }).addTo(map);
 
