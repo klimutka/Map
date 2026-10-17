@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карта </title>
+    <title>Интерактивная карта Скайрима (Общая)</title>
     <!-- Подключаем стили Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -235,15 +235,15 @@
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             width: 230px; 
-            max-height: 70vh; /* Увеличена максимальная высота окна */
+            max-height: 70vh; 
             overflow-y: auto; 
             font-size: 12px; color: #2c221e;
             transition: all 0.25s ease-in-out;
         }
         .filter-panel.collapsed {
             width: 32px;
-            height: 220px;
-            padding: 8px 4px;
+            height: 240px;
+            padding: 8px 2px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -264,13 +264,14 @@
         }
         .vertical-title {
             display: none;
-            writing-mode: vertical-rl;
+            width: 16px;
+            word-break: break-all;
+            line-height: 1.1;
             text-transform: uppercase;
             font-weight: bold;
             font-size: 12px;
-            letter-spacing: 4px;
             color: #5a4521;
-            margin-top: 12px;
+            margin-top: 10px;
             user-select: none;
             text-align: center;
         }
@@ -400,7 +401,7 @@
             <h4>Фильтры</h4>
             <button class="collapse-btn" id="filter-collapse-btn" onclick="toggleLeftPanel()">−</button>
         </div>
-        <div class="vertical-title">Фильтры</div>
+        <div class="vertical-title">ФИЛЬТРЫ</div>
         <div class="panel-content" id="filter-content">
             <div class="filter-group">
                 <div class="filter-group-header">
