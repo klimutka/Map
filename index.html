@@ -146,7 +146,7 @@
         }
 
         .users-list {
-            max-height: 150px;
+            max-height: 140px;
             overflow-y: auto;
             text-align: left;
             background: #e8dbbc;
@@ -378,14 +378,17 @@
     </div>
 
     <div id="admin-users-modal" class="auth-overlay" style="display: none;">
-        <div class="auth-card" style="width: 440px;">
-            <h3>Управление доступом</h3>
+        <div class="auth-card" style="width: 460px;">
+            <h3>Панель управления</h3>
             
             <p style="font-size: 12px; margin-bottom: 4px; font-weight: bold; color: #a83232;">⏳ Заявки на регистрацию:</p>
             <div class="users-list" id="pending-users-container"></div>
 
             <p style="font-size: 12px; margin: 8px 0 4px 0; font-weight: bold;">🛡️ Одобренные пользователи:</p>
             <div class="users-list" id="users-list-container"></div>
+
+            <p style="font-size: 12px; margin: 8px 0 4px 0; font-weight: bold; color: #8c7355;">🗑️ Корзина (Удаленные метки):</p>
+            <div class="users-list" id="deleted-markers-container"></div>
             
             <button class="btn-secondary" onclick="closeAdminModal()" style="margin-top: 10px;">Закрыть</button>
         </div>
@@ -401,7 +404,7 @@
             <h4>Фильтры</h4>
             <button class="collapse-btn" id="filter-collapse-btn" onclick="toggleLeftPanel()">−</button>
         </div>
-        <div class="vertical-title">ФИЛЬТРЫ</div>
+        <div class="vertical-title">Ф<br>И<br>Л<br>Ь<br>Т<br>Р<br>Ы</div>
         <div class="panel-content" id="filter-content">
             <div class="filter-group">
                 <div class="filter-group-header">
@@ -827,6 +830,32 @@
                         <div>
                             <button class="approve-user-btn" onclick="approveUser('${key}', '${escapeHTML(u.name)}')">Принять</button>
                             <button class="del-user-btn" onclick="rejectUser('${key}')">Отклонить</button>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            });
+
+            // Загрузка удаленных меток (Корзина)
+            database.ref('deleted_markers').once('value').then(snapshot => {
+                let deleted = snapshot.val() || {};
+                let container = document.getElementById('deleted-markers-container');
+                container.innerHTML = '';
+
+                let keys = Object.keys(deleted);
+                if (keys.length === 0) {
+                    container.innerHTML = '<div style="color: #666; font-style: italic; padding: 4px;">Корзина пуста</div>';
+                    return;
+                }
+
+                keys.forEach(key => {
+                    let m = deleted[key];
+                    let row = document.createElement('div');
+                    row.className = 'user-row';
+                    row.innerHTML = `
+                        <span><b>${escapeHTML(m.name)}</b> <span style="font-size: 10px; color: #555;">(X:${m.x}, Y:${m.y})</span></span>
+                        <div>
+                            <button class="approve-user-btn" onclick="restoreMarker('${key}')">Восстановить</button>
                         </div>
                     `;
                     container.appendChild(row);
@@ -1282,12 +1311,42 @@
 
         window.deleteMarker = function(id, type, markerName) {
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) return;
-            database.ref('skyrim_markers/' + type + '/' + id).remove().then(() => {
-                map.closePopup();
-                logAction(`удалил(а) метку "${markerName}"`);
+            
+            // Сначала забираем данные метки, чтобы сохранить их в корзину
+            database.ref('skyrim_markers/' + type + '/' + id).once('value').then(snapshot => {
+                let markerData = snapshot.val();
+                if (markerData) {
+                    // Сохраняем в корзину
+                    database.ref('deleted_markers/' + id).set(markerData).then(() => {
+                        // Удаляем с карты
+                        database.ref('skyrim_markers/' + type + '/' + id).remove().then(() => {
+                            map.closePopup();
+                            logAction(`удалил(а) метку "${markerName}"`);
+                        });
+                    });
+                }
             }).catch(err => {
                 console.error("Ошибка удаления метки:", err);
                 alert("Отказано в доступе.");
+            });
+        };
+
+        window.restoreMarker = function(id) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+
+            database.ref('deleted_markers/' + id).once('value').then(snapshot => {
+                let markerData = snapshot.val();
+                if (markerData) {
+                    let type = markerData.type;
+                    // Возвращаем на карту
+                    database.ref('skyrim_markers/' + type + '/' + id).set(markerData).then(() => {
+                        // Удаляем из корзины
+                        database.ref('deleted_markers/' + id).remove().then(() => {
+                            loadUsersLists();
+                            logAction(`восстановил(а) метку "${markerData.name}"`);
+                        });
+                    });
+                }
             });
         };
 
