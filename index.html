@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карта</title>
+    <title>Карта Коллегии Винтерхолда</title>
     <!-- Подключаем стили Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -203,7 +203,7 @@
             padding: 8px 12px;
             border-radius: 6px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 240px;
+            max-width: 250px;
             font-size: 12px;
             color: #2c221e;
         }
@@ -394,8 +394,21 @@
         </div>
     </div>
 
+    <!-- Модальное окно смены никнейма -->
+    <div id="change-name-modal" class="auth-overlay" style="display: none;">
+        <div class="auth-card" style="width: 300px;">
+            <h3>Смена никнейма</h3>
+            <p style="font-size: 11px; margin: 6px 0;">Введите новый ник:</p>
+            <input type="text" id="new-name-input" placeholder="Новый ник..." />
+            <button onclick="submitNewUsername()">Сохранить</button>
+            <button class="btn-secondary" onclick="closeChangeNameModal()" style="margin-top: 5px;">Отмена</button>
+            <p id="change-name-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 6px;"></p>
+        </div>
+    </div>
+
     <div class="bottom-left-controls">
         <button id="admin-panel-btn" class="map-control-btn" style="display: none;" onclick="openAdminModal()">🛡️ Управление доступом</button>
+        <button id="change-name-btn" class="map-control-btn" style="display: none; background: #8c7355;" onclick="openChangeNameModal()">✏️ Сменить ник</button>
         <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
     </div>
 
@@ -656,12 +669,12 @@
                 let users = snapshot.val();
 
                 if (!users) {
-                    database.ref('allowed_users/арунин').set({ 
-                        name: "Арунин", 
+                    database.ref('allowed_users/шалдир').set({ 
+                        name: "Шалдир", 
                         role: "admin", 
                         passwordHash: "" 
                     });
-                    users = { "арунин": { name: "Арунин", role: "admin", passwordHash: "" } };
+                    users = { "шалдир": { name: "Шалдир", role: "admin", passwordHash: "" } };
                 }
 
                 if (users[key]) {
@@ -724,6 +737,7 @@
                 document.getElementById('auth-modal').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'none';
                 document.getElementById('admin-panel-btn').style.display = 'none';
+                document.getElementById('change-name-btn').style.display = 'none';
                 return;
             }
 
@@ -731,6 +745,7 @@
             document.body.classList.toggle('is-admin', currentUser.role === 'admin');
             document.getElementById('auth-modal').style.display = 'none';
             document.getElementById('logout-btn').style.display = 'block';
+            document.getElementById('change-name-btn').style.display = 'block';
 
             let roleNameRu = 'Читатель';
             if (currentUser.role === 'admin') roleNameRu = 'Администратор';
@@ -765,6 +780,60 @@
             document.getElementById('admin-users-modal').style.display = 'none';
         };
 
+        window.openChangeNameModal = function() {
+            document.getElementById('new-name-input').value = '';
+            document.getElementById('change-name-error').style.display = 'none';
+            document.getElementById('change-name-modal').style.display = 'flex';
+        };
+
+        window.closeChangeNameModal = function() {
+            document.getElementById('change-name-modal').style.display = 'none';
+        };
+
+        window.submitNewUsername = function() {
+            let newName = document.getElementById('new-name-input').value.trim();
+            let errElem = document.getElementById('change-name-error');
+
+            if (!newName) {
+                errElem.textContent = "Введите новый ник!";
+                errElem.style.display = 'block';
+                return;
+            }
+
+            let newKey = sanitizeKey(newName);
+
+            database.ref('allowed_users/' + newKey).once('value').then(snap => {
+                if (snap.exists()) {
+                    errElem.textContent = "Такой ник уже занят!";
+                    errElem.style.display = 'block';
+                    return;
+                }
+
+                let oldKey = currentUser.key;
+                let oldName = currentUser.name;
+
+                database.ref('allowed_users/' + oldKey).once('value').then(userSnap => {
+                    let userData = userSnap.val();
+                    if (!userData) return;
+
+                    userData.name = newName;
+
+                    database.ref('allowed_users/' + newKey).set(userData).then(() => {
+                        database.ref('allowed_users/' + oldKey).remove().then(() => {
+                            currentUser.key = newKey;
+                            currentUser.name = newName;
+                            sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
+
+                            closeChangeNameModal();
+                            logAction(`сменил(а) никнейм с "${oldName}" на "${newName}"`);
+                            initUserSession();
+                            alert("Никнейм успешно изменен!");
+                        });
+                    });
+                });
+            });
+        };
+
         function loadUsersLists() {
             database.ref('allowed_users').once('value').then(snapshot => {
                 let users = snapshot.val() || {};
@@ -774,7 +843,7 @@
                 Object.keys(users).forEach(key => {
                     let u = users[key];
                     let uRole = (u.role || '').toLowerCase();
-                    let isProtected = (key === 'арунин' || (u.name && u.name.toLowerCase() === 'арунин'));
+                    let isProtected = (key === 'шалдир' || (u.name && u.name.toLowerCase() === 'шалдир'));
 
                     let roleControlHTML = '';
                     if (isProtected) {
@@ -836,7 +905,6 @@
                 });
             });
 
-            // Загрузка удаленных меток (Корзина)
             database.ref('deleted_markers').once('value').then(snapshot => {
                 let deleted = snapshot.val() || {};
                 let container = document.getElementById('deleted-markers-container');
@@ -865,8 +933,8 @@
 
         window.updateUserRole = function(key, newRole, userName) {
             if (!currentUser || currentUser.role !== 'admin') return;
-            if (key === 'арунин') {
-                alert("Нельзя изменять роль главного администратора «Арунин»!");
+            if (key === 'шалдир') {
+                alert("Нельзя изменять роль главного администратора «Шалдир»!");
                 loadUsersLists();
                 return;
             }
@@ -902,8 +970,8 @@
 
         window.removeUser = function(key, userName) {
             if (!currentUser || currentUser.role !== 'admin') return;
-            if (key === 'арунин') {
-                alert("Нельзя удалить главного администратора «Арунин»!");
+            if (key === 'шалдир') {
+                alert("Нельзя удалить главного администратора «Шалдир»!");
                 return;
             }
             if (confirm(`Точно удалить пользователя "${userName}"?`)) {
@@ -1312,13 +1380,10 @@
         window.deleteMarker = function(id, type, markerName) {
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) return;
             
-            // Сначала забираем данные метки, чтобы сохранить их в корзину
             database.ref('skyrim_markers/' + type + '/' + id).once('value').then(snapshot => {
                 let markerData = snapshot.val();
                 if (markerData) {
-                    // Сохраняем в корзину
                     database.ref('deleted_markers/' + id).set(markerData).then(() => {
-                        // Удаляем с карты
                         database.ref('skyrim_markers/' + type + '/' + id).remove().then(() => {
                             map.closePopup();
                             logAction(`удалил(а) метку "${markerName}"`);
@@ -1338,9 +1403,7 @@
                 let markerData = snapshot.val();
                 if (markerData) {
                     let type = markerData.type;
-                    // Возвращаем на карту
                     database.ref('skyrim_markers/' + type + '/' + id).set(markerData).then(() => {
-                        // Удаляем из корзины
                         database.ref('deleted_markers/' + id).remove().then(() => {
                             loadUsersLists();
                             logAction(`восстановил(а) метку "${markerData.name}"`);
