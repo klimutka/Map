@@ -672,7 +672,7 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК ПУТЕЙ ТАЙЛОВ
+        // НАСТРОЙКИ КАРТЫ С АБСОЛЮТНЫМ ПУТЕМ ДЛЯ GITHUB PAGES (/Map/tiles/)
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
@@ -692,21 +692,15 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Универсальный обработчик для корректной загрузки тайлов с учетом папки 0/0/
-        L.tileLayer('', {
+        // Явный абсолютный путь с учетом имени репозитория /Map/
+        L.tileLayer('/Map/tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
             noWrap: true,
             bounds: bounds,
             errorTileUrl: '',
-            attribution: 'Skyrim Map',
-            getTileUrl: function (coords) {
-                if (coords.z === 0) {
-                    return 'tiles/0/0/' + coords.y + '.png';
-                }
-                return 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
-            }
+            attribution: 'Skyrim Map'
         }).addTo(map);
 
         map.fitBounds(bounds);
