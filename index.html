@@ -88,7 +88,7 @@
             border-bottom: 2px solid #5a4521;
             padding-bottom: 8px;
         }
-        .auth-card input, .auth-card select {
+        .auth-card input {
             width: 100%;
             padding: 8px;
             margin: 8px 0;
@@ -114,7 +114,6 @@
         }
         .btn-secondary {
             background: #8c7355 !important;
-            margin-top: 8px !important;
         }
         .btn-secondary:hover {
             background: #5a4521 !important;
@@ -330,9 +329,9 @@
         .btn-delete { background: #a83232 !important; margin-top: 4px; color: #fff; border: none; padding: 4px; cursor: pointer; width: 100%; border-radius: 3px; font-size: 11px; }
         .btn-delete:hover { background: #c94040 !important; }
         
-        .tab-buttons { display: flex; margin-bottom: 10px; border-bottom: 2px solid #5a4521; }
-        .tab-btn { flex: 1; background: #e8dbbc; border: none; padding: 6px; font-weight: bold; cursor: pointer; font-family: 'Georgia', serif; font-size: 12px; }
-        .tab-btn.active { background: #5a4521; color: #f4ebd0; }
+        .auth-buttons-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .auth-btn-tab { flex: 1; background: #8c7355; color: #f4ebd0; border: 2px solid #5a4521; padding: 8px; font-weight: bold; cursor: pointer; font-family: 'Georgia', serif; font-size: 13px; border-radius: 4px; }
+        .auth-btn-tab.active { background: #5a4521; border-color: #3b2a1a; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -340,24 +339,16 @@
     <div id="auth-modal" class="auth-overlay">
         <div class="auth-card">
             <h3>Вход / Регистрация</h3>
-            <div class="tab-buttons">
-                <button class="tab-btn active" id="tab-login-btn" onclick="switchTab('login')">Вход</button>
-                <button class="tab-btn" id="tab-reg-btn" onclick="switchTab('reg')">Регистрация</button>
+            <div class="auth-buttons-row">
+                <button class="auth-btn-tab active" id="tab-login-btn" onclick="switchTab('login')">Вход</button>
+                <button class="auth-btn-tab" id="tab-reg-btn" onclick="switchTab('reg')">Регистрация</button>
             </div>
             
-            <div id="form-login">
-                <p style="font-size: 11px; margin: 4px 0;">Введите ник и пароль:</p>
-                <input type="text" id="login-name-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
-                <input type="password" id="login-pass-input" placeholder="Пароль..." onkeydown="checkEnter(event)" />
-                <button id="login-submit-btn" onclick="loginUser()">Войти на карту</button>
-            </div>
-
-            <div id="form-reg" style="display: none;">
-                <p style="font-size: 11px; margin: 4px 0;">Создать аккаунт (нужно одобрение админа):</p>
-                <input type="text" id="reg-name-input" placeholder="Придумайте ник..." onkeydown="checkEnter(event)" />
-                <input type="password" id="reg-pass-input" placeholder="Придумайте пароль..." onkeydown="checkEnter(event)" />
-                <button id="reg-submit-btn" onclick="registerUser()">Подать заявку</button>
-            </div>
+            <p style="font-size: 11px; margin: 6px 0;">Введите ник и пароль:</p>
+            <input type="text" id="auth-name-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
+            <input type="password" id="auth-pass-input" placeholder="Пароль..." onkeydown="checkEnter(event)" />
+            
+            <button id="main-action-btn" onclick="performAction()">Войти</button>
 
             <p id="auth-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 8px;"></p>
         </div>
@@ -487,6 +478,7 @@
         const auth = firebase.auth();
 
         let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
+        let currentAuthMode = 'login'; // 'login' или 'reg'
 
         if (currentUser && currentUser.role === 'admin') {
             auth.signInAnonymously().catch(err => console.error("Ошибка Auth:", err));
@@ -506,7 +498,6 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // Функция безопасного шифрования пароля (SHA-256) — пароль в чистом виде НИКУДА не уходит!
         async function hashPassword(password) {
             const msgBuffer = new TextEncoder().encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -525,43 +516,45 @@
             }).catch(err => console.error("Ошибка записи лога:", err));
         }
 
-        window.switchTab = function(tab) {
+        window.switchTab = function(mode) {
+            currentAuthMode = mode;
             let btnLogin = document.getElementById('tab-login-btn');
             let btnReg = document.getElementById('tab-reg-btn');
-            let formLogin = document.getElementById('form-login');
-            let formReg = document.getElementById('form-reg');
+            let mainBtn = document.getElementById('main-action-btn');
             let errElem = document.getElementById('auth-error');
             errElem.style.display = 'none';
 
-            if (tab === 'login') {
+            if (mode === 'login') {
                 btnLogin.classList.add('active');
                 btnReg.classList.remove('active');
-                formLogin.style.display = 'block';
-                formReg.style.display = 'none';
+                mainBtn.textContent = "Войти";
             } else {
                 btnReg.classList.add('active');
                 btnLogin.classList.remove('active');
-                formReg.style.display = 'block';
-                formLogin.style.display = 'none';
+                mainBtn.textContent = "Зарегистрироваться";
             }
         };
 
         window.checkEnter = function(event) {
             if (event.key === "Enter") {
-                if (document.getElementById('form-login').style.display !== 'none') {
-                    loginUser();
-                } else {
-                    registerUser();
-                }
+                performAction();
             }
         };
 
-        // Регистрация нового игрока
+        window.performAction = function() {
+            if (currentAuthMode === 'login') {
+                loginUser();
+            } else {
+                registerUser();
+            }
+        };
+
+        // Регистрация
         window.registerUser = async function() {
-            let nameInput = document.getElementById('reg-name-input').value.trim();
-            let passInput = document.getElementById('reg-pass-input').value;
+            let nameInput = document.getElementById('auth-name-input').value.trim();
+            let passInput = document.getElementById('auth-pass-input').value;
             let errElem = document.getElementById('auth-error');
-            let submitBtn = document.getElementById('reg-submit-btn');
+            let submitBtn = document.getElementById('main-action-btn');
 
             if (!nameInput || !passInput) {
                 errElem.textContent = "Заполните ник и пароль!";
@@ -573,8 +566,7 @@
             submitBtn.disabled = true;
             let passwordHash = await hashPassword(passInput);
 
-            // Проверяем, нет ли уже такого в одобренных или заявках
-            database.ref('allowed_users/' + key).once('value').then(async snapshot => {
+            database.ref('allowed_users/' + key).once('value').then(snapshot => {
                 if (snapshot.exists()) {
                     submitBtn.disabled = false;
                     errElem.textContent = "Такой ник уже занят!";
@@ -590,7 +582,6 @@
                         return;
                     }
 
-                    // Отправляем заявку в pending_users (админы увидят хэш пароля, а не оригинал!)
                     database.ref('pending_users/' + key).set({
                         name: nameInput,
                         passwordHash: passwordHash,
@@ -598,8 +589,8 @@
                     }).then(() => {
                         submitBtn.disabled = false;
                         alert("Заявка успешно отправлена! Ожидайте подтверждения администратора.");
-                        document.getElementById('reg-name-input').value = '';
-                        document.getElementById('reg-pass-input').value = '';
+                        document.getElementById('auth-name-input').value = '';
+                        document.getElementById('auth-pass-input').value = '';
                         switchTab('login');
                     });
                 });
@@ -609,13 +600,13 @@
             });
         };
 
-        // Вход на карту
+        // Вход
         window.loginUser = async function() {
-            let inputVal = document.getElementById('login-name-input').value.trim();
-            let inputPass = document.getElementById('login-pass-input').value;
+            let inputVal = document.getElementById('auth-name-input').value.trim();
+            let inputPass = document.getElementById('auth-pass-input').value;
             let key = sanitizeKey(inputVal);
             let errElem = document.getElementById('auth-error');
-            let submitBtn = document.getElementById('login-submit-btn');
+            let submitBtn = document.getElementById('main-action-btn');
 
             if (!key || !inputPass) {
                 errElem.textContent = "Введите ник и пароль.";
@@ -630,12 +621,11 @@
                 submitBtn.disabled = false;
                 let users = snapshot.val();
 
-                // Авто-создание главного админа при первой инициализации
                 if (!users) {
                     database.ref('allowed_users/арунин').set({ 
                         name: "Арунин", 
                         role: "admin", 
-                        passwordHash: "" // Можно будет сменить, пустой хэш для первого входа
+                        passwordHash: "" 
                     });
                     users = { "арунин": { name: "Арунин", role: "admin", passwordHash: "" } };
                 }
@@ -643,7 +633,6 @@
                 if (users[key]) {
                     let userRecord = users[key];
                     
-                    // Если у админа задан хэш, проверяем его
                     if (userRecord.passwordHash && userRecord.passwordHash !== inputHash) {
                         errElem.textContent = "Неверный пароль!";
                         errElem.style.display = "block";
@@ -672,12 +661,11 @@
                     }
 
                 } else {
-                    // Проверяем, вдруг заявка еще на рассмотрении
                     database.ref('pending_users/' + key).once('value').then(pendingSnap => {
                         if (pendingSnap.exists()) {
                             errElem.textContent = "Ваша заявка еще не подтверждена администратором!";
                         } else {
-                            errElem.textContent = "Аккаунт не найден. Зарегистрируйтесь во вкладке «Регистрация»!";
+                            errElem.textContent = "Аккаунт не найден. Зарегистрируйтесь!";
                         }
                         errElem.style.display = "block";
                     });
@@ -740,7 +728,6 @@
         };
 
         function loadUsersLists() {
-            // Загружаем одобренных
             database.ref('allowed_users').once('value').then(snapshot => {
                 let users = snapshot.val() || {};
                 let container = document.getElementById('users-list-container');
@@ -760,7 +747,6 @@
                 });
             });
 
-            // Загружаем заявки
             database.ref('pending_users').once('value').then(snapshot => {
                 let pending = snapshot.val() || {};
                 let container = document.getElementById('pending-users-container');
