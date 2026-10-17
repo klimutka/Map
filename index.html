@@ -27,10 +27,6 @@
             background: #241b14 !important;
         }
 
-        .leaflet-image-layer {
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
-        }
-
         .leaflet-control-zoom {
             border: 2px solid #5a4521 !important;
             border-radius: 4px !important;
@@ -216,12 +212,15 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
-        /* ОБНОВЛЕННЫЙ СТИЛЬ ФИЛЬТРОВ И ВЕРТИКАЛЬНОЙ ПЛАНКИ */
+        /* КОМПАКТНАЯ ПАНЕЛЬ ФИЛЬТРОВ СО СКРОЛЛОМ (ВЫСОТА 50vh) */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 220px; max-height: 85vh; overflow-y: auto; font-size: 12px; color: #2c221e;
+            width: 220px; 
+            max-height: 50vh; /* Ограничиваем высоту до 50% экрана */
+            overflow-y: auto; /* Включаем красивый скроллбар */
+            font-size: 12px; color: #2c221e;
             transition: all 0.25s ease-in-out;
         }
         .filter-panel.collapsed {
@@ -360,7 +359,6 @@
         <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
     </div>
 
-    <!-- ПАНЕЛЬ ФИЛЬТРОВ С ВЕРТИКАЛЬНОЙ ПЛАНКОЙ ПРИ СВЕРТЫВАНИИ -->
     <div class="filter-panel" id="filter-panel-box">
         <div class="panel-header">
             <h4>Фильтры</h4>
@@ -674,50 +672,48 @@
             }
         };
 
-        // ИНИЦИАЛИЗАЦИЯ КАРТЫ С ТАЙЛАМИ
+        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВОЙ СЕТКИ MAPTILER
         var mapWidth = 4096, mapHeight = 3072;
-        var buffer = 500; 
-        var maxBounds = [[-buffer, -buffer], [mapHeight + buffer, mapWidth + buffer]];
+        var mapBounds = [[-mapHeight, 0], [0, mapWidth]];
 
         var map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: 0,
             maxZoom: 4,
             zoomSnap: 0.5,
-            maxBounds: maxBounds,
+            maxBounds: [[-mapHeight - 500, -500], [500, mapWidth + 500]],
             maxBoundsViscosity: 1.0,
             zoomControl: false
         });
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Подключаем нарезку MapTiler из папки tiles
+        // Исправленное подключение слоя тайлов
         L.tileLayer('tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
-            tms: false,
             noWrap: true,
-            bounds: [[0, 0], [mapHeight, mapWidth]],
+            bounds: mapBounds,
             attribution: 'Skyrim Map'
         }).addTo(map);
 
-        var bounds = [[0, 0], [mapHeight, mapWidth]];
-        map.fitBounds(bounds);
+        map.fitBounds(mapBounds);
 
         window.addEventListener('resize', function() {
             map.invalidateSize();
         });
 
+        // ФУНКЦИИ ПЕРЕВОДА КООРДИНАТ С ИСПОЛЬЗОВАНИЕМ ПРАВИЛЬНОЙ СЕТКИ
         function latLngToXY(lat, lng) {
             let x = Math.round(lng - (mapWidth / 2));
-            let y = Math.round((mapHeight / 2) - lat);
+            let y = Math.round((mapHeight / 2) + lat);
             return { x: x, y: y };
         }
 
         function xyToLatLng(x, y) {
             let lng = x + (mapWidth / 2);
-            let lat = (mapHeight / 2) - y;
+            let lat = y - (mapHeight / 2);
             return [lat, lng];
         }
 
@@ -809,7 +805,6 @@
             if (panel) panel.style.display = 'none';
         };
 
-        // ПЕРЕКЛЮЧАТЕЛЬ ДЛЯ ВЕРТИКАЛЬНОЙ ПЛАНКИ ФИЛЬТРОВ
         window.toggleLeftPanel = function() {
             var panel = document.getElementById('filter-panel-box');
             var btn = document.getElementById('filter-collapse-btn');
@@ -977,8 +972,6 @@
             if (!currentUser || currentUser.role !== 'admin') return;
 
             var lat = e.latlng.lat, lng = e.latlng.lng;
-            if (lat < 0 || lat > mapHeight || lng < 0 || lng > mapWidth) return;
-
             let coords = latLngToXY(lat, lng);
 
             if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
