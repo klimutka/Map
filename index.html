@@ -212,14 +212,14 @@
         }
         .collapse-btn:hover { background: #73592c; }
 
-        /* КОМПАКТНАЯ ПАНЕЛЬ ФИЛЬТРОВ СО СКРОЛЛОМ (ВЫСОТА 50vh) */
+        /* КОМПАКТНАЯ ПАНЕЛЬ ФИЛЬТРОВ (ВЫСОТА 50vh) С ВЕРТИКАЛЬНОЙ ПЛАНКОЙ ПРИ СВЕРТЫВАНИИ */
         .filter-panel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             width: 220px; 
-            max-height: 50vh; /* Ограничиваем высоту до 50% экрана */
-            overflow-y: auto; /* Включаем красивый скроллбар */
+            max-height: 50vh; 
+            overflow-y: auto; 
             font-size: 12px; color: #2c221e;
             transition: all 0.25s ease-in-out;
         }
@@ -672,48 +672,47 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВОЙ СЕТКИ MAPTILER
+        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВОЙ СЕТКИ MAPTILER (С УЧЕТОМ СХЕМЫ TMS)
         var mapWidth = 4096, mapHeight = 3072;
-        var mapBounds = [[-mapHeight, 0], [0, mapWidth]];
+        var bounds = [[0, 0], [mapHeight, mapWidth]];
 
         var map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: 0,
             maxZoom: 4,
             zoomSnap: 0.5,
-            maxBounds: [[-mapHeight - 500, -500], [500, mapWidth + 500]],
-            maxBoundsViscosity: 1.0,
             zoomControl: false
         });
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Исправленное подключение слоя тайлов
+        // ИСПРАВЛЕННОЕ ПОДКЛЮЧЕНИЕ С СИСТЕМОЙ TMS: ПРЕДОТВРАЩАЕТ ОШИБКИ 404
         L.tileLayer('tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
+            tms: true, // ИСПОЛЬЗУЕТСЯ MAPTILER ДЛЯ ИНВЕРТИРОВАННОЙ ОСИ Y
             noWrap: true,
-            bounds: mapBounds,
+            bounds: bounds,
             attribution: 'Skyrim Map'
         }).addTo(map);
 
-        map.fitBounds(mapBounds);
+        map.fitBounds(bounds);
 
         window.addEventListener('resize', function() {
             map.invalidateSize();
         });
 
-        // ФУНКЦИИ ПЕРЕВОДА КООРДИНАТ С ИСПОЛЬЗОВАНИЕМ ПРАВИЛЬНОЙ СЕТКИ
+        // ФУНКЦИИ ПЕРЕВОДА КООРДИНАТ ДЛЯ МЕТОК
         function latLngToXY(lat, lng) {
             let x = Math.round(lng - (mapWidth / 2));
-            let y = Math.round((mapHeight / 2) + lat);
+            let y = Math.round((mapHeight / 2) - lat);
             return { x: x, y: y };
         }
 
         function xyToLatLng(x, y) {
             let lng = x + (mapWidth / 2);
-            let lat = y - (mapHeight / 2);
+            let lat = (mapHeight / 2) - y;
             return [lat, lng];
         }
 
