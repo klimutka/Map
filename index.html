@@ -672,20 +672,18 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВОЙ СЕТКИ MAPTILER
+       // НАСТРОЙКИ КАРТЫ И ТАЙЛОВОЙ СЕТКИ MAPTILER
         var mapWidth = 4096, mapHeight = 3072;
 
-        // Сначала создаем карту L.map, чтобы у нее появился метод unproject
         var map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: 0,
-            maxZoom: 4,
+            maxZoom: 3, // Ограничим пока до 3-го зума, чтобы не запрашивать несуществующие тайлы
             zoomSnap: 0.5,
             maxBoundsViscosity: 1.0,
             zoomControl: false
         });
 
-        // Теперь высчитываем точные границы через unproject()
         var southWest = map.unproject([0, mapHeight], 0);
         var northEast = map.unproject([mapWidth, 0], 0);
         var bounds = L.latLngBounds(southWest, northEast);
@@ -694,13 +692,14 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Подключение слоя тайлов MapTiler без отрицательных координат
+        // Подключаем слой тайлов
         L.tileLayer('tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
-            maxZoom: 4,
+            maxZoom: 3,
             tileSize: 256,
             noWrap: true,
             bounds: bounds,
+            errorTileUrl: '', // Не показывать битые картинки при ошибках 404
             attribution: 'Skyrim Map'
         }).addTo(map);
 
