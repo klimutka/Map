@@ -589,10 +589,7 @@
 
             setTimeout(function() {
                 map.invalidateSize();
-                map.fitBounds([
-                    crs.unproject(L.point(mapExtent[2], mapExtent[3])),
-                    crs.unproject(L.point(mapExtent[0], mapExtent[1]))
-                ]);
+                map.fitBounds(mapBounds);
             }, 100);
 
             if (currentUser.role === 'admin') {
@@ -678,7 +675,7 @@
             }
         };
 
-        // НАСТРОЙКА КАРТЫ С МАТЕМАТИКОЙ MAPTILER ENGINE
+        // НАСТРОЙКА КАРТЫ И ГРАНИЦ СДВИГА
         var mapExtent = [0.00000000, -3072.00000000, 4096.00000000, 0.00000000];
         var mapMinZoom = 0;
         var mapMaxZoom = 4;
@@ -694,10 +691,17 @@
             return Math.log(scale * mapMinResolution) / Math.LN2;
         };
 
+        var mapBounds = [
+            crs.unproject(L.point(mapExtent[2], mapExtent[3])),
+            crs.unproject(L.point(mapExtent[0], mapExtent[1]))
+        ];
+
         var map = new L.Map('map', {
             maxZoom: mapMaxZoom,
             minZoom: mapMinZoom,
             crs: crs,
+            maxBounds: mapBounds,         // Запрещаем утягивать карту в темноту
+            maxBoundsViscosity: 1.0,      // Плотный упор в границы карты
             zoomControl: false
         });
 
@@ -711,10 +715,7 @@
             tms: false
         }).addTo(map);
 
-        map.fitBounds([
-            crs.unproject(L.point(mapExtent[2], mapExtent[3])),
-            crs.unproject(L.point(mapExtent[0], mapExtent[1]))
-        ]);
+        map.fitBounds(mapBounds);
 
         window.addEventListener('resize', function() {
             map.invalidateSize();
@@ -980,11 +981,17 @@
             if (cb) cb.addEventListener('change', renderMarkers);
         });
 
+        // КЛИК ПО КАРТЕ С ПРОВЕРКОЙ ГРАНИЦ
         map.on('click', function(e) {
             if (!currentUser || currentUser.role !== 'admin') return;
 
             var lat = e.latlng.lat, lng = e.latlng.lng;
             let coords = latLngToXY(lat, lng);
+
+            // КРИТИЧЕСКАЯ ПРОВЕРКА: за пределами пергамента метку ставить нельзя!
+            if (coords.x < 0 || coords.x > 4096 || coords.y < -3072 || coords.y > 0) {
+                return;
+            }
 
             if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
                 map.closePopup(currentCreationPopup);
