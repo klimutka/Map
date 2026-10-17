@@ -1080,7 +1080,6 @@
                 let cardGlowClass = 'diplo-card-' + currentStatus;
                 let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
 
-                // Только администратор может менять отношения с городами (редактор не может)
                 let controlHTML = (currentUser.role === 'admin') ? `
                     <select onchange="updateCityStatus('${city.type}', this.value, '${city.name}')">
                         <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
@@ -1137,9 +1136,9 @@
 
             let className = currentStatus ? 'color-' + currentStatus : '';
             let currentZoom = map.getZoom(); 
-            let baseSize = 36 + (currentZoom * 10); 
-            if (baseSize < 20) baseSize = 20; 
-            if (baseSize > 80) baseSize = 80; 
+            let baseSize = 16 + (currentZoom * 6); // Уменьшенный размер значков
+            if (baseSize < 14) baseSize = 14; 
+            if (baseSize > 40) baseSize = 40;     // Ограничение максимального размера
             let anchor = Math.round(baseSize / 2);
 
             return L.icon({
@@ -1165,7 +1164,6 @@
 
                 var marker = L.marker(latLng, { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
                 
-                // И админ, и редактор могут удалять метки
                 var deleteBtnHTML = (currentUser.role === 'admin' || currentUser.role === 'editor') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${loc.type}', '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
 
                 var popupContent = `
@@ -1191,7 +1189,6 @@
         });
 
         map.on('click', function(e) {
-            // И админ, и редактор могут ставить метки
             if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) return;
 
             var lat = e.latlng.lat, lng = e.latlng.lng;
