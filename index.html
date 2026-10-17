@@ -362,7 +362,7 @@
     <div class="filter-panel" id="filter-panel-box">
         <div class="panel-header">
             <h4>Фильтры</h4>
-            <button class="collapse-btn" id="filter-collapse-btn" onclick="toggleLeftPanel()">−</button>
+            <button class="collapse-btn" id="filter-collapse-btn" onclick="toggleLeftPanel()">−}</button>
         </div>
         <div class="vertical-title">ФИЛЬТРЫ</div>
         <div class="panel-content" id="filter-content">
@@ -672,26 +672,33 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВОЙ СЕТКИ MAPTILER (С УЧЕТОМ СХЕМЫ TMS)
+        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВОЙ СЕТКИ MAPTILER
         var mapWidth = 4096, mapHeight = 3072;
-        var bounds = [[0, 0], [mapHeight, mapWidth]];
 
+        // Сначала создаем карту L.map, чтобы у нее появился метод unproject
         var map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: 0,
             maxZoom: 4,
             zoomSnap: 0.5,
+            maxBoundsViscosity: 1.0,
             zoomControl: false
         });
 
+        // Теперь высчитываем точные границы через unproject()
+        var southWest = map.unproject([0, mapHeight], 0);
+        var northEast = map.unproject([mapWidth, 0], 0);
+        var bounds = L.latLngBounds(southWest, northEast);
+
+        map.setMaxBounds(bounds);
+
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // ИСПРАВЛЕННОЕ ПОДКЛЮЧЕНИЕ С СИСТЕМОЙ TMS: ПРЕДОТВРАЩАЕТ ОШИБКИ 404
+        // Подключение слоя тайлов MapTiler без отрицательных координат
         L.tileLayer('tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
-            tms: true, // ИСПОЛЬЗУЕТСЯ MAPTILER ДЛЯ ИНВЕРТИРОВАННОЙ ОСИ Y
             noWrap: true,
             bounds: bounds,
             attribution: 'Skyrim Map'
