@@ -571,7 +571,6 @@
             }
         };
 
-        // Регистрация с выбором роли
         window.registerUser = async function() {
             let nameInput = document.getElementById('auth-name-input').value.trim();
             let passInput = document.getElementById('auth-pass-input').value;
@@ -629,7 +628,6 @@
             });
         };
 
-        // Вход
         window.loginUser = async function() {
             let inputVal = document.getElementById('auth-name-input').value.trim();
             let inputPass = document.getElementById('auth-pass-input').value;
@@ -772,7 +770,7 @@
                         roleControlHTML = `<b>🛡️ Админ (Защищен)</b>`;
                     } else if (currentUser.role === 'admin') {
                         roleControlHTML = `
-                            <select class="user-role-select" onchange="updateUserRole('${key}', this.value)">
+                            <select class="user-role-select" onchange="updateUserRole('${key}', this.value, '${escapeHTML(u.name)}')">
                                 <option value="reader" ${uRole === 'reader' ? 'selected' : ''}>Читатель</option>
                                 <option value="admin" ${uRole === 'admin' ? 'selected' : ''}>Админ</option>
                             </select>
@@ -781,7 +779,7 @@
                         roleControlHTML = uRole === 'admin' ? '🛡️ Админ' : '📖 Читатель';
                     }
 
-                    let deleteBtnHTML = (!isProtected && key !== currentUser.key) ? `<button class="del-user-btn" onclick="removeUser('${key}')">Удалить</button>` : '';
+                    let deleteBtnHTML = (!isProtected && key !== currentUser.key) ? `<button class="del-user-btn" onclick="removeUser('${key}', '${escapeHTML(u.name)}')">Удалить</button>` : '';
 
                     let row = document.createElement('div');
                     row.className = 'user-row';
@@ -815,7 +813,7 @@
                     row.innerHTML = `
                         <span><b>${escapeHTML(u.name)}</b> <span style="font-size: 10px; color: #555;">(${uRole})</span></span>
                         <div>
-                            <button class="approve-user-btn" onclick="approveUser('${key}')">Принять</button>
+                            <button class="approve-user-btn" onclick="approveUser('${key}', '${escapeHTML(u.name)}')">Принять</button>
                             <button class="del-user-btn" onclick="rejectUser('${key}')">Отклонить</button>
                         </div>
                     `;
@@ -824,7 +822,7 @@
             });
         }
 
-        window.updateUserRole = function(key, newRole) {
+        window.updateUserRole = function(key, newRole, userName) {
             if (!currentUser || currentUser.role !== 'admin') return;
             if (key === 'арунин') {
                 alert("Нельзя изменять роль главного администратора «Арунин»!");
@@ -832,11 +830,12 @@
                 return;
             }
             database.ref('allowed_users/' + key + '/role').set(newRole).then(() => {
-                logAction(`изменил(а) роль пользователя с ключом ${key} на ${newRole}`);
+                let roleRu = newRole === 'admin' ? 'Администратор' : 'Читатель';
+                logAction(`изменил(а) роль пользователя "${userName}" на "${roleRu}"`);
             });
         };
 
-        window.approveUser = function(key) {
+        window.approveUser = function(key, userName) {
             if (!currentUser || currentUser.role !== 'admin') return;
             database.ref('pending_users/' + key).once('value').then(snapshot => {
                 let userData = snapshot.val();
@@ -844,7 +843,7 @@
                     database.ref('allowed_users/' + key).set(userData).then(() => {
                         database.ref('pending_users/' + key).remove().then(() => {
                             loadUsersLists();
-                            logAction(`одобрил(а) заявку пользователя: ${userData.name}`);
+                            logAction(`одобрил(а) заявку пользователя: ${userName}`);
                         });
                     });
                 }
@@ -860,16 +859,16 @@
             }
         };
 
-        window.removeUser = function(key) {
+        window.removeUser = function(key, userName) {
             if (!currentUser || currentUser.role !== 'admin') return;
             if (key === 'арунин') {
                 alert("Нельзя удалить главного администратора «Арунин»!");
                 return;
             }
-            if (confirm("Точно удалить этого пользователя?")) {
+            if (confirm(`Точно удалить пользователя "${userName}"?`)) {
                 database.ref('allowed_users/' + key).remove().then(() => {
                     loadUsersLists();
-                    logAction(`удалил(а) пользователя с ключом: ${key}`);
+                    logAction(`удалил(а) пользователя: ${userName}`);
                 });
             }
         };
