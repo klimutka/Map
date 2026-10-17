@@ -175,6 +175,16 @@
             cursor: pointer;
             border-radius: 3px;
         }
+        .approve-user-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-right: 4px;
+        }
 
         .info-panel {
             position: absolute;
@@ -319,37 +329,51 @@
         .popup-form button:hover { background: #73592c; }
         .btn-delete { background: #a83232 !important; margin-top: 4px; color: #fff; border: none; padding: 4px; cursor: pointer; width: 100%; border-radius: 3px; font-size: 11px; }
         .btn-delete:hover { background: #c94040 !important; }
+        
+        .tab-buttons { display: flex; margin-bottom: 10px; border-bottom: 2px solid #5a4521; }
+        .tab-btn { flex: 1; background: #e8dbbc; border: none; padding: 6px; font-weight: bold; cursor: pointer; font-family: 'Georgia', serif; font-size: 12px; }
+        .tab-btn.active { background: #5a4521; color: #f4ebd0; }
     </style>
 </head>
 <body>
 
     <div id="auth-modal" class="auth-overlay">
         <div class="auth-card">
-            <h3>Вход на карту</h3>
-            <p style="font-size: 12px;">Введите ваш никнейм и пароль (если установлен):</p>
-            <input type="text" id="user-nickname-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
-            <input type="password" id="user-password-input" placeholder="Пароль (опционально)..." onkeydown="checkEnter(event)" />
-            <button id="login-submit-btn" onclick="loginUser()">Войти</button>
+            <h3>Вход / Регистрация</h3>
+            <div class="tab-buttons">
+                <button class="tab-btn active" id="tab-login-btn" onclick="switchTab('login')">Вход</button>
+                <button class="tab-btn" id="tab-reg-btn" onclick="switchTab('reg')">Регистрация</button>
+            </div>
+            
+            <div id="form-login">
+                <p style="font-size: 11px; margin: 4px 0;">Введите ник и пароль:</p>
+                <input type="text" id="login-name-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
+                <input type="password" id="login-pass-input" placeholder="Пароль..." onkeydown="checkEnter(event)" />
+                <button id="login-submit-btn" onclick="loginUser()">Войти на карту</button>
+            </div>
+
+            <div id="form-reg" style="display: none;">
+                <p style="font-size: 11px; margin: 4px 0;">Создать аккаунт (нужно одобрение админа):</p>
+                <input type="text" id="reg-name-input" placeholder="Придумайте ник..." onkeydown="checkEnter(event)" />
+                <input type="password" id="reg-pass-input" placeholder="Придумайте пароль..." onkeydown="checkEnter(event)" />
+                <button id="reg-submit-btn" onclick="registerUser()">Подать заявку</button>
+            </div>
+
             <p id="auth-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 8px;"></p>
         </div>
     </div>
 
     <div id="admin-users-modal" class="auth-overlay" style="display: none;">
-        <div class="auth-card" style="width: 380px;">
+        <div class="auth-card" style="width: 400px;">
             <h3>Управление доступом</h3>
-            <p style="font-size: 12px; margin-bottom: 6px;">Список одобренных пользователей:</p>
+            
+            <p style="font-size: 12px; margin-bottom: 4px; font-weight: bold; color: #a83232;">⏳ Заявки на регистрацию:</p>
+            <div class="users-list" id="pending-users-container"></div>
+
+            <p style="font-size: 12px; margin: 8px 0 4px 0; font-weight: bold;">🛡️ Одобренные пользователи:</p>
             <div class="users-list" id="users-list-container"></div>
             
-            <hr style="border: 0; border-top: 1px solid #5a4521; margin: 10px 0;">
-            <p style="font-size: 12px; font-weight: bold;">Добавить/Изменить пользователя:</p>
-            <input type="text" id="new-user-name" placeholder="Никнейм..." />
-            <input type="password" id="new-user-password" placeholder="Пароль (пусто = без пароля)..." />
-            <select id="new-user-role">
-                <option value="reader">Читатель</option>
-                <option value="admin">Администратор</option>
-            </select>
-            <button id="add-user-submit-btn" onclick="addNewUser()">Сохранить пользователя</button>
-            <button class="btn-secondary" onclick="closeAdminModal()">Закрыть</button>
+            <button class="btn-secondary" onclick="closeAdminModal()" style="margin-top: 10px;">Закрыть</button>
         </div>
     </div>
 
@@ -482,6 +506,14 @@
                 .replace(/'/g, '&#039;');
         }
 
+        // Функция безопасного шифрования пароля (SHA-256) — пароль в чистом виде НИКУДА не уходит!
+        async function hashPassword(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         function logAction(text) {
             if (!currentUser) return;
             let logId = Date.now();
@@ -493,38 +525,126 @@
             }).catch(err => console.error("Ошибка записи лога:", err));
         }
 
-        window.checkEnter = function(event) {
-            if (event.key === "Enter") {
-                loginUser();
+        window.switchTab = function(tab) {
+            let btnLogin = document.getElementById('tab-login-btn');
+            let btnReg = document.getElementById('tab-reg-btn');
+            let formLogin = document.getElementById('form-login');
+            let formReg = document.getElementById('form-reg');
+            let errElem = document.getElementById('auth-error');
+            errElem.style.display = 'none';
+
+            if (tab === 'login') {
+                btnLogin.classList.add('active');
+                btnReg.classList.remove('active');
+                formLogin.style.display = 'block';
+                formReg.style.display = 'none';
+            } else {
+                btnReg.classList.add('active');
+                btnLogin.classList.remove('active');
+                formReg.style.display = 'block';
+                formLogin.style.display = 'none';
             }
         };
 
-        window.loginUser = function() {
-            let inputVal = document.getElementById('user-nickname-input').value;
-            let inputPass = document.getElementById('user-password-input').value;
+        window.checkEnter = function(event) {
+            if (event.key === "Enter") {
+                if (document.getElementById('form-login').style.display !== 'none') {
+                    loginUser();
+                } else {
+                    registerUser();
+                }
+            }
+        };
+
+        // Регистрация нового игрока
+        window.registerUser = async function() {
+            let nameInput = document.getElementById('reg-name-input').value.trim();
+            let passInput = document.getElementById('reg-pass-input').value;
+            let errElem = document.getElementById('auth-error');
+            let submitBtn = document.getElementById('reg-submit-btn');
+
+            if (!nameInput || !passInput) {
+                errElem.textContent = "Заполните ник и пароль!";
+                errElem.style.display = "block";
+                return;
+            }
+
+            let key = sanitizeKey(nameInput);
+            submitBtn.disabled = true;
+            let passwordHash = await hashPassword(passInput);
+
+            // Проверяем, нет ли уже такого в одобренных или заявках
+            database.ref('allowed_users/' + key).once('value').then(async snapshot => {
+                if (snapshot.exists()) {
+                    submitBtn.disabled = false;
+                    errElem.textContent = "Такой ник уже занят!";
+                    errElem.style.display = "block";
+                    return;
+                }
+
+                database.ref('pending_users/' + key).once('value').then(pendingSnapshot => {
+                    if (pendingSnapshot.exists()) {
+                        submitBtn.disabled = false;
+                        errElem.textContent = "Заявка с таким ником уже ждет рассмотрения!";
+                        errElem.style.display = "block";
+                        return;
+                    }
+
+                    // Отправляем заявку в pending_users (админы увидят хэш пароля, а не оригинал!)
+                    database.ref('pending_users/' + key).set({
+                        name: nameInput,
+                        passwordHash: passwordHash,
+                        role: 'reader'
+                    }).then(() => {
+                        submitBtn.disabled = false;
+                        alert("Заявка успешно отправлена! Ожидайте подтверждения администратора.");
+                        document.getElementById('reg-name-input').value = '';
+                        document.getElementById('reg-pass-input').value = '';
+                        switchTab('login');
+                    });
+                });
+            }).catch(err => {
+                submitBtn.disabled = false;
+                console.error("Ошибка регистрации:", err);
+            });
+        };
+
+        // Вход на карту
+        window.loginUser = async function() {
+            let inputVal = document.getElementById('login-name-input').value.trim();
+            let inputPass = document.getElementById('login-pass-input').value;
             let key = sanitizeKey(inputVal);
             let errElem = document.getElementById('auth-error');
             let submitBtn = document.getElementById('login-submit-btn');
 
-            if (!key) {
-                errElem.textContent = "Пожалуйста, введите никнейм.";
+            if (!key || !inputPass) {
+                errElem.textContent = "Введите ник и пароль.";
                 errElem.style.display = "block";
                 return;
             }
 
             submitBtn.disabled = true;
+            let inputHash = await hashPassword(inputPass);
+
             database.ref('allowed_users').once('value').then(snapshot => {
                 submitBtn.disabled = false;
                 let users = snapshot.val();
 
+                // Авто-создание главного админа при первой инициализации
                 if (!users) {
-                    database.ref('allowed_users/арунин').set({ name: "Арунин", role: "admin", password: "" });
-                    users = { "арунин": { name: "Арунин", role: "admin", password: "" } };
+                    database.ref('allowed_users/арунин').set({ 
+                        name: "Арунин", 
+                        role: "admin", 
+                        passwordHash: "" // Можно будет сменить, пустой хэш для первого входа
+                    });
+                    users = { "арунин": { name: "Арунин", role: "admin", passwordHash: "" } };
                 }
 
                 if (users[key]) {
                     let userRecord = users[key];
-                    if (userRecord.password && userRecord.password !== inputPass) {
+                    
+                    // Если у админа задан хэш, проверяем его
+                    if (userRecord.passwordHash && userRecord.passwordHash !== inputHash) {
                         errElem.textContent = "Неверный пароль!";
                         errElem.style.display = "block";
                         return;
@@ -544,7 +664,6 @@
                         auth.signInAnonymously().then(() => {
                             initUserSession();
                         }).catch(err => {
-                            console.error("Ошибка авторизации в Firebase:", err);
                             initUserSession();
                         });
                     } else {
@@ -553,8 +672,15 @@
                     }
 
                 } else {
-                    errElem.textContent = "Вашего ника нет в списке одобренных лиц!";
-                    errElem.style.display = "block";
+                    // Проверяем, вдруг заявка еще на рассмотрении
+                    database.ref('pending_users/' + key).once('value').then(pendingSnap => {
+                        if (pendingSnap.exists()) {
+                            errElem.textContent = "Ваша заявка еще не подтверждена администратором!";
+                        } else {
+                            errElem.textContent = "Аккаунт не найден. Зарегистрируйтесь во вкладке «Регистрация»!";
+                        }
+                        errElem.style.display = "block";
+                    });
                 }
             }).catch(err => {
                 submitBtn.disabled = false;
@@ -605,7 +731,7 @@
 
         window.openAdminModal = function() {
             if (!currentUser || currentUser.role !== 'admin') return;
-            loadUsersList();
+            loadUsersLists();
             document.getElementById('admin-users-modal').style.display = 'flex';
         };
 
@@ -613,7 +739,8 @@
             document.getElementById('admin-users-modal').style.display = 'none';
         };
 
-        function loadUsersList() {
+        function loadUsersLists() {
+            // Загружаем одобренных
             database.ref('allowed_users').once('value').then(snapshot => {
                 let users = snapshot.val() || {};
                 let container = document.getElementById('users-list-container');
@@ -623,64 +750,84 @@
                     let u = users[key];
                     let uRole = (u.role || '').toLowerCase();
                     let roleBadge = uRole === 'admin' ? '🛡️ Админ' : '📖 Читатель';
-                    let passStatus = u.password ? '🔒 с паролем' : '🔓 без пароля';
                     let row = document.createElement('div');
                     row.className = 'user-row';
                     row.innerHTML = `
-                        <span><b>${escapeHTML(u.name)}</b> (${roleBadge}, ${passStatus})</span>
+                        <span><b>${escapeHTML(u.name)}</b> (${roleBadge})</span>
                         ${key !== currentUser.key ? `<button class="del-user-btn" onclick="removeUser('${key}')">Удалить</button>` : ''}
                     `;
                     container.appendChild(row);
                 });
-            }).catch(err => console.error("Ошибка загрузки пользователей:", err));
+            });
+
+            // Загружаем заявки
+            database.ref('pending_users').once('value').then(snapshot => {
+                let pending = snapshot.val() || {};
+                let container = document.getElementById('pending-users-container');
+                container.innerHTML = '';
+
+                let keys = Object.keys(pending);
+                if (keys.length === 0) {
+                    container.innerHTML = '<div style="color: #666; font-style: italic; padding: 4px;">Нет новых заявок</div>';
+                    return;
+                }
+
+                keys.forEach(key => {
+                    let u = pending[key];
+                    let row = document.createElement('div');
+                    row.className = 'user-row';
+                    row.innerHTML = `
+                        <span><b>${escapeHTML(u.name)}</b></span>
+                        <div>
+                            <button class="approve-user-btn" onclick="approveUser('${key}')">Принять</button>
+                            <button class="del-user-btn" onclick="rejectUser('${key}')">Отклонить</button>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            });
         }
 
-        window.addNewUser = function() {
+        window.approveUser = function(key) {
             if (!currentUser || currentUser.role !== 'admin') return;
-            let nameInput = document.getElementById('new-user-name').value.trim();
-            let passInput = document.getElementById('new-user-password').value;
-            let roleInput = document.getElementById('new-user-role').value;
-            let submitBtn = document.getElementById('add-user-submit-btn');
-            
-            if (!nameInput) {
-                alert("Введите никнейм!");
-                return;
-            }
-            let key = sanitizeKey(nameInput);
-            submitBtn.disabled = true;
-
-            database.ref('allowed_users/' + key).set({
-                name: nameInput,
-                password: passInput,
-                role: roleInput
-            }).then(() => {
-                submitBtn.disabled = false;
-                document.getElementById('new-user-name').value = '';
-                document.getElementById('new-user-password').value = '';
-                loadUsersList();
-                logAction(`добавил(а) нового пользователя: ${nameInput} (${roleInput})`);
-            }).catch(err => {
-                submitBtn.disabled = false;
-                console.error("Ошибка добавления пользователя:", err);
+            database.ref('pending_users/' + key).once('value').then(snapshot => {
+                let userData = snapshot.val();
+                if (userData) {
+                    database.ref('allowed_users/' + key).set(userData).then(() => {
+                        database.ref('pending_users/' + key).remove().then(() => {
+                            loadUsersLists();
+                            logAction(`одобрил(а) заявку пользователя: ${userData.name}`);
+                        });
+                    });
+                }
             });
+        };
+
+        window.rejectUser = function(key) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            if (confirm("Отклонить и удалить эту заявку?")) {
+                database.ref('pending_users/' + key).remove().then(() => {
+                    loadUsersLists();
+                });
+            }
         };
 
         window.removeUser = function(key) {
             if (!currentUser || currentUser.role !== 'admin') return;
             if (confirm("Точно удалить этого пользователя?")) {
                 database.ref('allowed_users/' + key).remove().then(() => {
-                    loadUsersList();
+                    loadUsersLists();
                     logAction(`удалил(а) пользователя с ключом: ${key}`);
-                }).catch(err => console.error("Ошибка удаления пользователя:", err));
+                });
             }
         };
 
-        // НАСТРОЙКИ С УВЕЛИЧЕННЫМ МАКСИМАЛЬНЫМ ЗУМОМ (maxZoom: 6)
+        // НАСТРОЙКИ КАРТЫ
         var mapExtent = [0.00000000, -3072.00000000, 4096.00000000, 0.00000000];
         var mapMinZoom = 0;
-        var mapMaxZoom = 6;           // Увеличили зум карты, чтобы можно было приближать ближе
+        var mapMaxZoom = 6;
         var mapMaxResolution = 1.00000000;
-        var mapMinResolution = Math.pow(2, 4) * mapMaxResolution; // База зума тайлов осталась на 4
+        var mapMinResolution = Math.pow(2, 4) * mapMaxResolution;
         var tileExtent = [0.00000000, -3072.00000000, 4096.00000000, 0.00000000];
         var crs = L.CRS.Simple;
         crs.transformation = new L.Transformation(1, -tileExtent[0], -1, tileExtent[3]);
@@ -707,11 +854,10 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Тайловый слой с maxNativeZoom: 4 (берет тайлы до 4 уровня и плавно увеличивает их дальше)
         L.tileLayer('/Map/tiles/{z}/{x}/{y}.png', {
             minZoom: mapMinZoom, 
             maxZoom: mapMaxZoom,
-            maxNativeZoom: 4, // Предельный зум физических файлов тайлов
+            maxNativeZoom: 4,
             attribution: 'Skyrim Map',
             noWrap: true,
             tms: false
@@ -723,7 +869,6 @@
             map.invalidateSize();
         });
 
-        // ФУНКЦИИ ПЕРЕВОДА КООРДИНАТ ДЛЯ МЕТОК
         function latLngToXY(lat, lng) {
             return { x: Math.round(lng), y: Math.round(lat) };
         }
@@ -983,7 +1128,6 @@
             if (cb) cb.addEventListener('change', renderMarkers);
         });
 
-        // КЛИК ПО КАРТЕ С ПРОВЕРКОЙ ГРАНИЦ
         map.on('click', function(e) {
             if (!currentUser || currentUser.role !== 'admin') return;
 
