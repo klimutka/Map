@@ -591,6 +591,7 @@
 
             setTimeout(function() {
                 map.invalidateSize();
+                map.fitBounds(bounds);
             }, 100);
 
             if (currentUser.role === 'admin') {
@@ -676,38 +677,45 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ С КОНСОЛЬНЫМ ЛОГИРОВАНИЕМ
+        // НАСТРОЙКИ КАРТЫ С ПРАВИЛЬНЫМИ ГРАНИЦАМИ L.CRS.Simple
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: 0,
             maxZoom: 4,
+            zoomSnap: 0.5,
+            maxBoundsViscosity: 1.0,
             zoomControl: false
         });
 
-        map.setView([mapHeight / 2, mapWidth / 2], 1);
+        // Корректные границы L.CRS.Simple (левый верхний [0,0], правый нижний [-mapHeight, mapWidth])
+        var bounds = [[-mapHeight, 0], [0, mapWidth]];
+        map.setMaxBounds(bounds);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Тайловый слой с отладкой запросов в консоль
+        // Тайловый слой с логированием запросов в консоль
         L.tileLayer('', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
             noWrap: true,
+            bounds: bounds,
             attribution: 'Skyrim Map',
             getTileUrl: function (coords) {
                 var url = '';
                 if (coords.z === 0) {
-                    url = '/Map/tiles/0/0/' + coords.y + '.png';
+                    url = 'tiles/0/0/' + coords.y + '.png';
                 } else {
-                    url = '/Map/tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
+                    url = 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
                 }
-                console.log("LEAFLET ПЫТАЕТСЯ ЗАГРУЗИТЬ:", url);
+                console.log("ЗАПРОС ТАЙЛА:", url);
                 return url;
             }
         }).addTo(map);
+
+        map.fitBounds(bounds);
 
         window.addEventListener('resize', function() {
             map.invalidateSize();
@@ -715,14 +723,14 @@
 
         // ФУНКЦИИ ПЕРЕВОДА КООРДИНАТ ДЛЯ МЕТОК
         function latLngToXY(lat, lng) {
-            let x = Math.round(lng - (mapWidth / 2));
-            let y = Math.round((mapHeight / 2) - lat);
+            let x = Math.round(lng);
+            let y = Math.round(-lat);
             return { x: x, y: y };
         }
 
         function xyToLatLng(x, y) {
-            let lng = x + (mapWidth / 2);
-            let lat = (mapHeight / 2) - y;
+            let lng = x;
+            let lat = -y;
             return [lat, lng];
         }
 
