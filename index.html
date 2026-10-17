@@ -542,7 +542,7 @@
                     };
                     sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
 
-                    if (currentUser.role === 'admin') {
+                        if (currentUser.role === 'admin') {
                         auth.signInAnonymously().then(() => {
                             initUserSession();
                         }).catch(err => {
@@ -589,10 +589,9 @@
             document.getElementById('current-user-name').textContent = currentUser.name;
             document.getElementById('current-user-role').textContent = currentUser.role === 'admin' ? 'Администратор' : 'Читатель';
 
-            // Пересчитываем размер карты после скрытия модального окна входа
+            // Даем DOM обновиться и принудительно обновляем размер карты
             setTimeout(function() {
                 map.invalidateSize();
-                map.fitBounds(bounds);
             }, 100);
 
             if (currentUser.role === 'admin') {
@@ -678,47 +677,40 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ И КОРРЕКТНОЕ ЦЕНТРИРОВАНИЕ ДЛЯ L.CRS.Simple
+        // НАСТРОЙКИ КАРТЫ (НАДЕЖНЫЙ СТАНДАРТ ДЛЯ L.CRS.Simple)
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: 0,
             maxZoom: 4,
-            zoomSnap: 0.5,
-            maxBoundsViscosity: 1.0,
             zoomControl: false
         });
 
-        // Расчет границ карты через unproject
-        var southWest = map.unproject([0, mapHeight], 0);
-        var northEast = map.unproject([mapWidth, 0], 0);
-        var bounds = L.latLngBounds(southWest, northEast);
-
-        map.setMaxBounds(bounds);
+        // Устанавливаем простой и надежный вид по центру без сложных unproject расчетов
+        map.setView([mapHeight / 2, mapWidth / 2], 1);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Подключаем тайловый слой с относительным путем
+        // Подключаем тайловый слой со встроенной отладкой в консоль
         L.tileLayer('', {
             minZoom: 0,
             maxZoom: 4,
             tileSize: 256,
             noWrap: true,
-            bounds: bounds,
             attribution: 'Skyrim Map',
             getTileUrl: function (coords) {
+                let url = '';
                 if (coords.z === 0) {
-                    return 'tiles/0/0/' + coords.y + '.png';
+                    url = 'tiles/0/0/' + coords.y + '.png';
+                } else {
+                    url = 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
                 }
-                return 'tiles/' + coords.z + '/' + coords.x + '/' + coords.y + '.png';
+                console.log("Запрос тайла:", url); // Поможет увидеть в консоли отладки, запрашивает ли Leaflet файлы
+                return url;
             }
         }).addTo(map);
 
-        // Вписываем карту строго в границы экрана при загрузке
-        map.fitBounds(bounds);
-
-        // Принудительно пересчитываем размер карты при изменении окна
         window.addEventListener('resize', function() {
             map.invalidateSize();
         });
