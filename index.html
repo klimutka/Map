@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивная карта Скайрима (Общая)</title>
+    <!-- Подключаем стили Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #241b14;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+            background-color: #241b14;
+        }
+
+        .leaflet-container {
+            background: #241b14 !important;
+        }
+
+        .leaflet-image-layer {
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
+        }
+
+        .leaflet-control-zoom {
+            border: 2px solid #5a4521 !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+        }
+        .leaflet-control-zoom a {
+            background-color: #f4ebd0 !important;
+            color: #2c221e !important;
+            font-family: 'Georgia', serif !important;
+            font-weight: bold !important;
+            border-bottom: 1px solid #5a4521 !important;
+        }
+        .leaflet-control-zoom a:hover {
+            background-color: #e8dbbc !important;
+            color: #3b2a1a !important;
+        }
+        .leaflet-control-zoom-in {
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+        }
+        .leaflet-control-zoom-out {
+            border-bottom-left-radius: 2px;
+            border-bottom-right-radius: 2px;
+            border-bottom: none !important;
+        }
+
+        body:not(.logged-in) .filter-panel,
+        body:not(.logged-in) .diplomacy-panel,
+        body:not(.logged-in) .info-panel,
+        body:not(.logged-in) .logs-panel,
+        body:not(.logged-in) .bottom-left-controls {
+            display: none !important;
+        }
+
+        body:not(.is-admin) .logs-panel {
+            display: none !important;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-card {
+            background: #f4ebd0;
+            border: 3px solid #5a4521;
+            padding: 25px;
+            border-radius: 8px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            color: #2c221e;
+        }
+        .auth-card h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #5a4521;
+            padding-bottom: 8px;
+        }
+        .auth-card input, .auth-card select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #5a4521;
+            border-radius: 4px;
+            font-family: 'Georgia', serif;
+            background: #fff;
+        }
+        .auth-card button {
+            background: #5a4521;
+            color: #f4ebd0;
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .auth-card button:hover {
+            background: #73592c;
+        }
+        .btn-secondary {
+            background: #8c7355 !important;
+            margin-top: 8px !important;
+        }
+        .btn-secondary:hover {
+            background: #5a4521 !important;
+        }
+
+        .bottom-left-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .map-control-btn {
+            background: #5a4521;
+            color: #f4ebd0;
+            border: 2px solid #3b2a1a;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-size: 13px;
+            text-align: left;
+        }
+        .map-control-btn:hover {
+            background: #73592c;
+        }
+
+        .users-list {
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            background: #e8dbbc;
+            padding: 6px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        .user-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px dashed #5a4521;
+        }
+        .user-row:last-child {
+            border-bottom: none;
+        }
+        .del-user-btn {
+            background: #a83232;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 10px; right: 10px;
+            z-index: 1000;
+            background: #f4ebd0;
+            border: 2px solid #5a4521;
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 240px;
+            font-size: 12px;
+            color: #2c221e;
+        }
+        .info-panel .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #5a4521; padding-bottom: 2px; margin-bottom: 4px;
+        }
+        .close-btn {
+            background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
+            width: 18px; height: 18px; cursor: pointer; font-weight: bold; font-size: 11px;
+        }
+
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #5a4521; padding-bottom: 2px; margin-bottom: 6px;
+        }
+        .panel-header h4 {
+            margin: 0; font-size: 13px; border: none; padding: 0; white-space: nowrap;
+        }
+        .collapse-btn {
+            background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
+            width: 18px; height: 18px; cursor: pointer; font-weight: bold; font-size: 10px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .collapse-btn:hover { background: #73592c; }
+
+        .filter-panel {
+            position: absolute; top: 10px; left: 10px; z-index: 1000;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
+            border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 200px; max-height: 90vh; overflow-y: auto; font-size: 12px; color: #2c221e;
+            transition: width 0.2s, padding 0.2s;
+        }
+        .filter-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
+        .filter-panel.collapsed .panel-content, .filter-panel.collapsed .panel-header h4 { display: none; }
+        .filter-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
+
+        .diplomacy-panel {
+            position: absolute; top: 140px; right: 10px; z-index: 1000;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
+            border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 240px; max-height: 65vh; overflow-y: auto; font-size: 12px; color: #2c221e;
+            transition: width 0.2s, padding 0.2s;
+        }
+        .diplomacy-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
+        .diplomacy-panel.collapsed .panel-content, .diplomacy-panel.collapsed .panel-header h4 { display: none; }
+        .diplomacy-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
+
+        .city-diplo-item {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 4px; background: #e8dbbc; padding: 3px 6px; border-radius: 4px;
+        }
+        .city-info { display: flex; align-items: center; gap: 4px; }
+        .city-diplo-item select {
+            font-family: 'Georgia', serif; font-size: 11px; padding: 1px;
+            background: #f4ebd0; border: 1px solid #5a4521; cursor: pointer;
+        }
+
+        .filter-group { margin-bottom: 6px; border-bottom: 1px dashed #5a4521; padding-bottom: 4px; }
+        .filter-group-header {
+            display: flex; align-items: center; justify-content: space-between;
+            font-weight: bold; cursor: pointer; user-select: none; padding: 1px 0;
+        }
+        .toggle-arrow { font-size: 9px; transition: transform 0.2s; display: inline-block; }
+        .filter-sublist { margin-left: 14px; margin-top: 3px; display: block; }
+        .filter-sublist.collapsed { display: none; }
+        .filter-panel label {
+            display: flex; align-items: center; margin-bottom: 3px; cursor: pointer; user-select: none; font-size: 11px;
+        }
+        .filter-icon { width: 16px; height: 16px; margin-right: 5px; vertical-align: middle; object-fit: contain; }
+
+        .logs-panel {
+            position: absolute; bottom: 20px; right: 75px; z-index: 1000;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
+            border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 260px; max-height: 180px; font-size: 11px; color: #2c221e;
+            display: flex; flex-direction: column; transition: width 0.2s, padding 0.2s;
+        }
+        .logs-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
+        .logs-panel.collapsed .logs-content, .logs-panel.collapsed .panel-header h4 { display: none; }
+        .logs-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
+        .logs-content { overflow-y: auto; max-height: 120px; margin-top: 4px; text-align: left; }
+        .log-item { padding: 3px 0; border-bottom: 1px dashed #c2b292; word-break: break-word; }
+        .log-item:last-child { border-bottom: none; }
+
+        @keyframes pulse-card-ally { 0% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } 50% { box-shadow: 0 0 8px rgba(46, 204, 113, 0.85); } 100% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } }
+        @keyframes pulse-card-neutral { 0% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } 50% { box-shadow: 0 0 8px rgba(241, 196, 15, 0.85); } 100% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } }
+        @keyframes pulse-card-enemy { 0% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } 50% { box-shadow: 0 0 8px rgba(231, 76, 60, 0.85); } 100% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } }
+
+        .diplo-card-ally { animation: pulse-card-ally 2.5s infinite; border: 1px solid #2ecc71; }
+        .diplo-card-neutral { animation: pulse-card-neutral 2.5s infinite; border: 1px solid #f1c40f; }
+        .diplo-card-enemy { animation: pulse-card-enemy 2.5s infinite; border: 1px solid #e74c3c; }
+
+        .color-ally { filter: invert(48%) sepia(79%) saturate(382%) hue-rotate(86deg) brightness(98%) contrast(92%); }
+        .color-neutral { filter: invert(74%) sepia(85%) saturate(848%) hue-rotate(359deg) brightness(103%) contrast(93%); }
+        .color-enemy { filter: invert(27%) sepia(85%) saturate(2284%) hue-rotate(345deg) brightness(97%) contrast(92%); }
+
+        .leaflet-popup-content-wrapper { background: #f4ebd0; border: 2px solid #5a4521; border-radius: 4px; color: #2c221e; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .leaflet-popup-tip { background: #f4ebd0; }
+        .popup-title { font-weight: bold; font-size: 14px; border-bottom: 1px solid #5a4521; margin-bottom: 4px; padding-bottom: 3px; color: #3b2a1a; }
+        .popup-form input, .popup-form select {
+            width: 100%; margin-bottom: 5px; padding: 4px; box-sizing: border-box; font-family: 'Georgia', serif; background: #fff; border: 1px solid #5a4521; border-radius: 3px; font-size: 12px;
+        }
+        .popup-form button {
+            background: #5a4521; color: #f4ebd0; border: none; padding: 5px 8px; cursor: pointer; width: 100%; font-weight: bold; border-radius: 3px; font-size: 12px;
+        }
+        .popup-form button:hover { background: #73592c; }
+        .btn-delete { background: #a83232 !important; margin-top: 4px; color: #fff; border: none; padding: 4px; cursor: pointer; width: 100%; border-radius: 3px; font-size: 11px; }
+        .btn-delete:hover { background: #c94040 !important; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-modal" class="auth-overlay">
+        <div class="auth-card">
+            <h3>Вход на карту</h3>
+            <p style="font-size: 12px;">Введите ваш никнейм и пароль (если установлен):</p>
+            <input type="text" id="user-nickname-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
+            <input type="password" id="user-password-input" placeholder="Пароль (опционально)..." onkeydown="checkEnter(event)" />
+            <button id="login-submit-btn" onclick="loginUser()">Войти</button>
+            <p id="auth-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 8px;"></p>
+        </div>
+    </div>
+
+    <div id="admin-users-modal" class="auth-overlay" style="display: none;">
+        <div class="auth-card" style="width: 380px;">
+            <h3>Управление доступом</h3>
+            <p style="font-size: 12px; margin-bottom: 6px;">Список одобренных пользователей:</p>
+            <div class="users-list" id="users-list-container"></div>
+            
+            <hr style="border: 0; border-top: 1px solid #5a4521; margin: 10px 0;">
+            <p style="font-size: 12px; font-weight: bold;">Добавить/Изменить пользователя:</p>
+            <input type="text" id="new-user-name" placeholder="Никнейм..." />
+            <input type="password" id="new-user-password" placeholder="Пароль (пусто = без пароля)..." />
+            <select id="new-user-role">
+                <option value="reader">Читатель</option>
+                <option value="admin">Администратор</option>
+            </select>
+            <button id="add-user-submit-btn" onclick="addNewUser()">Сохранить пользователя</button>
+            <button class="btn-secondary" onclick="closeAdminModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="bottom-left-controls">
+        <button id="admin-panel-btn" class="map-control-btn" style="display: none;" onclick="openAdminModal()">🛡️ Управление доступом</button>
+        <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
+    </div>
+
+    <div class="filter-panel" id="filter-panel-box">
+        <div class="panel-header">
+            <h4>Фильтры</h4>
+            <button class="collapse-btn" onclick="toggleLeftPanel()">−</button>
+        </div>
+        <div class="panel-content" id="filter-content">
+            <div class="filter-group">
+                <div class="filter-group-header">
+                    <label style="margin:0; font-weight:bold; cursor:pointer;">
+                        <input type="checkbox" id="filter-all-herbs" checked onchange="toggleGroup('herb', 5, this.checked)"> 🌿 Травы
+                    </label>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
+                </div>
+                <div class="filter-sublist" id="sublist-herbs">
+                    <label><input type="checkbox" id="filter-herb1" class="sub-herb" checked> <img src="Herbs1.png" class="filter-icon"> Травы 1 ур</label>
+                    <label><input type="checkbox" id="filter-herb2" class="sub-herb" checked> <img src="Herbs2.png" class="filter-icon"> Травы 2 ур</label>
+                    <label><input type="checkbox" id="filter-herb3" class="sub-herb" checked> <img src="Herbs3.png" class="filter-icon"> Травы 3 ур</label>
+                    <label><input type="checkbox" id="filter-herb4" class="sub-herb" checked> <img src="Herbs4.png" class="filter-icon"> Травы 4 ур</label>
+                    <label><input type="checkbox" id="filter-herb5" class="sub-herb" checked> <img src="Herbs5.png" class="filter-icon"> Травы 5 ур</label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-group-header">
+                    <label style="margin:0; font-weight:bold; cursor:pointer;">
+                        <input type="checkbox" id="filter-all-animals" checked onchange="toggleGroup('animal', 4, this.checked)"> 🐾 Животные
+                    </label>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
+                </div>
+                <div class="filter-sublist" id="sublist-animals">
+                    <label><input type="checkbox" id="filter-animal1" class="sub-animal" checked> <img src="Animals1.png" class="filter-icon"> Животные 1 ур</label>
+                    <label><input type="checkbox" id="filter-animal2" class="sub-animal" checked> <img src="Animals2.png" class="filter-icon"> Животные 2 ур</label>
+                    <label><input type="checkbox" id="filter-animal3" class="sub-animal" checked> <img src="Animals3.png" class="filter-icon"> Животные 3 ур</label>
+                    <label><input type="checkbox" id="filter-animal4" class="sub-animal" checked> <img src="Animals4.png" class="filter-icon"> Животные 4 ур</label>
+                </div>
+            </div>
+
+            <div class="filter-group" style="border: none; margin-bottom: 0; padding-bottom: 0;">
+                <div class="filter-group-header" style="margin-bottom: 4px;">
+                    <span style="font-weight:bold; color: #3b2a1a;">📦 Разное</span>
+                </div>
+                <div class="filter-sublist" style="margin-left: 0;">
+                    <label><input type="checkbox" id="filter-anomaly" checked> <img src="Magical Anomaly.png" class="filter-icon"> Магические аномалии</label>
+                    <label><input type="checkbox" id="filter-ruins" checked> <img src="Nord Ruins.png" class="filter-icon"> Нордские руины</label>
+                    <label><input type="checkbox" id="filter-dwarven_ruins" checked> <img src="Ruins.svg" class="filter-icon"> Двемерские руины</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-panel" id="info-panel-box">
+        <div class="panel-header">
+            <h4>Карта Скайрима</h4>
+            <button class="close-btn" onclick="closeInfoPanel()">×</button>
+        </div>
+        <p style="margin: 3px 0;">• Пользователь: <b id="current-user-name">-</b></p>
+        <p style="margin: 3px 0;">• Доступ: <b id="current-user-role">-</b></p>
+        <p style="margin: 3px 0;">• Синхронизация в реальном времени.</p>
+    </div>
+
+    <div class="diplomacy-panel" id="diplomacy-panel-box">
+        <div class="panel-header">
+            <h4>Отношения с городами</h4>
+            <button class="collapse-btn" onclick="toggleRightPanel()">−</button>
+        </div>
+        <div class="panel-content" id="diplomacy-content">
+            <div id="diplomacy-list"></div>
+        </div>
+    </div>
+
+    <div class="logs-panel" id="logs-panel-box">
+        <div class="panel-header">
+            <h4>📜 История изменений</h4>
+            <button class="collapse-btn" onclick="toggleLogsPanel()">−</button>
+        </div>
+        <div class="logs-content" id="logs-list-container">
+            <div style="color: #666; font-style: italic;">Загрузка истории...</div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAjoA4hScJz8IGH-F_3y22ifZYDwdIpAkY",
+            authDomain: "skyrimmap-6a376.firebaseapp.com",
+            databaseURL: "https://skyrimmap-6a376-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skyrimmap-6a376",
+            storageBucket: "skyrimmap-6a376.firebasestorage.app",
+            messagingSenderId: "836868606277",
+            appId: "1:836868606277:web:fca99b310846f035e4d62c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
+
+        if (currentUser && currentUser.role === 'admin') {
+            auth.signInAnonymously().catch(err => console.error("Ошибка Auth:", err));
+        }
+
+        function sanitizeKey(str) {
+            return str.replace(/[\.\#\$\[\]]/g, "_").toLowerCase().trim();
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function logAction(text) {
+            if (!currentUser) return;
+            let logId = Date.now();
+            let timeStr = new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow' });
+            database.ref('skyrim_logs/' + logId).set({
+                text: text,
+                author: currentUser.name,
+                time: timeStr
+            }).catch(err => console.error("Ошибка записи лога:", err));
+        }
+
+        window.checkEnter = function(event) {
+            if (event.key === "Enter") {
+                loginUser();
+            }
+        };
+
+        window.loginUser = function() {
+            let inputVal = document.getElementById('user-nickname-input').value;
+            let inputPass = document.getElementById('user-password-input').value;
+            let key = sanitizeKey(inputVal);
+            let errElem = document.getElementById('auth-error');
+            let submitBtn = document.getElementById('login-submit-btn');
+
+            if (!key) {
+                errElem.textContent = "Пожалуйста, введите никнейм.";
+                errElem.style.display = "block";
+                return;
+            }
+
+            submitBtn.disabled = true;
+            database.ref('allowed_users').once('value').then(snapshot => {
+                submitBtn.disabled = false;
+                let users = snapshot.val();
+
+                if (!users) {
+                    database.ref('allowed_users/арунин').set({ name: "Арунин", role: "admin", password: "" });
+                    users = { "арунин": { name: "Арунин", role: "admin", password: "" } };
+                }
+
+                if (users[key]) {
+                    let userRecord = users[key];
+                    if (userRecord.password && userRecord.password !== inputPass) {
+                        errElem.textContent = "Неверный пароль!";
+                        errElem.style.display = "block";
+                        return;
+                    }
+
+                    let userRole = (userRecord.role || 'reader').toLowerCase().trim();
+                    if (userRole === 'administrator') userRole = 'admin';
+
+                    currentUser = {
+                        key: key,
+                        name: userRecord.name || inputVal,
+                        role: userRole
+                    };
+                    sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
+
+                    if (currentUser.role === 'admin') {
+                        auth.signInAnonymously().then(() => {
+                            initUserSession();
+                        }).catch(err => {
+                            console.error("Ошибка авторизации в Firebase:", err);
+                            initUserSession();
+                        });
+                    } else {
+                        auth.signOut();
+                        initUserSession();
+                    }
+
+                } else {
+                    errElem.textContent = "Вашего ника нет в списке одобренных лиц!";
+                    errElem.style.display = "block";
+                }
+            }).catch(err => {
+                submitBtn.disabled = false;
+                console.error("Ошибка авторизации:", err);
+            });
+        };
+
+        window.logoutUser = function() {
+            auth.signOut();
+            sessionStorage.removeItem('skyrim_active_user');
+            currentUser = null;
+            location.reload();
+        };
+
+        function initUserSession() {
+            if (!currentUser) {
+                document.body.classList.remove('logged-in');
+                document.body.classList.remove('is-admin');
+                document.getElementById('auth-modal').style.display = 'flex';
+                document.getElementById('logout-btn').style.display = 'none';
+                document.getElementById('admin-panel-btn').style.display = 'none';
+                return;
+            }
+
+            document.body.classList.add('logged-in');
+            document.body.classList.toggle('is-admin', currentUser.role === 'admin');
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'block';
+
+            document.getElementById('current-user-name').textContent = currentUser.name;
+            document.getElementById('current-user-role').textContent = currentUser.role === 'admin' ? 'Администратор' : 'Читатель';
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('admin-panel-btn').style.display = 'block';
+                listenLogs();
+            } else {
+                document.getElementById('admin-panel-btn').style.display = 'none';
+            }
+
+            renderDiplomacyPanel();
+            renderMarkers();
+        }
+
+        window.openAdminModal = function() {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            loadUsersList();
+            document.getElementById('admin-users-modal').style.display = 'flex';
+        };
+
+        window.closeAdminModal = function() {
+            document.getElementById('admin-users-modal').style.display = 'none';
+        };
+
+        function loadUsersList() {
+            database.ref('allowed_users').once('value').then(snapshot => {
+                let users = snapshot.val() || {};
+                let container = document.getElementById('users-list-container');
+                container.innerHTML = '';
+
+                Object.keys(users).forEach(key => {
+                    let u = users[key];
+                    let uRole = (u.role || '').toLowerCase();
+                    let roleBadge = uRole === 'admin' ? '🛡️ Админ' : '📖 Читатель';
+                    let passStatus = u.password ? '🔒 с паролем' : '🔓 без пароля';
+                    let row = document.createElement('div');
+                    row.className = 'user-row';
+                    row.innerHTML = `
+                        <span><b>${escapeHTML(u.name)}</b> (${roleBadge}, ${passStatus})</span>
+                        ${key !== currentUser.key ? `<button class="del-user-btn" onclick="removeUser('${key}')">Удалить</button>` : ''}
+                    `;
+                    container.appendChild(row);
+                });
+            }).catch(err => console.error("Ошибка загрузки пользователей:", err));
+        }
+
+        window.addNewUser = function() {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            let nameInput = document.getElementById('new-user-name').value.trim();
+            let passInput = document.getElementById('new-user-password').value;
+            let roleInput = document.getElementById('new-user-role').value;
+            let submitBtn = document.getElementById('add-user-submit-btn');
+            
+            if (!nameInput) {
+                alert("Введите никнейм!");
+                return;
+            }
+            let key = sanitizeKey(nameInput);
+            submitBtn.disabled = true;
+
+            database.ref('allowed_users/' + key).set({
+                name: nameInput,
+                password: passInput,
+                role: roleInput
+            }).then(() => {
+                submitBtn.disabled = false;
+                document.getElementById('new-user-name').value = '';
+                document.getElementById('new-user-password').value = '';
+                loadUsersList();
+                logAction(`добавил(а) нового пользователя: ${nameInput} (${roleInput})`);
+            }).catch(err => {
+                submitBtn.disabled = false;
+                console.error("Ошибка добавления пользователя:", err);
+            });
+        };
+
+        window.removeUser = function(key) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            if (confirm("Точно удалить этого пользователя?")) {
+                database.ref('allowed_users/' + key).remove().then(() => {
+                    loadUsersList();
+                    logAction(`удалил(а) пользователя с ключом: ${key}`);
+                }).catch(err => console.error("Ошибка удаления пользователя:", err));
+            }
+        };
+
+        var mapWidth = 4096, mapHeight = 3072;
+        var buffer = 500; 
+        var maxBounds = [[-buffer, -buffer], [mapHeight + buffer, mapWidth + buffer]];
+
+        var map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: 0,
+            maxZoom: 4,
+            zoomSnap: 0.5,
+            maxBounds: maxBounds,
+            maxBoundsViscosity: 1.0,
+            zoomControl: false
+        });
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // ИНТЕГРАЦИЯ ТАЙЛОВ: подключаем тайлы из папки tiles
+        L.tileLayer('tiles/{z}/{x}/{y}.png', {
+            minZoom: 0,
+            maxZoom: 4,
+            tileSize: 256,
+            noWrap: true,
+            bounds: [[0, 0], [mapHeight, mapWidth]],
+            attribution: 'Skyrim Map'
+        }).addTo(map);
+
+        var bounds = [[0, 0], [mapHeight, mapWidth]];
+        map.fitBounds(bounds);
+
+        window.addEventListener('resize', function() {
+            map.invalidateSize();
+        });
+
+        function latLngToXY(lat, lng) {
+            let x = Math.round(lng - (mapWidth / 2));
+            let y = Math.round((mapHeight / 2) - lat);
+            return { x: x, y: y };
+        }
+
+        function xyToLatLng(x, y) {
+            let lng = x + (mapWidth / 2);
+            let lat = (mapHeight / 2) - y;
+            return [lat, lng];
+        }
+
+        const citiesList = [
+            { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.svg' },
+            { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath_undiscovered.svg' },
+            { type: 'markarth', name: 'Маркарт', icon: 'Markarth.svg' },
+            { type: 'morthal', name: 'Морфал', icon: 'Morthal.svg' },
+            { type: 'riften', name: 'Рифтен', icon: 'Riften_undiscovered.svg' },
+            { type: 'solitude', name: 'Солитьюд', icon: 'Solitude_undiscovered.svg' },
+            { type: 'whiterun', name: 'Вайтран', icon: 'Whiterun.svg' },
+            { type: 'windhelm', name: 'Виндхельм', icon: 'Windhelm.svg' },
+            { type: 'winterhold', name: 'Винтерхолд', icon: 'Winterhold.svg' }
+        ];
+
+        const categoriesList = [
+            { type: 'herb1', name: '🌿 Травы 1 ур', icon: 'Herbs1.png' },
+            { type: 'herb2', name: '🌿 Травы 2 ур', icon: 'Herbs2.png' },
+            { type: 'herb3', name: '🌿 Травы 3 ур', icon: 'Herbs3.png' },
+            { type: 'herb4', name: '🌿 Травы 4 ур', icon: 'Herbs4.png' },
+            { type: 'herb5', name: '🌿 Травы 5 ур', icon: 'Herbs5.png' },
+            { type: 'animal1', name: '🐾 Животные 1 ур', icon: 'Animals1.png' },
+            { type: 'animal2', name: '🐾 Животные 2 ур', icon: 'Animals2.png' },
+            { type: 'animal3', name: '🐾 Животные 3 ур', icon: 'Animals3.png' },
+            { type: 'animal4', name: '🐾 Животные 4 ур', icon: 'Animals4.png' },
+            { type: 'anomaly', name: '✨ Магические аномалии', icon: 'Magical Anomaly.png' },
+            { type: 'ruins', name: '🏛️ Нордские руины', icon: 'Nord Ruins.png' },
+            { type: 'dwarven_ruins', name: '⚙️ Двемерские руины', icon: 'Ruins.svg' }
+        ];
+
+        var cityStatuses = {};
+        var markersData = [];
+        var leafletMarkers = {};
+        var currentCreationPopup = null;
+
+        database.ref('skyrim_markers').on('value', snapshot => {
+            let data = snapshot.val();
+            let loadedMarkers = [];
+            if (data) {
+                Object.values(data).forEach(categoryObj => {
+                    if (typeof categoryObj === 'object' && categoryObj !== null) {
+                        loadedMarkers = loadedMarkers.concat(Object.values(categoryObj));
+                    }
+                });
+            }
+            markersData = loadedMarkers;
+            renderMarkers();
+        });
+
+        database.ref('city_statuses').on('value', snapshot => {
+            cityStatuses = snapshot.val() || {};
+            renderDiplomacyPanel();
+            renderMarkers();
+        });
+
+        function listenLogs() {
+            database.ref('skyrim_logs').limitToLast(20).on('value', snapshot => {
+                let logs = snapshot.val() || {};
+                let container = document.getElementById('logs-list-container');
+                container.innerHTML = '';
+
+                let logKeys = Object.keys(logs);
+                if (logKeys.length === 0) {
+                    container.innerHTML = '<div style="color: #666; font-style: italic;">Нет записей в истории</div>';
+                    return;
+                }
+
+                logKeys.sort((a, b) => b - a).forEach(k => {
+                    let log = logs[k];
+                    let div = document.createElement('div');
+                    div.className = 'log-item';
+                    div.innerHTML = `<span style="color: #73592c; font-size: 9px;">[${log.time}]</span> <b>${escapeHTML(log.author)}</b> ${escapeHTML(log.text)}`;
+                    container.appendChild(div);
+                });
+                container.scrollTop = container.scrollHeight;
+            }, error => {
+                console.error("Ошибка чтения логов:", error);
+                let container = document.getElementById('logs-list-container');
+                if (container) container.innerHTML = '<div style="color: #a83232;">Нет доступа к логам</div>';
+            });
+        }
+
+        map.on('zoomend', function() {
+            renderMarkers();
+        });
+
+        window.closeInfoPanel = function() {
+            var panel = document.getElementById('info-panel-box');
+            if (panel) panel.style.display = 'none';
+        };
+
+        window.toggleLeftPanel = function() {
+            var panel = document.getElementById('filter-panel-box');
+            var btn = panel.querySelector('.collapse-btn');
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                btn.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                btn.textContent = '+';
+            }
+        };
+
+        window.toggleRightPanel = function() {
+            var panel = document.getElementById('diplomacy-panel-box');
+            var btn = panel.querySelector('.collapse-btn');
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                btn.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                btn.textContent = '+';
+            }
+        };
+
+        window.toggleLogsPanel = function() {
+            var panel = document.getElementById('logs-panel-box');
+            var btn = panel.querySelector('.collapse-btn');
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                btn.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                btn.textContent = '+';
+            }
+        };
+
+        window.toggleSublist = function(arrowElement) {
+            var sublist = arrowElement.parentElement.nextElementSibling;
+            if (sublist.classList.contains('collapsed')) {
+                sublist.classList.remove('collapsed');
+                arrowElement.textContent = '▼';
+            } else {
+                sublist.classList.add('collapsed');
+                arrowElement.textContent = '▶';
+            }
+        };
+
+        window.toggleGroup = function(prefix, count, isChecked) {
+            for (let i = 1; i <= count; i++) {
+                let cb = document.getElementById('filter-' + prefix + i);
+                if (cb) cb.checked = isChecked;
+            }
+            renderMarkers();
+        };
+
+        function renderDiplomacyPanel() {
+            if (!currentUser) return;
+
+            var container = document.getElementById('diplomacy-list');
+            container.innerHTML = '';
+
+            citiesList.forEach(city => {
+                var currentStatus = cityStatuses[city.type] || 'neutral';
+                let cardGlowClass = 'diplo-card-' + currentStatus;
+                let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
+
+                let controlHTML = (currentUser.role === 'admin') ? `
+                    <select onchange="updateCityStatus('${city.type}', this.value, '${city.name}')">
+                        <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
+                        <option value='neutral' ${currentStatus === 'neutral' ? 'selected' : ''}>🟡 Нейтрал</option>
+                        <option value='enemy' ${currentStatus === 'enemy' ? 'selected' : ''}>🔴 Враг</option>
+                    </select>
+                ` : `<span style="font-size: 11px; font-weight: bold;">${statusText}</span>`;
+
+                var div = document.createElement('div');
+                div.className = 'city-diplo-item ' + cardGlowClass;
+                div.innerHTML = `
+                    <div class="city-info">
+                        <img src="${city.icon}" class="filter-icon" style="width: 14px; height: 14px;">
+                        <span><b>${city.name}</b></span>
+                    </div>
+                    ${controlHTML}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.updateCityStatus = function(cityType, newStatus, cityName) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            database.ref('city_statuses/' + cityType).set(newStatus).then(() => {
+                let statusRu = newStatus === 'ally' ? 'Союзник' : (newStatus === 'enemy' ? 'Враг' : 'Нейтрал');
+                logAction(`изменил(а) статус города "${cityName}" на "${statusRu}"`);
+            }).catch(err => console.error("Ошибка обновления статуса города:", err));
+        };
+
+        function getCustomIcon(type, status) {
+            let iconUrl = 'Herbs1.png';
+
+            if (type && type.startsWith('herb')) {
+                let level = type.replace('herb', '');
+                iconUrl = 'Herbs' + level + '.png';
+            } else if (type && type.startsWith('animal')) {
+                let level = type.replace('animal', '');
+                iconUrl = 'Animals' + level + '.png';
+            } else if (type === 'anomaly') {
+                iconUrl = 'Magical Anomaly.png';
+            } else if (type === 'ruins') {
+                iconUrl = 'Nord Ruins.png';
+            } else if (type === 'dwarven_ruins') {
+                iconUrl = 'Ruins.svg';
+            } else {
+                let foundCity = citiesList.find(c => c.type === type);
+                if (foundCity) iconUrl = foundCity.icon;
+            }
+
+            let currentStatus = status;
+            if (citiesList.some(c => c.type === type)) {
+                currentStatus = cityStatuses[type] || 'neutral';
+            }
+
+            let className = currentStatus ? 'color-' + currentStatus : '';
+            let currentZoom = map.getZoom(); 
+            let baseSize = 36 + (currentZoom * 10); 
+            if (baseSize < 20) baseSize = 20; 
+            if (baseSize > 80) baseSize = 80; 
+            let anchor = Math.round(baseSize / 2);
+
+            return L.icon({
+                iconUrl: iconUrl,
+                className: className,
+                iconSize: [baseSize, baseSize],      
+                iconAnchor: [anchor, anchor],    
+                popupAnchor: [0, -anchor]    
+            });
+        }
+
+        function renderMarkers() {
+            Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
+            leafletMarkers = {};
+
+            if (!currentUser) return;
+
+            markersData.forEach(loc => {
+                var filterCheckbox = document.getElementById('filter-' + loc.type);
+                if (filterCheckbox && !filterCheckbox.checked) return;
+
+                let latLng = xyToLatLng(loc.x, loc.y);
+
+                var marker = L.marker(latLng, { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
+                
+                var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${loc.type}', '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
+
+                var popupContent = `
+                    <div class='popup-title'>${escapeHTML(loc.name)}</div>
+                    <p style="margin: 4px 0;">${escapeHTML(loc.desc || '')}</p>
+                    <p style="font-size: 10px; color: #555; margin: 2px 0 4px 0;">👤 Поставил: <b>${escapeHTML(loc.author || 'Неизвестно')}</b></p>
+                    ${deleteBtnHTML}
+                `;
+                marker.bindPopup(popupContent);
+                leafletMarkers[loc.id] = marker;
+            });
+        }
+
+        const categoryTypes = [
+            'herb1', 'herb2', 'herb3', 'herb4', 'herb5', 
+            'animal1', 'animal2', 'animal3', 'animal4', 
+            'anomaly', 'ruins', 'dwarven_ruins'
+        ];
+
+        categoryTypes.forEach(type => {
+            var cb = document.getElementById('filter-' + type);
+            if (cb) cb.addEventListener('change', renderMarkers);
+        });
+
+        map.on('click', function(e) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+
+            var lat = e.latlng.lat, lng = e.latlng.lng;
+            if (lat < 0 || lat > mapHeight || lng < 0 || lng > mapWidth) return;
+
+            let coords = latLngToXY(lat, lng);
+
+            if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
+                map.closePopup(currentCreationPopup);
+                currentCreationPopup = null;
+                return;
+            }
+
+            let optionsHTML = '';
+            categoriesList.forEach(cat => {
+                optionsHTML += `<option value="${cat.type}" data-name="${cat.name}">${cat.name}</option>`;
+            });
+
+            var formContent = `
+                <div class='popup-title'>Новая метка (X: ${coords.x}, Y: ${coords.y})</div>
+                <div class='popup-form'>
+                    <label>Категория:</label>
+                    <select id='new-type'>${optionsHTML}</select>
+                    <label>Описание:</label>
+                    <input type='text' id='new-desc' placeholder='Примечания...' />
+                    <button onclick='addNewMarker(${coords.x}, ${coords.y})'>Сохранить метку</button>
+                </div>
+            `;
+
+            currentCreationPopup = L.popup({ closeOnClick: false })
+                .setLatLng([lat, lng])
+                .setContent(formContent)
+                .openOn(map);
+        });
+
+        map.on('popupclose', function(e) {
+            if (e.popup === currentCreationPopup) {
+                currentCreationPopup = null;
+            }
+        });
+
+        window.addNewMarker = function(x, y) {
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert("Отказано в доступе: у вас нет прав администратора для создания меток.");
+                return;
+            }
+
+            if (auth.currentUser === null) {
+                auth.signInAnonymously().then(() => {
+                    executeSaveMarker(x, y);
+                }).catch(err => {
+                    console.error("Полная ошибка auth:", err);
+                    alert("Firebase Auth Error: " + (err.message || JSON.stringify(err)));
+                });
+            } else {
+                executeSaveMarker(x, y);
+            }
+        };
+
+        function executeSaveMarker(x, y) {
+            var selectElement = document.getElementById('new-type');
+            var type = selectElement.value;
+            var selectedOption = selectElement.options[selectElement.selectedIndex];
+            var name = selectedOption.getAttribute('data-name');
+            var desc = document.getElementById('new-desc').value;
+
+            var newId = Date.now();
+            var newObj = {
+                id: newId,
+                name: name,
+                type: type,
+                x: x, 
+                y: y, 
+                desc: desc,
+                author: currentUser.name
+            };
+
+            database.ref('skyrim_markers/' + type + '/' + newId).set(newObj).then(() => {
+                map.closePopup();
+                currentCreationPopup = null;
+                logAction(`поставил(а) метку "${name}"`);
+            }).catch(err => {
+                console.error("Ошибка сохранения метки:", err);
+                alert("Не удалось сохранить метку! Проверьте правила Firebase.");
+            });
+        }
+
+        window.deleteMarker = function(id, type, markerName) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            database.ref('skyrim_markers/' + type + '/' + id).remove().then(() => {
+                map.closePopup();
+                logAction(`удалил(а) метку "${markerName}"`);
+            }).catch(err => {
+                console.error("Ошибка удаления метки:", err);
+                alert("Отказано в доступе.");
+            });
+        };
+
+        initUserSession();
+    </script>
+</body>
+</html>
