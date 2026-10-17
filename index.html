@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <!-- Иконка для вкладки браузера -->
-<link rel="icon" type="image/png" href="CollegeofWinterhold.png">
-
-<!-- Иконка для закладок на iOS / мобильных устройств -->
-<link rel="apple-touch-icon" href="CollegeofWinterhold.webp">
-
-<!-- Превью для соцсетей, мессенджеров (Open Graph) -->
-<meta property="og:image" content="CollegeofWinterhold.webp">
-<meta property="og:title" content="Интерактивная карта Скайрима">
-<meta property="og:description" content="Общая карта Скайрима с метками и синхронизацией в реальном времени.">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Карта Коллегии Винтерхолда</title>
+
+    <!-- Иконка для вкладки браузера -->
+    <link rel="icon" type="image/png" href="CollegeofWinterhold.png">
+
+    <!-- Иконка для закладок на iOS / мобильных устройств -->
+    <link rel="apple-touch-icon" href="https://klimutka.github.io/Map/CollegeofWinterhold.webp">
+
+    <!-- Превью для соцсетей и мессенджеров (Open Graph) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://klimutka.github.io/Map/">
+    <meta property="og:title" content="Карта Коллегии Винтерхолда">
+    <meta property="og:description" content="Общая интерактивная карта Скайрима с метками и синхронизацией в реальном времени.">
+    <meta property="og:image" content="https://klimutka.github.io/Map/CollegeofWinterhold.webp">
+
     <!-- Подключаем стили Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -1185,7 +1189,7 @@
             return L.icon({
                 iconUrl: iconUrl,
                 className: className,
-                iconSize: [baseSize, baseSize],      
+                iconSize: [baseSize, baseSize],     
                 iconAnchor: [anchor, anchor],    
                 popupAnchor: [0, -anchor]    
             });
