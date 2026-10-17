@@ -58,7 +58,6 @@
         }
 
         body:not(.logged-in) .filter-panel,
-        body:not(.logged-in) .diplomacy-panel,
         body:not(.logged-in) .info-panel,
         body:not(.logged-in) .logs-panel,
         body:not(.logged-in) .bottom-left-controls {
@@ -221,23 +220,12 @@
             position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 200px; max-height: 90vh; overflow-y: auto; font-size: 12px; color: #2c221e;
+            width: 220px; max-height: 90vh; overflow-y: auto; font-size: 12px; color: #2c221e;
             transition: width 0.2s, padding 0.2s;
         }
         .filter-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
         .filter-panel.collapsed .panel-content, .filter-panel.collapsed .panel-header h4 { display: none; }
         .filter-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
-
-        .diplomacy-panel {
-            position: absolute; top: 140px; right: 10px; z-index: 1000;
-            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
-            border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 240px; max-height: 65vh; overflow-y: auto; font-size: 12px; color: #2c221e;
-            transition: width 0.2s, padding 0.2s;
-        }
-        .diplomacy-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
-        .diplomacy-panel.collapsed .panel-content, .diplomacy-panel.collapsed .panel-header h4 { display: none; }
-        .diplomacy-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
 
         .city-diplo-item {
             display: flex; align-items: center; justify-content: space-between;
@@ -266,13 +254,13 @@
             position: absolute; bottom: 20px; right: 75px; z-index: 1000;
             background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
             border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 260px; max-height: 180px; font-size: 11px; color: #2c221e;
+            width: 260px; max-height: 200px; font-size: 11px; color: #2c221e;
             display: flex; flex-direction: column; transition: width 0.2s, padding 0.2s;
         }
-        .logs-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; }
+        .logs-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; height: 32px; }
         .logs-panel.collapsed .logs-content, .logs-panel.collapsed .panel-header h4 { display: none; }
         .logs-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
-        .logs-content { overflow-y: auto; max-height: 120px; margin-top: 4px; text-align: left; }
+        .logs-content { overflow-y: auto; max-height: 140px; margin-top: 4px; text-align: left; }
         .log-item { padding: 3px 0; border-bottom: 1px dashed #c2b292; word-break: break-word; }
         .log-item:last-child { border-bottom: none; }
 
@@ -342,7 +330,7 @@
     <div class="filter-panel" id="filter-panel-box">
         <div class="panel-header">
             <h4>Фильтры</h4>
-            <button class="collapse-btn" onclick="toggleLeftPanel()">−</button>
+            <button class="collapse-btn" onclick="toggleLeftPanel()">−}</button>
         </div>
         <div class="panel-content" id="filter-content">
             <div class="filter-group">
@@ -376,14 +364,26 @@
                 </div>
             </div>
 
-            <div class="filter-group" style="border: none; margin-bottom: 0; padding-bottom: 0;">
-                <div class="filter-group-header" style="margin-bottom: 4px;">
+            <div class="filter-group">
+                <div class="filter-group-header">
                     <span style="font-weight:bold; color: #3b2a1a;">📦 Разное</span>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
                 </div>
-                <div class="filter-sublist" style="margin-left: 0;">
+                <div class="filter-sublist">
                     <label><input type="checkbox" id="filter-anomaly" checked> <img src="Magical Anomaly.png" class="filter-icon"> Магические аномалии</label>
                     <label><input type="checkbox" id="filter-ruins" checked> <img src="Nord Ruins.png" class="filter-icon"> Нордские руины</label>
                     <label><input type="checkbox" id="filter-dwarven_ruins" checked> <img src="Ruins.svg" class="filter-icon"> Двемерские руины</label>
+                </div>
+            </div>
+
+            <!-- ПЕРЕНЕСЕННЫЙ БЛОК: Отношения с городами -->
+            <div class="filter-group" style="border: none; margin-bottom: 0; padding-bottom: 0;">
+                <div class="filter-group-header" style="margin-bottom: 4px;">
+                    <span style="font-weight:bold; color: #3b2a1a;">🏰 Отношения с городами</span>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
+                </div>
+                <div class="filter-sublist" style="margin-left: 0;">
+                    <div id="diplomacy-list"></div>
                 </div>
             </div>
         </div>
@@ -399,20 +399,11 @@
         <p style="margin: 3px 0;">• Синхронизация в реальном времени.</p>
     </div>
 
-    <div class="diplomacy-panel" id="diplomacy-panel-box">
-        <div class="panel-header">
-            <h4>Отношения с городами</h4>
-            <button class="collapse-btn" onclick="toggleRightPanel()">−</button>
-        </div>
-        <div class="panel-content" id="diplomacy-content">
-            <div id="diplomacy-list"></div>
-        </div>
-    </div>
-
+    <!-- ПАНЕЛЬ ИСТОРИИ ИЗМЕНЕНИЙ С ВОЗМОЖНОСТЬЮ СВЕРНУТЬ/РАЗВЕРНУТЬ -->
     <div class="logs-panel" id="logs-panel-box">
         <div class="panel-header">
             <h4>📜 История изменений</h4>
-            <button class="collapse-btn" onclick="toggleLogsPanel()">−</button>
+            <button class="collapse-btn" id="logs-collapse-btn" onclick="toggleLogsPanel()">−</button>
         </div>
         <div class="logs-content" id="logs-list-container">
             <div style="color: #666; font-style: italic;">Загрузка истории...</div>
@@ -665,7 +656,7 @@
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // ИНТЕГРАЦИЯ ТАЙЛОВ: подключаем тайлы из папки tiles
+        // Подключаем сетку тайлов из папки tiles
         L.tileLayer('tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
             maxZoom: 4,
@@ -794,21 +785,10 @@
             }
         };
 
-        window.toggleRightPanel = function() {
-            var panel = document.getElementById('diplomacy-panel-box');
-            var btn = panel.querySelector('.collapse-btn');
-            if (panel.classList.contains('collapsed')) {
-                panel.classList.remove('collapsed');
-                btn.textContent = '−';
-            } else {
-                panel.classList.add('collapsed');
-                btn.textContent = '+';
-            }
-        };
-
+        // ФУНКЦИЯ СВЕРТЫВАНИЯ / РАЗВЕРТЫВАНИЯ ИСТОРИИ ИЗМЕНЕНИЙ (БЕЗ ОЧИСТКИ ЛОГОВ)
         window.toggleLogsPanel = function() {
             var panel = document.getElementById('logs-panel-box');
-            var btn = panel.querySelector('.collapse-btn');
+            var btn = document.getElementById('logs-collapse-btn');
             if (panel.classList.contains('collapsed')) {
                 panel.classList.remove('collapsed');
                 btn.textContent = '−';
@@ -841,6 +821,7 @@
             if (!currentUser) return;
 
             var container = document.getElementById('diplomacy-list');
+            if (!container) return;
             container.innerHTML = '';
 
             citiesList.forEach(city => {
