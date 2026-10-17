@@ -677,27 +677,26 @@
             }
         };
 
-        // НАСТРОЙКИ КАРТЫ С СЕТЕВЫМ ШАБЛОНОМ /Map/tiles/{z}/{x}/{y}.png
+        // НАСТРОЙКИ КАРТЫ И ТАЙЛОВ
         var mapWidth = 4096, mapHeight = 3072;
 
         var map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: 0,
-            maxZoom: 4,
-            zoomSnap: 0.5,
-            maxBoundsViscosity: 1.0,
+            maxZoom: 6,
             zoomControl: false
         });
 
-        var bounds = [[-mapHeight, 0], [0, mapWidth]];
-        map.setMaxBounds(bounds);
+        // Границы карты в пикселях (4096х3072)
+        var bounds = [[0, 0], [mapHeight, mapWidth]];
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Стандартный надежный тайловый слой с абсолютным путем для GitHub Pages
+        // Стандартный компактный путь с абсолютным префиксом GitHub Pages и maxNativeZoom: 4
         L.tileLayer('/Map/tiles/{z}/{x}/{y}.png', {
             minZoom: 0,
-            maxZoom: 4,
+            maxZoom: 6,
+            maxNativeZoom: 4, // Останавливает запросы несуществующих тайлов выше 4-го зума
             tileSize: 256,
             noWrap: true,
             bounds: bounds,
@@ -713,13 +712,13 @@
         // ФУНКЦИИ ПЕРЕВОДА КООРДИНАТ ДЛЯ МЕТОК
         function latLngToXY(lat, lng) {
             let x = Math.round(lng);
-            let y = Math.round(-lat);
+            let y = Math.round(lat);
             return { x: x, y: y };
         }
 
         function xyToLatLng(x, y) {
             let lng = x;
-            let lat = -y;
+            let lat = y;
             return [lat, lng];
         }
 
