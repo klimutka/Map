@@ -675,12 +675,12 @@
             }
         };
 
-        // НАСТРОЙКА КАРТЫ И ГРАНИЦ СДВИГА
+        // НАСТРОЙКИ С УВЕЛИЧЕННЫМ МАКСИМАЛЬНЫМ ЗУМОМ (maxZoom: 6)
         var mapExtent = [0.00000000, -3072.00000000, 4096.00000000, 0.00000000];
         var mapMinZoom = 0;
-        var mapMaxZoom = 4;
+        var mapMaxZoom = 6;           // Увеличили зум карты, чтобы можно было приближать ближе
         var mapMaxResolution = 1.00000000;
-        var mapMinResolution = Math.pow(2, mapMaxZoom) * mapMaxResolution;
+        var mapMinResolution = Math.pow(2, 4) * mapMaxResolution; // База зума тайлов осталась на 4
         var tileExtent = [0.00000000, -3072.00000000, 4096.00000000, 0.00000000];
         var crs = L.CRS.Simple;
         crs.transformation = new L.Transformation(1, -tileExtent[0], -1, tileExtent[3]);
@@ -700,16 +700,18 @@
             maxZoom: mapMaxZoom,
             minZoom: mapMinZoom,
             crs: crs,
-            maxBounds: mapBounds,         // Запрещаем утягивать карту в темноту
-            maxBoundsViscosity: 1.0,      // Плотный упор в границы карты
+            maxBounds: mapBounds,
+            maxBoundsViscosity: 1.0,
             zoomControl: false
         });
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+        // Тайловый слой с maxNativeZoom: 4 (берет тайлы до 4 уровня и плавно увеличивает их дальше)
         L.tileLayer('/Map/tiles/{z}/{x}/{y}.png', {
             minZoom: mapMinZoom, 
             maxZoom: mapMaxZoom,
+            maxNativeZoom: 4, // Предельный зум физических файлов тайлов
             attribution: 'Skyrim Map',
             noWrap: true,
             tms: false
@@ -988,7 +990,6 @@
             var lat = e.latlng.lat, lng = e.latlng.lng;
             let coords = latLngToXY(lat, lng);
 
-            // КРИТИЧЕСКАЯ ПРОВЕРКА: за пределами пергамента метку ставить нельзя!
             if (coords.x < 0 || coords.x > 4096 || coords.y < -3072 || coords.y > 0) {
                 return;
             }
