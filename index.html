@@ -363,6 +363,7 @@
                 <label style="font-size: 11px; display: block; text-align: left; margin-top: 4px;">Желаемая роль:</label>
                 <select id="auth-role-select">
                     <option value="reader">📖 Читатель</option>
+                    <option value="editor">✏️ Редактор</option>
                     <option value="admin">🛡️ Администратор</option>
                 </select>
             </div>
@@ -374,7 +375,7 @@
     </div>
 
     <div id="admin-users-modal" class="auth-overlay" style="display: none;">
-        <div class="auth-card" style="width: 420px;">
+        <div class="auth-card" style="width: 440px;">
             <h3>Управление доступом</h3>
             
             <p style="font-size: 12px; margin-bottom: 4px; font-weight: bold; color: #a83232;">⏳ Заявки на регистрацию:</p>
@@ -676,7 +677,7 @@
                     };
                     sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
 
-                    if (currentUser.role === 'admin') {
+                    if (currentUser.role === 'admin' || currentUser.role === 'editor') {
                         auth.signInAnonymously().then(() => {
                             initUserSession();
                         }).catch(err => {
@@ -725,8 +726,12 @@
             document.getElementById('auth-modal').style.display = 'none';
             document.getElementById('logout-btn').style.display = 'block';
 
+            let roleNameRu = 'Читатель';
+            if (currentUser.role === 'admin') roleNameRu = 'Администратор';
+            if (currentUser.role === 'editor') roleNameRu = 'Редактор';
+
             document.getElementById('current-user-name').textContent = currentUser.name;
-            document.getElementById('current-user-role').textContent = currentUser.role === 'admin' ? 'Администратор' : 'Читатель';
+            document.getElementById('current-user-role').textContent = roleNameRu;
 
             setTimeout(function() {
                 map.invalidateSize();
@@ -772,11 +777,12 @@
                         roleControlHTML = `
                             <select class="user-role-select" onchange="updateUserRole('${key}', this.value, '${escapeHTML(u.name)}')">
                                 <option value="reader" ${uRole === 'reader' ? 'selected' : ''}>Читатель</option>
+                                <option value="editor" ${uRole === 'editor' ? 'selected' : ''}>Редактор</option>
                                 <option value="admin" ${uRole === 'admin' ? 'selected' : ''}>Админ</option>
                             </select>
                         `;
                     } else {
-                        roleControlHTML = uRole === 'admin' ? '🛡️ Админ' : '📖 Читатель';
+                        roleControlHTML = uRole === 'admin' ? '🛡️ Админ' : (uRole === 'editor' ? '✏️ Редактор' : '📖 Читатель');
                     }
 
                     let deleteBtnHTML = (!isProtected && key !== currentUser.key) ? `<button class="del-user-btn" onclick="removeUser('${key}', '${escapeHTML(u.name)}')">Удалить</button>` : '';
@@ -807,11 +813,14 @@
 
                 keys.forEach(key => {
                     let u = pending[key];
-                    let uRole = u.role === 'admin' ? '🛡️ Админ' : '📖 Читатель';
+                    let rLabel = '📖 Читатель';
+                    if (u.role === 'editor') rLabel = '✏️ Редактор';
+                    if (u.role === 'admin') rLabel = '🛡️ Админ';
+
                     let row = document.createElement('div');
                     row.className = 'user-row';
                     row.innerHTML = `
-                        <span><b>${escapeHTML(u.name)}</b> <span style="font-size: 10px; color: #555;">(${uRole})</span></span>
+                        <span><b>${escapeHTML(u.name)}</b> <span style="font-size: 10px; color: #555;">(${rLabel})</span></span>
                         <div>
                             <button class="approve-user-btn" onclick="approveUser('${key}', '${escapeHTML(u.name)}')">Принять</button>
                             <button class="del-user-btn" onclick="rejectUser('${key}')">Отклонить</button>
@@ -830,7 +839,7 @@
                 return;
             }
             database.ref('allowed_users/' + key + '/role').set(newRole).then(() => {
-                let roleRu = newRole === 'admin' ? 'Администратор' : 'Читатель';
+                let roleRu = newRole === 'admin' ? 'Администратор' : (newRole === 'editor' ? 'Редактор' : 'Читатель');
                 logAction(`изменил(а) роль пользователя "${userName}" на "${roleRu}"`);
             });
         };
@@ -1071,6 +1080,7 @@
                 let cardGlowClass = 'diplo-card-' + currentStatus;
                 let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
 
+                // Только администратор может менять отношения с городами (редактор не может)
                 let controlHTML = (currentUser.role === 'admin') ? `
                     <select onchange="updateCityStatus('${city.type}', this.value, '${city.name}')">
                         <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
@@ -1155,7 +1165,8 @@
 
                 var marker = L.marker(latLng, { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
                 
-                var deleteBtnHTML = (currentUser.role === 'admin') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${loc.type}', '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
+                // И админ, и редактор могут удалять метки
+                var deleteBtnHTML = (currentUser.role === 'admin' || currentUser.role === 'editor') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${loc.type}', '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
 
                 var popupContent = `
                     <div class='popup-title'>${escapeHTML(loc.name)}</div>
@@ -1180,7 +1191,8 @@
         });
 
         map.on('click', function(e) {
-            if (!currentUser || currentUser.role !== 'admin') return;
+            // И админ, и редактор могут ставить метки
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) return;
 
             var lat = e.latlng.lat, lng = e.latlng.lng;
             let coords = latLngToXY(lat, lng);
@@ -1224,17 +1236,16 @@
         });
 
         window.addNewMarker = function(x, y) {
-            if (!currentUser || currentUser.role !== 'admin') {
-                alert("Отказано в доступе: у вас нет прав администратора для создания меток.");
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) {
+                alert("Отказано в доступе: у вас нет прав для создания меток.");
                 return;
             }
 
-            if (auth.currentUser === null) {
+            if (auth.currentUser === null && currentUser.role === 'admin') {
                 auth.signInAnonymously().then(() => {
                     executeSaveMarker(x, y);
                 }).catch(err => {
-                    console.error("Полная ошибка auth:", err);
-                    alert("Firebase Auth Error: " + (err.message || JSON.stringify(err)));
+                    executeSaveMarker(x, y);
                 });
             } else {
                 executeSaveMarker(x, y);
@@ -1270,7 +1281,7 @@
         }
 
         window.deleteMarker = function(id, type, markerName) {
-            if (!currentUser || currentUser.role !== 'admin') return;
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) return;
             database.ref('skyrim_markers/' + type + '/' + id).remove().then(() => {
                 map.closePopup();
                 logAction(`удалил(а) метку "${markerName}"`);
