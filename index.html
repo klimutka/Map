@@ -344,7 +344,7 @@
                 <button class="auth-btn-tab" id="tab-reg-btn" onclick="switchTab('reg')">Регистрация</button>
             </div>
             
-            <p style="font-size: 11px; margin: 6px 0;">Введите ник и пароль:</p>
+            <p style="font-size: 11px; margin: 6px 0;" id="auth-instruction">Введите ник и пароль:</p>
             <input type="text" id="auth-name-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
             <input type="password" id="auth-pass-input" placeholder="Пароль..." onkeydown="checkEnter(event)" />
             
@@ -478,7 +478,7 @@
         const auth = firebase.auth();
 
         let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
-        let currentAuthMode = 'login'; // 'login' или 'reg'
+        let currentAuthMode = 'login';
 
         if (currentUser && currentUser.role === 'admin') {
             auth.signInAnonymously().catch(err => console.error("Ошибка Auth:", err));
@@ -549,7 +549,7 @@
             }
         };
 
-        // Регистрация
+        // Регистрация с сохранением в pending_users
         window.registerUser = async function() {
             let nameInput = document.getElementById('auth-name-input').value.trim();
             let passInput = document.getElementById('auth-pass-input').value;
@@ -588,15 +588,22 @@
                         role: 'reader'
                     }).then(() => {
                         submitBtn.disabled = false;
-                        alert("Заявка успешно отправлена! Ожидайте подтверждения администратора.");
                         document.getElementById('auth-name-input').value = '';
                         document.getElementById('auth-pass-input').value = '';
+                        
+                        // Выводим красивое сообщение о том, что заявка принята
+                        alert("Ваша заявка принята, ожидайте подтверждения администратора.");
                         switchTab('login');
+                    }).catch(err => {
+                        submitBtn.disabled = false;
+                        console.error("Ошибка записи заявки:", err);
+                        errElem.textContent = "Ошибка сети при отправке заявки.";
+                        errElem.style.display = "block";
                     });
                 });
             }).catch(err => {
                 submitBtn.disabled = false;
-                console.error("Ошибка регистрации:", err);
+                console.error("Ошибка проверки пользователя:", err);
             });
         };
 
