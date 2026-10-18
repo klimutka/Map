@@ -9,14 +9,18 @@
     <link rel="icon" type="image/png" href="CollegeofWinterhold.png">
 
     <!-- Иконка для закладок на iOS / мобильных устройств -->
-    <link rel="apple-touch-icon" href="https://klimutka.github.io/Map/CollegeofWinterhold.webp">
+    <link rel="apple-touch-icon" href="https://klimutka.github.io/Map/CollegeofWinterhold.png">
 
     <!-- Превью для соцсетей и мессенджеров (Open Graph) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://klimutka.github.io/Map/">
     <meta property="og:title" content="Карта Коллегии Винтерхолда">
     <meta property="og:description" content="Общая интерактивная карта Скайрима с метками и синхронизацией в реальном времени.">
-    <meta property="og:image" content="https://klimutka.github.io/Map/CollegeofWinterhold.webp">
+    <meta property="og:image" content="https://klimutka.github.io/Map/CollegeofWinterhold.png">
+
+    <!-- Дополнительно для Telegram и Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://klimutka.github.io/Map/CollegeofWinterhold.png">
 
     <!-- Подключаем стили Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -516,6 +520,24 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const auth = firebase.auth();
+
+        // --- МОНИТОРИНГ И ВОССТАНОВЛЕНИЕ СОЕДИНЕНИЯ С БД ---
+        const connectedRef = database.ref(".info/connected");
+        connectedRef.on("value", function(snap) {
+            if (snap.val() === true) {
+                console.log("Соединение с базой данных установлено.");
+            } else {
+                console.log("Соединение с базой данных потеряно. Ожидание восстановления...");
+            }
+        });
+
+        // Автоматическое восстановление анонимного входа при обрыве токена Auth
+        auth.onAuthStateChanged(user => {
+            if (!user && currentUser && (currentUser.role === 'admin' || currentUser.role === 'editor')) {
+                auth.signInAnonymously().catch(err => console.error("Ошибка восстановления сессии Auth:", err));
+            }
+        });
+        // --------------------------------------------------
 
         let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
         let currentAuthMode = 'login';
