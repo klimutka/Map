@@ -1,0 +1,3556 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта Коллегии Винтерхолда — Atlas v7</title>
+
+    <!-- Иконка для вкладки браузера -->
+    <link rel="icon" type="image/png" href="CollegeofWinterhold.png">
+
+    <!-- Иконка для закладок на iOS / мобильных устройств -->
+    <link rel="apple-touch-icon" href="https://klimutka.github.io/Map/CollegeofWinterhold.webp">
+
+    <!-- Превью для соцсетей и мессенджеров (Open Graph) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://klimutka.github.io/Map/">
+    <meta property="og:title" content="Карта Коллегии Винтерхолда">
+    <meta property="og:description" content="Общая интерактивная карта Скайрима с метками и синхронизацией в реальном времени.">
+    <meta property="og:image" content="https://klimutka.github.io/Map/CollegeofWinterhold.webp">
+
+    <!-- Подключаем стили Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #241b14;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100vw;
+            height: 100vh;
+            background-color: #241b14;
+        }
+
+        .leaflet-container {
+            background: #241b14 !important;
+        }
+
+        .leaflet-control-zoom {
+            border: 2px solid #5a4521 !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+        }
+        .leaflet-control-zoom a {
+            background-color: #f4ebd0 !important;
+            color: #2c221e !important;
+            font-family: 'Georgia', serif !important;
+            font-weight: bold !important;
+            border-bottom: 1px solid #5a4521 !important;
+        }
+        .leaflet-control-zoom a:hover {
+            background-color: #e8dbbc !important;
+            color: #3b2a1a !important;
+        }
+        .leaflet-control-zoom-in {
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+        }
+        .leaflet-control-zoom-out {
+            border-bottom-left-radius: 2px;
+            border-bottom-right-radius: 2px;
+            border-bottom: none !important;
+        }
+
+        body:not(.logged-in) .filter-panel,
+        body:not(.logged-in) .info-panel,
+        body:not(.logged-in) .logs-panel,
+        body:not(.logged-in) .bottom-left-controls {
+            display: none !important;
+        }
+
+        body:not(.is-admin) .logs-panel {
+            display: none !important;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-card {
+            background: #f4ebd0;
+            border: 3px solid #5a4521;
+            padding: 25px;
+            border-radius: 8px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            color: #2c221e;
+        }
+        .auth-card h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #5a4521;
+            padding-bottom: 8px;
+        }
+        .auth-card input, .auth-card select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #5a4521;
+            border-radius: 4px;
+            font-family: 'Georgia', serif;
+            background: #fff;
+        }
+        .auth-card button {
+            background: #5a4521;
+            color: #f4ebd0;
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .auth-card button:hover {
+            background: #73592c;
+        }
+        .btn-secondary {
+            background: #8c7355 !important;
+        }
+        .btn-secondary:hover {
+            background: #5a4521 !important;
+        }
+
+        .bottom-left-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .map-control-btn {
+            background: #5a4521;
+            color: #f4ebd0;
+            border: 2px solid #3b2a1a;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-size: 13px;
+            text-align: left;
+        }
+        .map-control-btn:hover {
+            background: #73592c;
+        }
+
+        .users-list {
+            max-height: 140px;
+            overflow-y: auto;
+            text-align: left;
+            background: #e8dbbc;
+            padding: 6px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        .user-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px dashed #5a4521;
+        }
+        .user-row:last-child {
+            border-bottom: none;
+        }
+        .del-user-btn {
+            background: #a83232;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .approve-user-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-right: 4px;
+        }
+        .user-role-select {
+            font-family: 'Georgia', serif;
+            font-size: 11px;
+            padding: 2px;
+            background: #f4ebd0;
+            border: 1px solid #5a4521;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 10px; right: 10px;
+            z-index: 1000;
+            background: #f4ebd0;
+            border: 2px solid #5a4521;
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 250px;
+            font-size: 12px;
+            color: #2c221e;
+        }
+        .info-panel .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #5a4521; padding-bottom: 2px; margin-bottom: 4px;
+        }
+        .close-btn {
+            background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
+            width: 18px; height: 18px; cursor: pointer; font-weight: bold; font-size: 11px;
+        }
+
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #5a4521; padding-bottom: 2px; margin-bottom: 6px;
+        }
+        .panel-header h4 {
+            margin: 0; font-size: 13px; border: none; padding: 0; white-space: nowrap;
+        }
+        .collapse-btn {
+            background: #5a4521; color: #f4ebd0; border: none; border-radius: 3px;
+            width: 18px; height: 18px; cursor: pointer; font-weight: bold; font-size: 10px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .collapse-btn:hover { background: #73592c; }
+
+        .filter-panel {
+            position: absolute; top: 10px; left: 10px; z-index: 1000;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
+            border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 255px; 
+            max-height: 70vh; 
+            overflow-y: auto; 
+            font-size: 12px; color: #2c221e;
+            transition: all 0.25s ease-in-out;
+        }
+        .filter-panel.collapsed {
+            width: 32px;
+            height: 240px;
+            padding: 8px 2px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .filter-panel.collapsed .panel-content, 
+        .filter-panel.collapsed .panel-header h4 { 
+            display: none; 
+        }
+        .filter-panel.collapsed .panel-header { 
+            border: none; 
+            margin: 0; 
+            padding: 0; 
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .vertical-title {
+            display: none;
+            width: 16px;
+            word-break: break-all;
+            line-height: 1.1;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 12px;
+            color: #5a4521;
+            margin-top: 10px;
+            user-select: none;
+            text-align: center;
+        }
+        .filter-panel.collapsed .vertical-title {
+            display: block;
+        }
+
+        .city-diplo-item {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 4px; background: #e8dbbc; padding: 3px 6px; border-radius: 4px;
+        }
+        .city-info { display: flex; align-items: center; gap: 4px; }
+        .city-diplo-item select {
+            font-family: 'Georgia', serif; font-size: 11px; padding: 1px;
+            background: #f4ebd0; border: 1px solid #5a4521; cursor: pointer;
+        }
+
+        .filter-group { margin-bottom: 6px; border-bottom: 1px dashed #5a4521; padding-bottom: 4px; }
+        .filter-group-header {
+            display: flex; align-items: center; justify-content: space-between;
+            font-weight: bold; cursor: pointer; user-select: none; padding: 1px 0;
+        }
+        .toggle-arrow { font-size: 9px; transition: transform 0.2s; display: inline-block; }
+        .filter-sublist { margin-left: 14px; margin-top: 3px; display: block; }
+        .filter-sublist.collapsed { display: none; }
+        .filter-panel label {
+            display: flex; align-items: center; margin-bottom: 3px; cursor: pointer; user-select: none; font-size: 11px;
+        }
+        .filter-icon { width: 16px; height: 16px; margin-right: 5px; vertical-align: middle; object-fit: contain; }
+
+        .logs-panel {
+            position: absolute; bottom: 20px; right: 75px; z-index: 1000;
+            background: #f4ebd0; border: 2px solid #5a4521; padding: 8px 10px;
+            border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 260px; max-height: 200px; font-size: 11px; color: #2c221e;
+            display: flex; flex-direction: column; transition: width 0.2s, padding 0.2s;
+        }
+        .logs-panel.collapsed { width: 32px; padding: 8px 4px; overflow: hidden; height: 32px; }
+        .logs-panel.collapsed .logs-content, .logs-panel.collapsed .panel-header h4 { display: none; }
+        .logs-panel.collapsed .panel-header { border: none; margin: 0; padding: 0; justify-content: center; }
+        .logs-content { overflow-y: auto; max-height: 140px; margin-top: 4px; text-align: left; }
+        .log-item { padding: 3px 0; border-bottom: 1px dashed #c2b292; word-break: break-word; }
+        .log-item:last-child { border-bottom: none; }
+
+        @keyframes pulse-card-ally { 0% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } 50% { box-shadow: 0 0 8px rgba(46, 204, 113, 0.85); } 100% { box-shadow: 0 0 3px rgba(46, 204, 113, 0.4); } }
+        @keyframes pulse-card-neutral { 0% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } 50% { box-shadow: 0 0 8px rgba(241, 196, 15, 0.85); } 100% { box-shadow: 0 0 3px rgba(241, 196, 15, 0.4); } }
+        @keyframes pulse-card-enemy { 0% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } 50% { box-shadow: 0 0 8px rgba(231, 76, 60, 0.85); } 100% { box-shadow: 0 0 3px rgba(231, 76, 60, 0.4); } }
+
+        .diplo-card-ally { animation: pulse-card-ally 2.5s infinite; border: 1px solid #2ecc71; }
+        .diplo-card-neutral { animation: pulse-card-neutral 2.5s infinite; border: 1px solid #f1c40f; }
+        .diplo-card-enemy { animation: pulse-card-enemy 2.5s infinite; border: 1px solid #e74c3c; }
+
+        .color-ally { filter: invert(48%) sepia(79%) saturate(382%) hue-rotate(86deg) brightness(98%) contrast(92%); }
+        .color-neutral { filter: invert(74%) sepia(85%) saturate(848%) hue-rotate(359deg) brightness(103%) contrast(93%); }
+        .color-enemy { filter: invert(27%) sepia(85%) saturate(2284%) hue-rotate(345deg) brightness(97%) contrast(92%); }
+
+        .leaflet-popup-content-wrapper { background: #f4ebd0; border: 2px solid #5a4521; border-radius: 4px; color: #2c221e; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .leaflet-popup-tip { background: #f4ebd0; }
+        .popup-title { font-weight: bold; font-size: 14px; border-bottom: 1px solid #5a4521; margin-bottom: 4px; padding-bottom: 3px; color: #3b2a1a; }
+        .popup-form input, .popup-form select {
+            width: 100%; margin-bottom: 5px; padding: 4px; box-sizing: border-box; font-family: 'Georgia', serif; background: #fff; border: 1px solid #5a4521; border-radius: 3px; font-size: 12px;
+        }
+        .popup-form button {
+            background: #5a4521; color: #f4ebd0; border: none; padding: 5px 8px; cursor: pointer; width: 100%; font-weight: bold; border-radius: 3px; font-size: 12px;
+        }
+        .popup-form button:hover { background: #73592c; }
+        .btn-delete { background: #a83232 !important; margin-top: 4px; color: #fff; border: none; padding: 4px; cursor: pointer; width: 100%; border-radius: 3px; font-size: 11px; }
+        .btn-delete:hover { background: #c94040 !important; }
+        
+        .auth-buttons-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .auth-btn-tab { flex: 1; background: #8c7355; color: #f4ebd0; border: 2px solid #5a4521; padding: 8px; font-weight: bold; cursor: pointer; font-family: 'Georgia', serif; font-size: 13px; border-radius: 4px; }
+        .auth-btn-tab.active { background: #5a4521; border-color: #3b2a1a; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        
+        .reg-extra-fields { display: none; }
+    
+        /* Nordic atlas polish: restrained ink, engraved borders and clearer controls */
+        :root {
+            --atlas-ink: #30251b;
+            --atlas-paper: #f1e6c9;
+            --atlas-paper-light: #fbf4e3;
+            --atlas-line: #80643a;
+            --atlas-shadow: 0 5px 18px rgba(0,0,0,.42);
+        }
+        .filter-panel, .info-panel, .logs-panel, .auth-card {
+            background: linear-gradient(145deg, var(--atlas-paper-light), var(--atlas-paper)) !important;
+            border: 2px solid var(--atlas-line) !important;
+            border-radius: 3px !important;
+            box-shadow: var(--atlas-shadow), inset 0 0 0 1px rgba(255,255,255,.42) !important;
+            color: var(--atlas-ink);
+        }
+        .panel-header {
+            border-bottom: 1px solid rgba(128,100,58,.75) !important;
+            padding-bottom: 7px !important;
+            margin-bottom: 8px !important;
+        }
+        .panel-header h4 {
+            letter-spacing: .035em;
+            text-transform: uppercase;
+        }
+        .filter-group { border-bottom-color: rgba(128,100,58,.48) !important; }
+        .filter-group-header { padding: 4px 2px !important; }
+        .filter-group-header:hover, .filter-panel label:hover {
+            color: #765323;
+        }
+        .filter-panel label {
+            min-height: 25px;
+            padding: 2px 4px;
+            border-radius: 2px;
+            gap: 2px;
+        }
+        .filter-panel label:hover { background: rgba(138,107,56,.11); }
+        .filter-icon {
+            width: 20px !important;
+            height: 20px !important;
+            margin-right: 7px !important;
+            filter: drop-shadow(0 1px 0 rgba(255,255,255,.65));
+        }
+        .map-control-btn, .collapse-btn, .close-btn {
+            border: 1px solid #9a7841 !important;
+            border-radius: 3px !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,.25);
+            transition: background .15s ease, transform .15s ease;
+        }
+        .map-control-btn:hover, .collapse-btn:hover, .close-btn:hover {
+            transform: translateY(-1px);
+        }
+        .auth-card input:focus, .auth-card select:focus,
+        .filter-panel input:focus-visible, button:focus-visible, select:focus-visible {
+            outline: 2px solid #a47c39;
+            outline-offset: 2px;
+        }
+        
+        /* Стилизация виджета переключения слоев Leaflet под общую тему */
+        .leaflet-control-layers {
+            background: linear-gradient(145deg, var(--atlas-paper-light), var(--atlas-paper)) !important;
+            border: 2px solid var(--atlas-line) !important;
+            border-radius: 3px !important;
+            box-shadow: var(--atlas-shadow), inset 0 0 0 1px rgba(255,255,255,.42) !important;
+            color: var(--atlas-ink) !important;
+            font-family: 'Georgia', serif !important;
+            padding: 6px 10px !important;
+        }
+        .leaflet-control-layers-expanded {
+            background: linear-gradient(145deg, var(--atlas-paper-light), var(--atlas-paper)) !important;
+            color: var(--atlas-ink) !important;
+        }
+        .leaflet-control-layers label {
+            font-family: 'Georgia', serif !important;
+            font-size: 12px !important;
+            color: var(--atlas-ink) !important;
+            cursor: pointer;
+        }
+        .leaflet-control-layers input[type="radio"] {
+            accent-color: #80643a;
+        }
+
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: var(--atlas-paper-light);
+            color: var(--atlas-ink);
+            border: 1px solid var(--atlas-line);
+            border-radius: 3px;
+            box-shadow: var(--atlas-shadow);
+        }
+        .leaflet-popup-content { font-family: Georgia, serif; }
+        .leaflet-control-attribution {
+            background: rgba(241,230,201,.82) !important;
+            color: #59452b !important;
+        }
+        @media (max-width: 700px) {
+            .filter-panel {
+                top: 8px !important; left: 8px !important;
+                width: min(220px, calc(100vw - 32px)) !important;
+                max-height: min(58vh, 470px) !important;
+                padding: 8px !important;
+                font-size: 12px !important;
+            }
+            .info-panel {
+                top: 8px !important; right: 8px !important;
+                max-width: min(190px, calc(100vw - 260px)) !important;
+                font-size: 11px !important;
+            }
+            .bottom-left-controls {
+                left: 8px !important; bottom: 12px !important;
+                gap: 6px !important;
+                max-width: 48vw;
+            }
+            .map-control-btn {
+                padding: 7px 9px !important;
+                font-size: 11px !important;
+            }
+            .logs-panel {
+                right: 8px !important; bottom: 12px !important;
+                width: min(220px, 48vw) !important;
+                max-height: 150px !important;
+            }
+            .logs-panel.collapsed { width: 32px !important; }
+            .leaflet-control-zoom { margin-right: 8px !important; margin-bottom: 8px !important; }
+        }
+        @media (max-width: 420px) {
+            .info-panel { max-width: 145px !important; }
+            .filter-panel { max-height: 52vh !important; }
+            .logs-panel:not(.collapsed) { width: 46vw !important; }
+        }
+
+
+        /* Уровни ресурсов: контрастные цветовые печати с номером уровня */
+        .tier-marker { position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border:2px solid var(--tier-color); border-radius:50% 50% 50% 4px; background:rgba(249,241,218,.96); box-shadow:0 2px 7px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.75); transform:rotate(-45deg); }
+        .tier-marker img { width:23px; height:23px; object-fit:contain; transform:rotate(45deg); filter:drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+        .tier-marker .tier-number { position:absolute; right:-5px; top:-6px; min-width:16px; height:16px; padding:0 2px; box-sizing:border-box; border-radius:50%; background:var(--tier-color); color:#fff; border:1px solid #f8efd8; font: bold 10px/14px Georgia,serif; text-align:center; transform:rotate(45deg); }
+        .tier-herb-1,.tier-animal-1 { --tier-color:#477b45; }
+        .tier-herb-2,.tier-animal-2 { --tier-color:#278b82; }
+        .tier-herb-3,.tier-animal-3 { --tier-color:#3974bd; }
+        .tier-herb-4,.tier-animal-4 { --tier-color:#8052a5; }
+        .tier-herb-5 { --tier-color:#b34a35; }
+        .tier-legend { display:flex; flex-wrap:wrap; gap:5px 9px; padding:7px 6px; margin:5px 0 8px; background:rgba(128,100,58,.09); border:1px solid rgba(128,100,58,.35); border-radius:3px; }
+        .tier-legend-item { display:flex; align-items:center; gap:4px; font-size:10px; white-space:nowrap; }
+        .tier-dot { width:10px; height:10px; border-radius:50%; background:var(--tier-color); border:1px solid rgba(0,0,0,.2); }
+        .map-tools { margin:0 0 9px; padding:7px; background:rgba(128,100,58,.10); border:1px solid rgba(128,100,58,.35); border-radius:3px; }
+        .map-search { width:100%; box-sizing:border-box; padding:7px 8px; border:1px solid #9a8054; border-radius:3px; background:#fffaf0; color:#30251b; font:12px Georgia,serif; }
+        .map-tools-row { display:flex; gap:5px; margin-top:6px; }
+        .map-tools button { flex:1; padding:5px 4px; border:1px solid #80643a; border-radius:3px; background:#e5d5b2; color:#30251b; font:11px Georgia,serif; cursor:pointer; }
+        .map-tools button:hover { background:#d8c397; }
+        .map-result-count { margin-top:5px; font-size:10px; color:#665238; }
+        .filter-panel label { gap:5px; }
+        .filter-panel input[type=checkbox] { accent-color:#80643a; flex-shrink:0; }
+        @media (max-width:700px) { .tier-marker { width:30px;height:30px; } .tier-marker img {width:20px;height:20px;} }
+
+    
+        /* ==========================================================
+           WINTERHOLD ATLAS — visual refinement (layout/logic unchanged)
+           ========================================================== */
+        :root {
+            --atlas-ink: #2b2118;
+            --atlas-ink-soft: #66523a;
+            --atlas-paper: #f0e4c4;
+            --atlas-paper-light: #fbf3df;
+            --atlas-paper-deep: #e4d2aa;
+            --atlas-bronze: #8a6836;
+            --atlas-bronze-dark: #5a421f;
+            --atlas-bronze-soft: rgba(138,104,54,.30);
+            --atlas-shadow: 0 10px 28px rgba(0,0,0,.38), 0 2px 7px rgba(0,0,0,.22);
+        }
+
+        html, body {
+            color: var(--atlas-ink);
+            background: #211810;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #map, .leaflet-container {
+            background: radial-gradient(ellipse at 50% 42%, #403020 0%, #2a1f16 68%, #1c140e 100%) !important;
+        }
+
+        /* Shared parchment panels */
+        .filter-panel, .info-panel, .logs-panel, .auth-card {
+            color: var(--atlas-ink) !important;
+            background: linear-gradient(155deg, rgba(255,249,232,.98), rgba(239,225,190,.97)) !important;
+            border: 1px solid #9b7843 !important;
+            border-radius: 7px !important;
+            box-shadow: var(--atlas-shadow), inset 0 0 0 1px rgba(255,255,255,.72), inset 0 0 0 3px rgba(138,104,54,.08) !important;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .filter-panel {
+            top: 16px !important;
+            left: 16px !important;
+            width: 286px !important;
+            max-height: calc(100vh - 32px) !important;
+            padding: 11px 12px 12px !important;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #a48755 rgba(138,104,54,.10);
+            transition: width .22s ease, padding .22s ease, box-shadow .22s ease;
+        }
+        .filter-panel:hover { box-shadow: 0 13px 32px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.72) !important; }
+        .filter-panel::-webkit-scrollbar, .logs-content::-webkit-scrollbar, .users-list::-webkit-scrollbar { width: 7px; }
+        .filter-panel::-webkit-scrollbar-track, .logs-content::-webkit-scrollbar-track, .users-list::-webkit-scrollbar-track { background: rgba(138,104,54,.09); border-radius: 8px; }
+        .filter-panel::-webkit-scrollbar-thumb, .logs-content::-webkit-scrollbar-thumb, .users-list::-webkit-scrollbar-thumb { background: #b49a6c; border: 1px solid rgba(255,255,255,.6); border-radius: 8px; }
+
+        .panel-header {
+            align-items: center !important;
+            border-bottom: 1px solid rgba(119,87,42,.42) !important;
+            padding: 0 0 9px !important;
+            margin: 0 0 9px !important;
+            gap: 10px;
+        }
+        .panel-header h4 {
+            color: #3a2b1c;
+            font-size: 12px !important;
+            letter-spacing: .11em !important;
+            font-weight: 700;
+        }
+        .collapse-btn, .close-btn {
+            width: 22px !important;
+            height: 22px !important;
+            min-width: 22px;
+            border: 1px solid #a18450 !important;
+            border-radius: 5px !important;
+            color: #f8efd9 !important;
+            background: linear-gradient(150deg, #76572d, #493319) !important;
+            box-shadow: 0 2px 5px rgba(50,35,16,.25) !important;
+            transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+        }
+        .collapse-btn:hover, .close-btn:hover { transform: translateY(-1px); filter: brightness(1.14); box-shadow: 0 4px 8px rgba(50,35,16,.28) !important; }
+
+        /* Filter tools */
+        .map-tools {
+            margin: 0 0 10px !important;
+            padding: 9px !important;
+            background: linear-gradient(145deg, rgba(222,203,161,.42), rgba(255,250,235,.52)) !important;
+            border: 1px solid rgba(138,104,54,.40) !important;
+            border-radius: 6px !important;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,.65);
+        }
+        .map-search {
+            padding: 9px 10px !important;
+            border: 1px solid #b59a6c !important;
+            border-radius: 5px !important;
+            background: rgba(255,252,242,.96) !important;
+            color: var(--atlas-ink) !important;
+            font: 12px Georgia, serif !important;
+            box-shadow: inset 0 1px 2px rgba(60,43,20,.07);
+        }
+        .map-search::placeholder { color: #927c59; opacity: 1; }
+        .map-search:focus { outline: 2px solid rgba(164,124,57,.28) !important; border-color: #97713a !important; }
+        .map-tools-row { gap: 7px !important; margin-top: 7px !important; }
+        .map-tools button {
+            min-height: 29px;
+            padding: 6px 7px !important;
+            border: 1px solid #9e7d49 !important;
+            border-radius: 5px !important;
+            background: linear-gradient(180deg, #f8edcf, #e5d2a8) !important;
+            color: #3a2a19 !important;
+            font: 11px Georgia, serif !important;
+            box-shadow: 0 1px 2px rgba(65,44,18,.12);
+            transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+        }
+        .map-tools button:hover { background: linear-gradient(180deg, #fff5d9, #e8d4aa) !important; transform: translateY(-1px); box-shadow: 0 3px 6px rgba(65,44,18,.16); }
+        .map-result-count { margin-top: 7px !important; color: #725b39 !important; font-size: 10px !important; }
+        .tier-legend {
+            padding: 8px 9px !important;
+            margin: 0 0 10px !important;
+            border: 1px solid rgba(138,104,54,.34) !important;
+            border-radius: 5px !important;
+            background: rgba(215,196,155,.25) !important;
+        }
+        .tier-legend-item { font-size: 10px !important; color: #5d482d; }
+        .tier-dot { box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+
+        /* Filter hierarchy and rows */
+        .filter-group {
+            margin: 0 0 7px !important;
+            padding: 0 0 7px !important;
+            border-bottom: 1px solid rgba(138,104,54,.25) !important;
+        }
+        .filter-group:last-child { border-bottom: 0 !important; }
+        .filter-group-header {
+            padding: 5px 5px !important;
+            border-radius: 5px;
+            color: #49351f;
+            font-size: 12px;
+            transition: background .15s ease;
+        }
+        .filter-group-header:hover { background: rgba(138,104,54,.09); }
+        .filter-sublist { margin: 4px 0 0 8px !important; }
+        .filter-panel label {
+            display: flex;
+            align-items: center;
+            min-height: 28px !important;
+            margin: 1px 0 !important;
+            padding: 3px 6px !important;
+            border-radius: 4px !important;
+            color: #493b29;
+            font-size: 11px !important;
+            transition: background .13s ease, color .13s ease;
+        }
+        .filter-panel label:hover { background: rgba(144,111,59,.12) !important; color: #261b11; }
+        .filter-panel input[type=checkbox] { accent-color: #816033 !important; width: 14px; height: 14px; }
+        .filter-icon { width: 19px !important; height: 19px !important; margin-right: 7px !important; }
+        .toggle-arrow { color: #8a6938; padding: 4px 7px !important; }
+
+        /* City diplomacy rows */
+        .city-diplo-item {
+            min-height: 31px;
+            padding: 4px 7px !important;
+            margin: 4px 0 !important;
+            border: 1px solid rgba(138,104,54,.25);
+            border-radius: 5px !important;
+            background: rgba(222,205,164,.32) !important;
+            gap: 6px;
+        }
+        .city-info { gap: 6px !important; }
+        .city-diplo-item select, .user-role-select {
+            max-width: 118px;
+            padding: 4px 5px !important;
+            border: 1px solid #b29a6d !important;
+            border-radius: 4px !important;
+            background: #fff8e7 !important;
+            color: #45331f;
+            font: 10px Georgia, serif !important;
+        }
+
+        /* Account actions: compact leather-and-brass buttons */
+        .bottom-left-controls {
+            left: 17px !important;
+            bottom: 17px !important;
+            gap: 7px !important;
+        }
+        .map-control-btn {
+            min-width: 184px;
+            padding: 9px 13px !important;
+            border: 1px solid #a88a55 !important;
+            border-radius: 5px !important;
+            background: linear-gradient(145deg, rgba(113,82,40,.97), rgba(62,43,23,.98)) !important;
+            color: #f9efd7 !important;
+            font: bold 12px Georgia, serif !important;
+            letter-spacing: .01em;
+            box-shadow: 0 4px 10px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.14) !important;
+            transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+        }
+        .map-control-btn:hover { background: linear-gradient(145deg, #8a6734, #583d20) !important; transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 6px 14px rgba(0,0,0,.34) !important; }
+        .map-control-btn:active { transform: translateY(0); }
+
+        /* Info and activity panels */
+        .info-panel {
+            top: 16px !important;
+            right: 16px !important;
+            max-width: 250px !important;
+            padding: 11px 13px !important;
+            font-size: 11px !important;
+            line-height: 1.48;
+        }
+        .info-panel .panel-header { margin-bottom: 7px !important; }
+        .info-panel p { color: #5c4930; }
+        .info-panel b { color: #392918; }
+        .logs-panel {
+            right: 74px !important;
+            bottom: 17px !important;
+            width: 282px !important;
+            max-height: 218px !important;
+            padding: 10px 12px !important;
+            font-size: 11px !important;
+        }
+        .logs-panel.collapsed { width: 36px !important; height: 36px !important; padding: 7px !important; }
+        .logs-content { max-height: 150px !important; color: #5b482f; }
+        .log-item { padding: 5px 2px !important; border-bottom: 1px solid rgba(138,104,54,.18) !important; line-height: 1.4; }
+
+        /* Zoom controls and map popups */
+        .leaflet-control-zoom {
+            overflow: hidden;
+            border: 1px solid #a18450 !important;
+            border-radius: 7px !important;
+            box-shadow: 0 5px 14px rgba(0,0,0,.30) !important;
+        }
+        .leaflet-control-zoom a {
+            width: 34px !important;
+            height: 33px !important;
+            line-height: 32px !important;
+            border: 0 !important;
+            background: linear-gradient(180deg, #fff5dc, #e8d6ae) !important;
+            color: #4a351d !important;
+            font: bold 21px/32px Georgia, serif !important;
+            transition: background .15s ease, color .15s ease;
+        }
+        .leaflet-control-zoom a:hover { background: #fff9e9 !important; color: #8c642e !important; }
+        .leaflet-control-zoom-in { border-bottom: 1px solid rgba(129,96,49,.27) !important; }
+        .leaflet-control-attribution { border-radius: 4px 0 0 0; padding: 2px 6px !important; font-size: 10px !important; }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            border: 1px solid #a18450 !important;
+            border-radius: 6px !important;
+            background: linear-gradient(145deg, #fff8e8, #efe1bf) !important;
+            box-shadow: 0 8px 22px rgba(0,0,0,.32) !important;
+        }
+        .leaflet-popup-content { margin: 12px 14px !important; color: #30251b; line-height: 1.45; }
+        .popup-title { color: #4b351d !important; border-bottom-color: rgba(138,104,54,.48) !important; padding-bottom: 6px !important; }
+        .popup-form input, .popup-form select { border: 1px solid #b29a6d !important; border-radius: 4px !important; padding: 7px !important; }
+        .popup-form button { border-radius: 4px !important; padding: 7px !important; background: linear-gradient(145deg, #76572d, #493319) !important; }
+
+        /* Collapsed panel geometry remains easy to reopen */
+        .filter-panel.collapsed {
+            width: 38px !important;
+            height: 250px !important;
+            padding: 9px 4px !important;
+        }
+        .logs-panel.collapsed .collapse-btn { margin: 0 auto; }
+
+        @media (max-width: 700px) {
+            .filter-panel {
+                top: 8px !important; left: 8px !important;
+                width: min(252px, calc(100vw - 24px)) !important;
+                max-height: min(62vh, calc(100vh - 92px)) !important;
+                padding: 9px !important;
+            }
+            .filter-panel.collapsed { width: 36px !important; height: 220px !important; }
+            .info-panel {
+                top: 8px !important; right: 8px !important;
+                max-width: min(185px, calc(100vw - 275px)) !important;
+                padding: 8px 9px !important;
+                font-size: 10px !important;
+            }
+            .bottom-left-controls { left: 8px !important; bottom: 8px !important; gap: 5px !important; }
+            .map-control-btn { min-width: 0; max-width: 48vw; padding: 7px 9px !important; font-size: 10px !important; }
+            .logs-panel { right: 54px !important; bottom: 8px !important; width: min(220px, 52vw) !important; max-height: 145px !important; padding: 8px !important; }
+            .logs-panel.collapsed { width: 34px !important; height: 34px !important; }
+            .leaflet-control-zoom { margin-right: 8px !important; margin-bottom: 8px !important; }
+        }
+        @media (max-width: 420px) {
+            .info-panel { display: none; }
+            .filter-panel { max-height: 55vh !important; }
+            .logs-panel:not(.collapsed) { width: 48vw !important; right: 48px !important; }
+            .map-control-btn { max-width: 43vw; }
+        }
+
+    
+
+        /* ===== Winterhold Atlas — visual refinement, pass II ===== */
+        :root {
+            --atlas-ink: #302316;
+            --atlas-muted: #715a38;
+            --atlas-paper: #f3e8ca;
+            --atlas-paper-light: #fff8e7;
+            --atlas-paper-shadow: #dfc99a;
+            --atlas-brass: #9b7740;
+            --atlas-brass-dark: #61451f;
+            --atlas-line: rgba(113, 82, 39, .34);
+        }
+
+        html, body { background: #2a2016 !important; }
+        #map, .leaflet-container {
+            background:
+                radial-gradient(ellipse at 48% 44%, rgba(222,207,168,.98) 0%, rgba(190,171,130,.98) 58%, rgba(139,117,78,.98) 100%) !important;
+        }
+
+        /* One consistent card language: parchment, fine brass line, quiet depth. */
+        .filter-panel, .info-panel, .logs-panel, .auth-card {
+            box-sizing: border-box !important;
+            background: linear-gradient(145deg, rgba(255,249,232,.985), rgba(237,222,185,.985)) !important;
+            border: 1px solid #9a7742 !important;
+            border-radius: 9px !important;
+            box-shadow: 0 12px 30px rgba(29,19,9,.34), 0 2px 7px rgba(29,19,9,.20), inset 0 0 0 1px rgba(255,255,255,.78), inset 0 0 0 3px rgba(151,113,55,.075) !important;
+            color: var(--atlas-ink) !important;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .filter-panel {
+            top: 14px !important; left: 14px !important;
+            width: 276px !important;
+            max-height: calc(100vh - 28px) !important;
+            padding: 12px 12px 13px !important;
+            scrollbar-width: thin;
+            scrollbar-color: #a78a56 rgba(135,102,55,.10);
+            transition: width .24s ease, padding .24s ease, border-radius .24s ease, box-shadow .2s ease;
+        }
+        .filter-panel:hover { box-shadow: 0 15px 34px rgba(29,19,9,.38), inset 0 0 0 1px rgba(255,255,255,.78) !important; }
+
+        .panel-header {
+            display: flex !important; align-items: center !important;
+            gap: 9px !important;
+            border-bottom: 1px solid var(--atlas-line) !important;
+            padding: 0 0 9px !important;
+            margin: 0 0 10px !important;
+        }
+        .panel-header h4 {
+            color: #382817 !important;
+            font-size: 11px !important;
+            letter-spacing: .15em !important;
+            line-height: 1.3 !important;
+            font-weight: 700 !important;
+        }
+        .collapse-btn, .close-btn {
+            width: 22px !important; height: 22px !important; min-width: 22px !important;
+            border: 1px solid #a98b55 !important;
+            border-radius: 5px !important;
+            background: linear-gradient(145deg, #806036, #4b351b) !important;
+            color: #fff4d9 !important;
+            box-shadow: 0 2px 5px rgba(46,30,12,.24), inset 0 1px 0 rgba(255,255,255,.16) !important;
+            transition: transform .16s ease, filter .16s ease;
+        }
+        .collapse-btn:hover, .close-btn:hover { transform: translateY(-1px); filter: brightness(1.12); }
+
+        /* Search tools read as a single utility module, not another floating box. */
+        .map-tools {
+            padding: 9px !important; margin: 0 0 9px !important;
+            border: 1px solid rgba(139,104,53,.38) !important;
+            border-radius: 7px !important;
+            background: linear-gradient(135deg, rgba(222,204,163,.52), rgba(255,250,237,.74)) !important;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,.7) !important;
+        }
+        .map-search {
+            box-sizing: border-box !important; width: 100% !important;
+            min-height: 35px !important; padding: 8px 10px !important;
+            border: 1px solid #b39a6c !important; border-radius: 5px !important;
+            background: #fffaf0 !important; color: #382918 !important;
+            font: 12px Georgia, serif !important;
+            box-shadow: inset 0 1px 2px rgba(55,38,15,.08) !important;
+        }
+        .map-search::placeholder { color: #8b7653 !important; }
+        .map-search:focus { outline: 2px solid rgba(151,116,60,.24) !important; border-color: #98733e !important; }
+        .map-tools-row { display: flex !important; gap: 6px !important; margin-top: 7px !important; }
+        .map-tools button {
+            flex: 1; min-height: 30px !important; padding: 6px 5px !important;
+            border: 1px solid #a48650 !important; border-radius: 5px !important;
+            background: linear-gradient(#fff5dc, #e7d4a9) !important;
+            color: #45321c !important; font: 11px Georgia, serif !important;
+            box-shadow: 0 1px 2px rgba(55,38,15,.12) !important;
+            transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+        }
+        .map-tools button:hover { transform: translateY(-1px); filter: brightness(1.035); box-shadow: 0 3px 7px rgba(55,38,15,.16) !important; }
+        .map-result-count { margin-top: 6px !important; color: #77603c !important; font-size: 10px !important; }
+        .tier-legend {
+            display: flex !important; align-items: center !important; justify-content: flex-start !important;
+            gap: 8px !important; min-height: 29px; box-sizing: border-box;
+            padding: 6px 8px !important; margin: 0 0 9px !important;
+            border: 1px solid rgba(139,104,53,.30) !important; border-radius: 6px !important;
+            background: rgba(211,192,150,.30) !important;
+        }
+        .tier-legend-item { font-size: 10px !important; color: #5e492c !important; }
+        .tier-dot { width: 10px !important; height: 10px !important; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+
+        /* Category groups: clearer spacing and calmer separators. */
+        .filter-group {
+            margin: 0 0 7px !important; padding: 0 0 8px !important;
+            border-bottom: 1px solid rgba(132,98,48,.23) !important;
+        }
+        .filter-group:last-child { border-bottom: 0 !important; }
+        .filter-group-header {
+            min-height: 30px; box-sizing: border-box;
+            padding: 4px 5px !important; border-radius: 5px !important;
+            color: #47331e !important; font-size: 12px !important;
+        }
+        .filter-group-header:hover { background: rgba(147,111,57,.085) !important; }
+        .filter-sublist { margin: 3px 0 0 9px !important; }
+        .filter-panel label {
+            min-height: 29px !important; box-sizing: border-box;
+            padding: 3px 6px !important; margin: 1px 0 !important;
+            border-radius: 5px !important; gap: 5px !important;
+            color: #51412b !important; font-size: 11px !important;
+        }
+        .filter-panel label:hover { background: rgba(145,108,54,.12) !important; color: #2d2115 !important; }
+        .filter-panel input[type=checkbox] { width: 14px !important; height: 14px !important; accent-color: #816033 !important; }
+        .filter-icon { width: 18px !important; height: 18px !important; margin-right: 5px !important; }
+        .toggle-arrow { color: #8a6938 !important; padding: 4px 6px !important; }
+
+        /* City status controls use quieter inlaid rows. */
+        .city-diplo-item {
+            min-height: 32px !important; margin: 4px 0 !important; padding: 4px 7px !important;
+            border: 1px solid rgba(138,104,54,.25) !important; border-radius: 5px !important;
+            background: rgba(218,200,159,.30) !important;
+        }
+        .city-diplo-item select, .user-role-select {
+            max-width: 118px; padding: 4px 5px !important;
+            border: 1px solid #b19a6d !important; border-radius: 4px !important;
+            background: #fff9e9 !important; color: #45331f !important;
+            font: 10px Georgia, serif !important;
+        }
+
+        /* Small leather action buttons, aligned to the lower edge. */
+        .bottom-left-controls { left: 14px !important; bottom: 14px !important; gap: 6px !important; }
+        .map-control-btn {
+            min-width: 178px !important; padding: 8px 12px !important;
+            border: 1px solid #a98a54 !important; border-radius: 5px !important;
+            background: linear-gradient(145deg, #806039, #4d361d) !important;
+            color: #fff4db !important; font: bold 11px Georgia, serif !important;
+            letter-spacing: .015em;
+            box-shadow: 0 4px 10px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.15) !important;
+            transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+        }
+        .map-control-btn:hover { transform: translateY(-1px); filter: brightness(1.1); box-shadow: 0 6px 14px rgba(0,0,0,.32) !important; }
+
+        /* User plaque and activity ledger. */
+        .info-panel {
+            top: 14px !important; right: 14px !important;
+            width: 238px !important; max-width: min(238px, calc(100vw - 310px)) !important;
+            padding: 11px 12px !important; font-size: 10px !important; line-height: 1.5 !important;
+        }
+        .info-panel .panel-header { margin-bottom: 7px !important; }
+        .info-panel p { color: #665238 !important; margin: 4px 0 !important; }
+        .info-panel b { color: #392918 !important; }
+        .logs-panel {
+            right: 66px !important; bottom: 14px !important;
+            width: 260px !important; max-height: 190px !important;
+            padding: 10px 11px !important; font-size: 10px !important;
+        }
+        .logs-panel .panel-header { margin-bottom: 5px !important; }
+        .logs-content { max-height: 125px !important; color: #5d492d !important; }
+        .log-item { padding: 4px 2px !important; border-bottom-color: rgba(138,104,54,.25) !important; }
+        .logs-panel.collapsed { width: 36px !important; height: 36px !important; padding: 7px !important; }
+
+        /* A compact vertical tab is intentional; avoid the oversized empty drawer. */
+        .filter-panel.collapsed {
+            box-sizing: border-box !important; width: 46px !important; height: 176px !important;
+            min-height: 0 !important; max-height: 176px !important;
+            padding: 9px 5px !important; overflow: hidden !important;
+            border-radius: 8px !important;
+        }
+        .filter-panel.collapsed .panel-header {
+            width: 100% !important; align-items: center !important; justify-content: center !important;
+            padding: 0 !important; margin: 0 !important; border: 0 !important;
+        }
+        .filter-panel.collapsed .collapse-btn { margin: 0 auto !important; }
+        .filter-panel.collapsed .vertical-title {
+            display: block !important; width: auto !important; margin-top: 12px !important;
+            color: #654a25 !important; font-size: 11px !important; line-height: 1 !important;
+            font-weight: 700 !important; letter-spacing: .16em !important;
+            word-break: normal !important; white-space: nowrap !important;
+            writing-mode: vertical-rl; text-orientation: upright;
+        }
+        .filter-panel.collapsed .vertical-title br { display: none !important; }
+
+        /* Zoom buttons and attribution match the same brass hardware. */
+        .leaflet-control-zoom {
+            border: 1px solid #9c7943 !important; border-radius: 7px !important;
+            overflow: hidden; box-shadow: 0 5px 14px rgba(0,0,0,.28) !important;
+        }
+        .leaflet-control-zoom a {
+            width: 34px !important; height: 33px !important; line-height: 32px !important;
+            border: 0 !important; background: linear-gradient(#fff7e0, #e7d5ad) !important;
+            color: #50391e !important; font: bold 21px/32px Georgia, serif !important;
+        }
+        .leaflet-control-zoom a:hover { background: #fff9e9 !important; color: #8c642e !important; }
+        .leaflet-control-zoom-in { border-bottom: 1px solid rgba(129,96,49,.25) !important; }
+        .leaflet-control-attribution { border-radius: 4px 0 0 0 !important; padding: 2px 6px !important; font-size: 9px !important; }
+
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            border: 1px solid #a18450 !important; border-radius: 6px !important;
+            background: linear-gradient(145deg, #fff8e8, #efe1bf) !important;
+            box-shadow: 0 8px 22px rgba(0,0,0,.32) !important;
+        }
+        .leaflet-popup-content { margin: 12px 14px !important; color: #30251b !important; line-height: 1.45 !important; }
+        .popup-title { color: #4b351d !important; border-bottom-color: rgba(138,104,54,.48) !important; padding-bottom: 6px !important; }
+        .popup-form input, .popup-form select { border: 1px solid #b29a6d !important; border-radius: 4px !important; padding: 7px !important; }
+        .popup-form button { border-radius: 4px !important; padding: 7px !important; background: linear-gradient(145deg, #76572d, #493319) !important; }
+
+        @media (max-width: 700px) {
+            .filter-panel { top: 8px !important; left: 8px !important; width: min(258px, calc(100vw - 24px)) !important; max-height: min(62vh, calc(100vh - 92px)) !important; padding: 9px !important; }
+            .filter-panel.collapsed { width: 40px !important; height: 150px !important; max-height: 150px !important; }
+            .info-panel { top: 8px !important; right: 8px !important; width: min(190px, calc(100vw - 275px)) !important; max-width: 190px !important; padding: 8px !important; font-size: 9px !important; }
+            .bottom-left-controls { left: 8px !important; bottom: 8px !important; gap: 5px !important; }
+            .map-control-btn { min-width: 0 !important; max-width: 48vw; padding: 7px 9px !important; font-size: 10px !important; }
+            .logs-panel { right: 52px !important; bottom: 8px !important; width: min(215px, 52vw) !important; max-height: 145px !important; padding: 8px !important; }
+            .logs-panel.collapsed { width: 34px !important; height: 34px !important; }
+            .leaflet-control-zoom { margin-right: 8px !important; margin-bottom: 8px !important; }
+        }
+        @media (max-width: 420px) {
+            .info-panel { display: none !important; }
+            .filter-panel { max-height: 55vh !important; }
+            .logs-panel:not(.collapsed) { width: 48vw !important; right: 48px !important; }
+            .map-control-btn { max-width: 43vw; }
+        }
+
+
+        /* ===== Final usability pass: compact filter drawer + full map framing ===== */
+        .filter-panel {
+            top: 12px !important;
+            left: 12px !important;
+            width: 248px !important;
+            max-height: min(74vh, calc(100vh - 24px)) !important;
+            padding: 9px 10px 10px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 9px 24px rgba(29,19,9,.30),
+                        0 2px 6px rgba(29,19,9,.16),
+                        inset 0 0 0 1px rgba(255,255,255,.76) !important;
+        }
+        .filter-panel .panel-header {
+            padding-bottom: 6px !important;
+            margin-bottom: 7px !important;
+        }
+        .filter-panel .panel-header h4 {
+            font-size: 10px !important;
+            letter-spacing: .13em !important;
+        }
+        .filter-panel .collapse-btn,
+        .filter-panel .close-btn {
+            width: 20px !important;
+            height: 20px !important;
+            min-width: 20px !important;
+        }
+        .filter-panel .map-tools {
+            padding: 7px !important;
+            margin-bottom: 7px !important;
+            border-radius: 6px !important;
+        }
+        .filter-panel .map-search {
+            min-height: 30px !important;
+            padding: 6px 8px !important;
+            font-size: 11px !important;
+        }
+        .filter-panel .map-tools-row {
+            gap: 5px !important;
+            margin-top: 5px !important;
+        }
+        .filter-panel .map-tools button {
+            min-height: 25px !important;
+            padding: 4px 5px !important;
+            font-size: 10px !important;
+        }
+        .filter-panel .map-result-count {
+            margin-top: 5px !important;
+            font-size: 9px !important;
+        }
+        .filter-panel .tier-legend {
+            gap: 4px 7px !important;
+            padding: 5px 6px !important;
+            margin: 0 0 6px !important;
+        }
+        .filter-panel .tier-legend-item { font-size: 9px !important; }
+        .filter-panel .tier-dot { width: 9px !important; height: 9px !important; }
+        .filter-panel .filter-group {
+            margin: 0 0 4px !important;
+            padding: 0 0 4px !important;
+        }
+        .filter-panel .filter-group-header {
+            min-height: 25px !important;
+            padding: 2px 4px !important;
+            font-size: 11px !important;
+        }
+        .filter-panel .filter-sublist {
+            margin: 2px 0 0 6px !important;
+        }
+        .filter-panel label {
+            min-height: 23px !important;
+            margin: 0 !important;
+            padding: 1px 4px !important;
+            gap: 4px !important;
+            border-radius: 4px !important;
+            font-size: 10px !important;
+            line-height: 1.15 !important;
+        }
+        .filter-panel label input[type="checkbox"] {
+            width: 12px !important;
+            height: 12px !important;
+            margin: 0 1px 0 0 !important;
+        }
+        .filter-panel .filter-icon {
+            width: 16px !important;
+            height: 16px !important;
+            margin-right: 4px !important;
+        }
+        .filter-panel .toggle-arrow {
+            padding: 2px 5px !important;
+            font-size: 9px !important;
+        }
+        .filter-panel .city-diplo-item {
+            min-height: 26px !important;
+            margin-bottom: 3px !important;
+            padding: 2px 5px !important;
+        }
+        .filter-panel .city-diplo-item select {
+            max-width: 104px !important;
+            padding: 3px 4px !important;
+            font-size: 9px !important;
+        }
+        .filter-panel.collapsed {
+            width: 40px !important;
+            height: 150px !important;
+            max-height: 150px !important;
+            padding: 8px 4px !important;
+        }
+        .info-panel {
+            top: 12px !important;
+            right: 12px !important;
+            width: 218px !important;
+            max-width: min(218px, calc(100vw - 280px)) !important;
+            padding: 9px 10px !important;
+        }
+        .info-panel .panel-header { padding-bottom: 6px !important; margin-bottom: 5px !important; }
+        .info-panel p { margin: 3px 0 !important; font-size: 9px !important; }
+        .logs-panel {
+            right: 58px !important;
+            bottom: 12px !important;
+            width: 238px !important;
+            max-height: 160px !important;
+            padding: 8px 9px !important;
+        }
+        .logs-panel .panel-header { padding-bottom: 6px !important; margin-bottom: 4px !important; }
+        .logs-content { max-height: 100px !important; }
+        .bottom-left-controls { left: 12px !important; bottom: 12px !important; gap: 5px !important; }
+        .map-control-btn {
+            min-width: 164px !important;
+            padding: 7px 10px !important;
+            font-size: 10px !important;
+        }
+
+        @media (max-width: 700px) {
+            .filter-panel {
+                top: 8px !important;
+                left: 8px !important;
+                width: min(236px, calc(100vw - 20px)) !important;
+                max-height: min(66vh, calc(100vh - 20px)) !important;
+                padding: 8px !important;
+            }
+            .filter-panel.collapsed {
+                width: 38px !important;
+                height: 136px !important;
+                max-height: 136px !important;
+            }
+            .info-panel {
+                top: 8px !important;
+                right: 8px !important;
+                width: min(180px, calc(100vw - 260px)) !important;
+                max-width: 180px !important;
+            }
+            .logs-panel {
+                right: 48px !important;
+                bottom: 8px !important;
+                width: min(205px, 50vw) !important;
+                max-height: 132px !important;
+            }
+            .bottom-left-controls { left: 8px !important; bottom: 8px !important; }
+            .map-control-btn { min-width: 0 !important; max-width: 45vw !important; }
+        }
+        @media (max-width: 420px) {
+            .filter-panel { max-height: 58vh !important; }
+            .info-panel { display: none !important; }
+            .logs-panel:not(.collapsed) { width: 46vw !important; right: 44px !important; }
+        }
+    </style>
+
+    <style id="winterhold-atlas-design-v5">
+      :root {
+        --atlas-night: #302116;
+        --atlas-leather: #52391f;
+        --atlas-leather-dark: #3b2818;
+        --atlas-brass: #a9854c;
+        --atlas-brass-soft: rgba(169,133,76,.42);
+        --atlas-paper: #f2e5c6;
+        --atlas-paper-light: #fff7e4;
+        --atlas-ink: #342617;
+      }
+
+      /* One coherent atlas surface: warm paper, dark leather title bands, fine brass edges. */
+      .filter-panel, .info-panel, .logs-panel, .auth-card {
+        border: 1px solid #9b7844 !important;
+        border-radius: 8px !important;
+        background: linear-gradient(145deg, rgba(255,248,229,.985), rgba(235,218,179,.985)) !important;
+        box-shadow: 0 12px 30px rgba(22,14,7,.34), 0 3px 8px rgba(22,14,7,.18), inset 0 0 0 1px rgba(255,255,255,.76) !important;
+        color: var(--atlas-ink) !important;
+        backdrop-filter: blur(5px);
+      }
+      .filter-panel, .info-panel, .logs-panel { overflow: hidden; }
+
+      .filter-panel {
+        width: 226px !important;
+        max-height: min(72vh, calc(100vh - 28px)) !important;
+        padding: 9px 9px 8px !important;
+        top: 12px !important; left: 12px !important;
+        border-radius: 8px !important;
+      }
+      .filter-panel .panel-header,
+      .info-panel .panel-header,
+      .logs-panel .panel-header {
+        box-sizing: border-box !important;
+        margin: -9px -9px 8px !important;
+        padding: 9px 10px 8px !important;
+        min-height: 35px;
+        border: 0 !important;
+        border-bottom: 1px solid #b18a4f !important;
+        border-radius: 7px 7px 0 0 !important;
+        background: linear-gradient(180deg, #70502b 0%, #4a321d 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 2px 5px rgba(45,28,11,.14) !important;
+      }
+      .filter-panel .panel-header h4,
+      .info-panel .panel-header h4,
+      .logs-panel .panel-header h4 {
+        color: #f8edcf !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        letter-spacing: .14em !important;
+        text-transform: uppercase !important;
+        text-shadow: 0 1px 1px rgba(0,0,0,.34);
+      }
+      .filter-panel .collapse-btn,
+      .info-panel .close-btn,
+      .logs-panel .collapse-btn {
+        width: 20px !important; height: 20px !important;
+        min-width: 20px !important;
+        border: 1px solid #c1a16a !important;
+        border-radius: 5px !important;
+        background: linear-gradient(145deg, #9c7842, #60421f) !important;
+        color: #fff4d8 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18) !important;
+      }
+      .filter-panel .collapse-btn:hover,
+      .info-panel .close-btn:hover,
+      .logs-panel .collapse-btn:hover { filter: brightness(1.13); transform: translateY(-1px); }
+
+      /* Search tools as a tidy inset tray, not a second large panel. */
+      .filter-panel .map-tools {
+        margin: 0 0 7px !important;
+        padding: 7px !important;
+        border: 1px solid rgba(151,115,57,.38) !important;
+        border-radius: 6px !important;
+        background: linear-gradient(135deg, rgba(221,202,159,.52), rgba(255,251,238,.72)) !important;
+        box-shadow: inset 0 1px 2px rgba(78,55,24,.08) !important;
+      }
+      .filter-panel .map-search {
+        box-sizing: border-box !important;
+        min-height: 29px !important;
+        padding: 6px 8px !important;
+        border: 1px solid #b49a6b !important;
+        border-radius: 5px !important;
+        background: #fffaf0 !important;
+        color: #392a19 !important;
+        font: 10px Georgia, serif !important;
+        box-shadow: inset 0 1px 2px rgba(45,30,12,.07) !important;
+      }
+      .filter-panel .map-tools-row { gap: 5px !important; margin-top: 5px !important; }
+      .filter-panel .map-tools button {
+        min-height: 25px !important;
+        padding: 4px 5px !important;
+        border: 1px solid #a78a57 !important;
+        border-radius: 4px !important;
+        background: linear-gradient(180deg, #fff5dc, #e5d1a7) !important;
+        color: #4b361e !important;
+        font: 10px Georgia, serif !important;
+        box-shadow: 0 1px 2px rgba(56,38,14,.12) !important;
+        transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+      }
+      .filter-panel .map-tools button:hover { transform: translateY(-1px); filter: brightness(1.04); box-shadow: 0 3px 7px rgba(55,38,15,.16) !important; }
+      .filter-panel .map-result-count { margin-top: 5px !important; font-size: 9px !important; color: #79613c !important; }
+      .filter-panel .tier-legend {
+        min-height: 26px !important;
+        display: flex !important; align-items: center !important;
+        gap: 6px !important;
+        margin: 0 0 6px !important; padding: 4px 6px !important;
+        border: 1px solid rgba(151,115,57,.32) !important;
+        border-radius: 5px !important;
+        background: rgba(216,196,151,.30) !important;
+      }
+      .filter-panel .tier-legend-item { font-size: 9px !important; color: #5f492b !important; }
+      .filter-panel .tier-dot { width: 9px !important; height: 9px !important; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+
+      /* Filter rows: tight, aligned and easy to scan. */
+      .filter-panel .filter-group {
+        margin: 0 0 4px !important;
+        padding: 0 0 4px !important;
+        border-bottom: 1px solid rgba(137,103,53,.22) !important;
+      }
+      .filter-panel .filter-group:last-child { border-bottom: 0 !important; }
+      .filter-panel .filter-group-header {
+        min-height: 24px !important;
+        padding: 2px 4px !important;
+        border-radius: 4px !important;
+        color: #47331e !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+      }
+      .filter-panel .filter-group-header:hover { background: rgba(144,108,53,.10) !important; }
+      .filter-panel .filter-sublist { margin: 1px 0 0 5px !important; }
+      .filter-panel label {
+        display: flex !important; align-items: center !important;
+        min-height: 21px !important;
+        box-sizing: border-box !important;
+        margin: 0 !important; padding: 1px 4px !important;
+        gap: 4px !important;
+        border-radius: 4px !important;
+        color: #55432b !important;
+        font-size: 9.5px !important;
+        line-height: 1.12 !important;
+      }
+      .filter-panel label:hover { background: rgba(144,108,53,.12) !important; color: #2e2114 !important; }
+      .filter-panel label input[type="checkbox"] {
+        width: 12px !important; height: 12px !important;
+        margin: 0 1px 0 0 !important;
+        accent-color: #806039 !important;
+      }
+      .filter-panel .filter-icon {
+        width: 15px !important; height: 15px !important;
+        margin: 0 3px 0 0 !important;
+        filter: drop-shadow(0 1px 0 rgba(255,255,255,.7));
+      }
+      .filter-panel .toggle-arrow { color: #9a7742 !important; font-size: 9px !important; padding: 2px 4px !important; }
+      .filter-panel .city-diplo-item {
+        min-height: 25px !important; margin: 2px 0 !important; padding: 2px 5px !important;
+        border: 1px solid rgba(145,110,56,.24) !important; border-radius: 4px !important;
+        background: rgba(218,200,159,.28) !important;
+      }
+      .filter-panel .city-diplo-item select {
+        max-width: 100px !important; padding: 2px 4px !important;
+        border: 1px solid #b19a6d !important; border-radius: 4px !important;
+        background: #fff9e9 !important; color: #45331f !important;
+        font: 9px Georgia, serif !important;
+      }
+      .filter-panel::-webkit-scrollbar { width: 7px; }
+      .filter-panel::-webkit-scrollbar-track { background: rgba(138,104,54,.10); border-radius: 8px; }
+      .filter-panel::-webkit-scrollbar-thumb { background: linear-gradient(#c4a977,#927347); border: 1px solid rgba(255,255,255,.65); border-radius: 8px; }
+
+      /* The map remains visually dominant; these plaques sit lightly over it. */
+      .info-panel {
+        top: 12px !important; right: 12px !important;
+        width: 205px !important; max-width: min(205px, calc(100vw - 260px)) !important;
+        padding: 9px !important; border-radius: 8px !important;
+      }
+      .info-panel .panel-header { margin-bottom: 6px !important; }
+      .info-panel p { margin: 3px 1px !important; font-size: 9px !important; line-height: 1.35 !important; color: #665238 !important; }
+      .info-panel b { color: #392918 !important; }
+
+      .logs-panel {
+        right: 62px !important; bottom: 12px !important;
+        width: 224px !important; max-height: 150px !important;
+        padding: 9px !important; border-radius: 8px !important;
+      }
+      .logs-panel .panel-header { margin-bottom: 6px !important; }
+      .logs-panel .logs-content { max-height: 93px !important; margin-top: 2px !important; font-size: 9px !important; color: #5d492d !important; }
+      .logs-panel .log-item { padding: 4px 2px !important; border-bottom: 1px solid rgba(138,104,54,.20) !important; }
+      .logs-panel.collapsed { width: 38px !important; height: 36px !important; padding: 8px !important; }
+
+      .bottom-left-controls { left: 12px !important; bottom: 12px !important; gap: 5px !important; }
+      .map-control-btn {
+        min-width: 150px !important;
+        padding: 7px 10px !important;
+        border: 1px solid #b0925c !important;
+        border-radius: 5px !important;
+        background: linear-gradient(145deg, #76552d, #422d19) !important;
+        color: #fff2d1 !important;
+        font: 700 10px Georgia, serif !important;
+        letter-spacing: .02em;
+        box-shadow: 0 3px 8px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16) !important;
+        transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+      }
+      .map-control-btn:hover { transform: translateY(-1px); filter: brightness(1.09); box-shadow: 0 5px 12px rgba(0,0,0,.32) !important; }
+
+      .leaflet-control-zoom { border: 1px solid #a08350 !important; border-radius: 7px !important; overflow: hidden; box-shadow: 0 5px 14px rgba(0,0,0,.28) !important; }
+      .leaflet-control-zoom a {
+        width: 33px !important; height: 32px !important; line-height: 31px !important;
+        border: 0 !important; background: linear-gradient(#fff6de,#e7d4aa) !important;
+        color: #50391e !important; font: bold 20px/31px Georgia,serif !important;
+      }
+      .leaflet-control-zoom a:hover { background: #fff9e9 !important; color: #8c642e !important; }
+      .leaflet-control-zoom-in { border-bottom: 1px solid rgba(129,96,49,.25) !important; }
+      .leaflet-control-attribution { border-radius: 4px 0 0 0 !important; padding: 2px 6px !important; font-size: 9px !important; background: rgba(246,235,207,.88) !important; color: #59452b !important; }
+
+      .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+        border: 1px solid #a18450 !important; border-radius: 6px !important;
+        background: linear-gradient(145deg, #fff8e8, #efe1bf) !important;
+        box-shadow: 0 8px 22px rgba(0,0,0,.32) !important;
+      }
+      .leaflet-popup-content { margin: 11px 13px !important; color: #30251b !important; line-height: 1.4 !important; }
+      .popup-title { color: #4b351d !important; border-bottom-color: rgba(138,104,54,.48) !important; padding-bottom: 5px !important; }
+      .popup-form input, .popup-form select { border: 1px solid #b29a6d !important; border-radius: 4px !important; padding: 6px !important; }
+      .popup-form button { border-radius: 4px !important; padding: 7px !important; background: linear-gradient(145deg, #76572d, #493319) !important; }
+
+      .auth-card { border-radius: 9px !important; border-width: 1px !important; }
+      .auth-card h3 { color: #4b351d; border-bottom: 1px solid #a98a54; letter-spacing: .04em; }
+      .auth-card input, .auth-card select { border: 1px solid #b49a6b !important; border-radius: 5px !important; background: #fffaf0 !important; }
+      .auth-card button { border-radius: 5px !important; background: linear-gradient(145deg,#76572d,#493319) !important; }
+
+      button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #bc9655 !important; outline-offset: 2px !important; }
+
+      @media (max-width: 700px) {
+        .filter-panel { top: 8px !important; left: 8px !important; width: min(218px, calc(100vw - 18px)) !important; max-height: min(64vh, calc(100vh - 18px)) !important; padding: 8px !important; }
+        .filter-panel .panel-header, .info-panel .panel-header, .logs-panel .panel-header { margin: -8px -8px 7px !important; padding: 8px 9px 7px !important; }
+        .filter-panel.collapsed { width: 38px !important; height: 136px !important; max-height: 136px !important; padding: 7px 4px !important; }
+        .info-panel { top: 8px !important; right: 8px !important; width: min(170px, calc(100vw - 245px)) !important; max-width: 170px !important; padding: 8px !important; }
+        .logs-panel { right: 46px !important; bottom: 8px !important; width: min(196px, 50vw) !important; max-height: 125px !important; padding: 8px !important; }
+        .logs-panel.collapsed { width: 34px !important; height: 34px !important; }
+        .bottom-left-controls { left: 8px !important; bottom: 8px !important; }
+        .map-control-btn { min-width: 0 !important; max-width: 44vw !important; padding: 6px 8px !important; font-size: 9px !important; }
+        .leaflet-control-zoom { margin-right: 8px !important; margin-bottom: 8px !important; }
+      }
+      @media (max-width: 420px) {
+        .info-panel { display: none !important; }
+        .filter-panel { width: min(205px, calc(100vw - 16px)) !important; max-height: 57vh !important; }
+        .logs-panel:not(.collapsed) { width: 45vw !important; right: 43px !important; }
+        .map-control-btn { max-width: 42vw !important; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .filter-panel, .map-control-btn, .map-tools button, .collapse-btn, .close-btn { transition: none !important; }
+      }
+    </style>
+
+
+    <style id="winterhold-atlas-design-v6">
+      /* V6 — finishing pass: a restrained in-game cartographer's journal */
+      :root {
+        --atlas-v6-ink: #302316;
+        --atlas-v6-muted: #766142;
+        --atlas-v6-paper: #f4e8c9;
+        --atlas-v6-paper-hi: #fff8e7;
+        --atlas-v6-paper-low: #e5d2a7;
+        --atlas-v6-brass: #a9854c;
+        --atlas-v6-brass-dark: #654923;
+        --atlas-v6-line: rgba(112, 82, 39, .28);
+      }
+
+      html, body { background: #2a1d13 !important; }
+      #map { background: #b5a27d !important; }
+      .leaflet-container { background: #b5a27d !important; }
+
+      /* Quiet vignette around the map; it sits below markers and controls. */
+      #map::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 450;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, transparent 66%, rgba(42, 27, 12, .13) 100%);
+      }
+
+      /* Small atlas title plaque gives the interface a clear identity. */
+      #map::after {
+        content: "✦  КАРТОГРАФИЧЕСКИЙ АРХИВ  ·  КОЛЛЕГИЯ ВИНТЕРХОЛДА  ✦";
+        position: absolute;
+        z-index: 500;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: calc(100% - 500px);
+        box-sizing: border-box;
+        padding: 7px 17px 6px;
+        border: 1px solid rgba(178, 143, 82, .8);
+        border-radius: 4px;
+        background: linear-gradient(180deg, rgba(78, 55, 29, .94), rgba(48, 33, 19, .94));
+        color: #f1dfb6;
+        font: 700 9px/1.2 Georgia, serif;
+        letter-spacing: .17em;
+        text-align: center;
+        white-space: nowrap;
+        text-shadow: 0 1px 2px rgba(0,0,0,.55);
+        box-shadow: 0 3px 11px rgba(0,0,0,.23), inset 0 1px 0 rgba(255,255,255,.12);
+        pointer-events: none;
+      }
+
+      /* The filter panel becomes a narrow, tidy journal column. */
+      .filter-panel {
+        width: 212px !important;
+        max-height: min(70vh, calc(100vh - 34px)) !important;
+        padding: 8px !important;
+        border: 1px solid #9a7847 !important;
+        border-radius: 6px !important;
+        background: linear-gradient(145deg, rgba(255,249,232,.985), rgba(235,218,180,.985)) !important;
+        box-shadow: 0 10px 26px rgba(22,14,7,.34), inset 0 0 0 1px rgba(255,255,255,.68) !important;
+      }
+      .filter-panel .panel-header,
+      .info-panel .panel-header,
+      .logs-panel .panel-header {
+        background: linear-gradient(180deg, #604626, #412d1b) !important;
+        border-bottom: 1px solid #b18b50 !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.13) !important;
+      }
+      .filter-panel .panel-header { margin: -8px -8px 7px !important; padding: 8px 9px 7px !important; }
+      .filter-panel .panel-header h4,
+      .info-panel .panel-header h4,
+      .logs-panel .panel-header h4 {
+        color: #f8edcf !important;
+        letter-spacing: .16em !important;
+        font-size: 9px !important;
+      }
+      .filter-panel .collapse-btn,
+      .info-panel .close-btn,
+      .logs-panel .collapse-btn {
+        width: 19px !important; height: 19px !important;
+        border: 1px solid #c0a16b !important;
+        border-radius: 4px !important;
+        background: linear-gradient(145deg, #a17d46, #604321) !important;
+        color: #fff3d6 !important;
+      }
+
+      .filter-panel .map-tools {
+        padding: 6px !important;
+        margin-bottom: 6px !important;
+        border-color: rgba(139,104,52,.35) !important;
+        border-radius: 5px !important;
+        background: linear-gradient(135deg, rgba(224,205,164,.54), rgba(255,251,239,.82)) !important;
+      }
+      .filter-panel .map-search {
+        min-height: 27px !important;
+        font-size: 9.5px !important;
+        border-radius: 4px !important;
+      }
+      .filter-panel .map-tools button {
+        min-height: 23px !important;
+        font-size: 9px !important;
+        border-radius: 4px !important;
+      }
+      .filter-panel .map-result-count { font-size: 8.5px !important; }
+      .filter-panel .tier-legend {
+        min-height: 23px !important;
+        margin-bottom: 5px !important;
+        padding: 3px 5px !important;
+        border-radius: 4px !important;
+        background: rgba(206,185,140,.28) !important;
+      }
+      .filter-panel .tier-legend-item { font-size: 8px !important; }
+      .filter-panel .tier-dot { width: 8px !important; height: 8px !important; }
+
+      .filter-panel .filter-group {
+        margin-bottom: 3px !important;
+        padding-bottom: 3px !important;
+        border-bottom: 1px solid rgba(112,82,39,.20) !important;
+      }
+      .filter-panel .filter-group-header {
+        min-height: 22px !important;
+        padding: 2px 3px !important;
+        border-radius: 4px !important;
+        font-size: 9.5px !important;
+        letter-spacing: .01em;
+      }
+      .filter-panel .filter-sublist { margin: 0 0 0 4px !important; }
+      .filter-panel label {
+        min-height: 19px !important;
+        padding: 1px 3px !important;
+        gap: 3px !important;
+        border-radius: 3px !important;
+        font-size: 9px !important;
+      }
+      .filter-panel label input[type="checkbox"] {
+        width: 11px !important; height: 11px !important;
+        margin-right: 1px !important;
+      }
+      .filter-panel .filter-icon {
+        width: 14px !important; height: 14px !important;
+        margin: 0 2px 0 0 !important;
+      }
+      .filter-panel .toggle-arrow { font-size: 8px !important; padding: 2px 4px !important; }
+      .filter-panel .city-diplo-item {
+        min-height: 23px !important;
+        margin: 2px 0 !important;
+        padding: 2px 4px !important;
+      }
+      .filter-panel .city-diplo-item select {
+        max-width: 92px !important;
+        font-size: 8.5px !important;
+      }
+
+      /* A slimmer status plaque; the map remains the focus. */
+      .info-panel {
+        top: 13px !important; right: 13px !important;
+        width: 190px !important; max-width: 190px !important;
+        padding: 8px !important;
+        border-radius: 6px !important;
+      }
+      .info-panel .panel-header { margin: -8px -8px 6px !important; padding: 8px 9px 7px !important; }
+      .info-panel p { font-size: 8.5px !important; line-height: 1.35 !important; margin: 3px 1px !important; }
+
+      .logs-panel {
+        right: 58px !important; bottom: 13px !important;
+        width: 215px !important; max-height: 142px !important;
+        padding: 8px !important; border-radius: 6px !important;
+      }
+      .logs-panel .panel-header { margin: -8px -8px 6px !important; padding: 8px 9px 7px !important; }
+      .logs-panel .logs-content { max-height: 86px !important; font-size: 8.5px !important; }
+      .logs-panel.collapsed { width: 34px !important; height: 34px !important; padding: 7px !important; }
+
+      /* Account actions form one compact leather toolbar. */
+      .bottom-left-controls {
+        left: 13px !important; bottom: 13px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 5px !important;
+        border: 1px solid rgba(176,139,78,.72) !important;
+        border-radius: 6px !important;
+        background: linear-gradient(145deg, rgba(65,46,26,.92), rgba(39,27,17,.94)) !important;
+        box-shadow: 0 5px 14px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.1) !important;
+      }
+      .map-control-btn {
+        min-width: 0 !important;
+        padding: 6px 9px !important;
+        border: 1px solid rgba(188,153,91,.72) !important;
+        border-radius: 4px !important;
+        background: linear-gradient(180deg, #866333, #573c20) !important;
+        color: #fff2d3 !important;
+        font: 700 9px Georgia, serif !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.13) !important;
+      }
+      .map-control-btn:hover { background: linear-gradient(180deg, #997441, #684925) !important; }
+
+      /* More consistent spacing for popups and all native controls. */
+      .leaflet-control-zoom { margin-right: 13px !important; margin-bottom: 13px !important; }
+      .leaflet-popup-content-wrapper, .leaflet-popup-tip { border-color: #9d7b48 !important; }
+      .leaflet-popup-content { font-family: Georgia, serif !important; }
+      input, select, button { accent-color: #806039; }
+      ::selection { background: rgba(156,119,57,.25); color: #302316; }
+
+      @media (max-width: 900px) {
+        #map::after { max-width: calc(100% - 420px); font-size: 8px; letter-spacing: .1em; }
+      }
+      @media (max-width: 700px) {
+        #map::after { display: none; }
+        .filter-panel { width: min(210px, calc(100vw - 18px)) !important; max-height: min(62vh, calc(100vh - 18px)) !important; }
+        .info-panel { width: min(170px, calc(100vw - 235px)) !important; max-width: 170px !important; }
+        .bottom-left-controls { left: 8px !important; bottom: 8px !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important; }
+        .map-control-btn { max-width: 44vw !important; text-align: left !important; }
+        .logs-panel { right: 46px !important; bottom: 8px !important; width: min(190px, 48vw) !important; }
+        .leaflet-control-zoom { margin-right: 8px !important; margin-bottom: 8px !important; }
+      }
+      @media (max-width: 420px) {
+        .info-panel { display: none !important; }
+        .filter-panel { max-height: 54vh !important; }
+        .logs-panel:not(.collapsed) { width: 46vw !important; right: 44px !important; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+      }
+    </style>
+
+
+
+    <style id="winterhold-nordic-filter-panel-v1">
+      /* Nordic cartographer's sidebar: translucent midnight slate, aged bronze and runic trim. */
+      .filter-panel {
+        width: 274px !important;
+        max-height: min(78vh, calc(100vh - 28px)) !important;
+        padding: 10px 11px 11px !important;
+        overflow-x: hidden !important;
+        border: 1px solid rgba(190, 157, 99, .88) !important;
+        border-radius: 8px !important;
+        color: #e9e3d6 !important;
+        background:
+          linear-gradient(145deg, rgba(39, 51, 63, .94), rgba(25, 34, 43, .91)),
+          repeating-linear-gradient(135deg, rgba(205, 178, 124, .035) 0 1px, transparent 1px 9px) !important;
+        box-shadow:
+          0 14px 34px rgba(5, 9, 13, .42),
+          0 3px 9px rgba(5, 9, 13, .25),
+          inset 0 0 0 1px rgba(255,255,255,.08),
+          inset 0 0 0 4px rgba(172, 139, 83, .075) !important;
+        -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
+        backdrop-filter: blur(15px) saturate(125%) !important;
+        scrollbar-color: rgba(179, 145, 87, .8) rgba(13, 21, 29, .35) !important;
+      }
+
+      .filter-panel::after {
+        content: "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ";
+        display: block;
+        position: sticky;
+        bottom: -5px;
+        margin: 9px -2px -4px;
+        padding: 7px 4px 2px;
+        border-top: 1px solid rgba(183, 148, 88, .30);
+        color: rgba(208, 181, 127, .38);
+        font: 11px/1.2 "Segoe UI Symbol", "Noto Sans Runic", Georgia, serif;
+        letter-spacing: .32em;
+        text-align: center;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgba(28, 38, 47, 0), rgba(28, 38, 47, .72));
+      }
+
+      .filter-panel .panel-header {
+        position: relative;
+        box-sizing: border-box !important;
+        margin: -10px -11px 9px !important;
+        padding: 10px 11px 9px !important;
+        min-height: 39px !important;
+        border: 0 !important;
+        border-bottom: 1px solid rgba(195, 160, 98, .76) !important;
+        border-radius: 7px 7px 0 0 !important;
+        background:
+          linear-gradient(180deg, rgba(67, 84, 98, .98), rgba(35, 47, 59, .99)) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 3px 8px rgba(0,0,0,.18) !important;
+      }
+      .filter-panel .panel-header::before {
+        content: "ᛟ";
+        margin-right: 8px;
+        color: #c8a66c;
+        font: 16px/1 "Segoe UI Symbol", "Noto Sans Runic", Georgia, serif;
+        text-shadow: 0 1px 4px rgba(0,0,0,.45);
+      }
+      .filter-panel .panel-header h4 {
+        display: flex;
+        align-items: center;
+        flex: 1 1 auto;
+        min-width: 0;
+        color: #f0e6d1 !important;
+        font: 700 10px/1.2 Georgia, serif !important;
+        letter-spacing: .19em !important;
+        text-transform: uppercase !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,.42);
+      }
+      .filter-panel .panel-header h4::after {
+        content: "ᚦ ᛉ";
+        margin-left: auto;
+        padding-left: 8px;
+        color: rgba(205, 174, 116, .63);
+        font: 11px/1 "Segoe UI Symbol", "Noto Sans Runic", Georgia, serif;
+        letter-spacing: .2em;
+      }
+      .filter-panel .collapse-btn {
+        flex: 0 0 21px;
+        width: 21px !important;
+        height: 21px !important;
+        min-width: 21px !important;
+        border: 1px solid rgba(211, 178, 117, .9) !important;
+        border-radius: 4px !important;
+        color: #fff0d2 !important;
+        background: linear-gradient(145deg, #a07c45, #624725) !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.18) !important;
+      }
+
+      /* Search and quick actions become a dark inset instrument tray. */
+      .filter-panel .map-tools {
+        margin: 0 0 8px !important;
+        padding: 8px !important;
+        border: 1px solid rgba(173, 143, 91, .48) !important;
+        border-radius: 6px !important;
+        background: linear-gradient(145deg, rgba(12, 21, 29, .50), rgba(51, 65, 77, .52)) !important;
+        box-shadow: inset 0 1px 4px rgba(0,0,0,.22), 0 1px 0 rgba(255,255,255,.04) !important;
+      }
+      .filter-panel .map-search {
+        box-sizing: border-box !important;
+        min-height: 32px !important;
+        padding: 7px 9px !important;
+        border: 1px solid rgba(177, 151, 105, .62) !important;
+        border-radius: 5px !important;
+        color: #eee7da !important;
+        background: rgba(14, 22, 30, .72) !important;
+        font: 11px Georgia, serif !important;
+        box-shadow: inset 0 1px 4px rgba(0,0,0,.30) !important;
+      }
+      .filter-panel .map-search::placeholder { color: #b7b4ad !important; opacity: .82; }
+      .filter-panel .map-search:focus {
+        outline: 1px solid rgba(209, 177, 116, .72) !important;
+        border-color: #c0a06a !important;
+      }
+      .filter-panel .map-tools-row { gap: 6px !important; margin-top: 6px !important; }
+      .filter-panel .map-tools button {
+        min-height: 27px !important;
+        padding: 5px 6px !important;
+        border: 1px solid rgba(183, 148, 88, .72) !important;
+        border-radius: 4px !important;
+        color: #eee4d0 !important;
+        background: linear-gradient(180deg, rgba(76, 91, 103, .94), rgba(43, 56, 68, .96)) !important;
+        font: 10px Georgia, serif !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 2px 4px rgba(0,0,0,.16) !important;
+      }
+      .filter-panel .map-tools button:hover {
+        color: #fff4dc !important;
+        background: linear-gradient(180deg, rgba(113, 91, 58, .98), rgba(73, 57, 36, .98)) !important;
+        transform: translateY(-1px);
+      }
+      .filter-panel .map-result-count {
+        margin-top: 6px !important;
+        color: #c1b69f !important;
+        font-size: 9px !important;
+        letter-spacing: .025em;
+      }
+
+      /* Resource tier legend, inlaid like a small brass instrument plate. */
+      .filter-panel .tier-legend {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin: 0 0 8px !important;
+        padding: 6px 7px !important;
+        border: 1px solid rgba(178, 145, 89, .48) !important;
+        border-radius: 5px !important;
+        background: rgba(9, 18, 26, .38) !important;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,.22) !important;
+      }
+      .filter-panel .tier-legend-item { color: #e2d7c3 !important; font-size: 9px !important; }
+      .filter-panel .tier-dot { box-shadow: 0 0 0 1px rgba(239,224,196,.18), 0 1px 3px rgba(0,0,0,.45) !important; }
+
+      /* Accordion headers: carved slate plaques, subtle gold edges. */
+      .filter-panel .filter-group {
+        margin: 0 0 6px !important;
+        padding: 0 0 6px !important;
+        border-bottom: 1px solid rgba(184, 151, 96, .25) !important;
+      }
+      .filter-panel .filter-group:last-child { border-bottom: 0 !important; }
+      .filter-panel .filter-group-header {
+        min-height: 28px !important;
+        padding: 3px 6px !important;
+        border: 1px solid rgba(179, 146, 91, .32) !important;
+        border-radius: 5px !important;
+        color: #f0e5d0 !important;
+        background: linear-gradient(90deg, rgba(67, 82, 94, .67), rgba(36, 49, 60, .38)) !important;
+        font-size: 10px !important;
+        letter-spacing: .025em;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.055);
+        transition: background .16s ease, border-color .16s ease, transform .16s ease;
+      }
+      .filter-panel .filter-group-header:hover {
+        border-color: rgba(210, 176, 112, .70) !important;
+        background: linear-gradient(90deg, rgba(111, 88, 54, .72), rgba(46, 57, 64, .62)) !important;
+      }
+      .filter-panel .filter-group-header > label,
+      .filter-panel .filter-group-header > span:not(.toggle-arrow) {
+        color: #f0e5d0 !important;
+      }
+      .filter-panel .filter-sublist { margin: 4px 0 0 8px !important; }
+      .filter-panel label {
+        min-height: 25px !important;
+        padding: 2px 5px !important;
+        gap: 5px !important;
+        border-radius: 4px !important;
+        color: #dcd8cf !important;
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+        transition: color .14s ease, background .14s ease;
+      }
+      .filter-panel label:hover {
+        color: #fff1d1 !important;
+        background: rgba(180, 148, 94, .18) !important;
+      }
+      .filter-panel input[type="checkbox"] { accent-color: #c0a06a !important; }
+      .filter-panel .filter-icon {
+        width: 17px !important;
+        height: 17px !important;
+        margin-right: 4px !important;
+        filter: drop-shadow(0 1px 1px rgba(0,0,0,.32));
+      }
+      .filter-panel .toggle-arrow { color: #cfad70 !important; font-size: 9px !important; }
+
+      /* City diplomacy keeps its status colors but fits the Nordic surface. */
+      .filter-panel .city-diplo-item {
+        min-height: 28px !important;
+        margin: 3px 0 !important;
+        padding: 3px 6px !important;
+        border: 1px solid rgba(177, 145, 90, .34) !important;
+        border-radius: 5px !important;
+        color: #e9dfcd !important;
+        background: rgba(13, 22, 30, .40) !important;
+      }
+      .filter-panel .city-info,
+      .filter-panel .city-info span { color: #e9dfcd !important; }
+      .filter-panel .city-diplo-item select {
+        border: 1px solid rgba(188, 157, 103, .72) !important;
+        border-radius: 4px !important;
+        color: #eee4d1 !important;
+        background: rgba(30, 42, 52, .95) !important;
+        font: 9px Georgia, serif !important;
+      }
+
+      .filter-panel::-webkit-scrollbar { width: 7px !important; }
+      .filter-panel::-webkit-scrollbar-track { background: rgba(9, 17, 24, .28) !important; border-radius: 8px; }
+      .filter-panel::-webkit-scrollbar-thumb { background: linear-gradient(#b8955d, #6f5834) !important; border: 1px solid rgba(239, 220, 181, .22); border-radius: 8px; }
+
+      .filter-panel.collapsed {
+        width: 40px !important;
+        height: 154px !important;
+        max-height: 154px !important;
+        padding: 8px 4px !important;
+        background: linear-gradient(145deg, rgba(43, 57, 69, .96), rgba(24, 34, 43, .96)) !important;
+      }
+      .filter-panel.collapsed::after { display: none; }
+      .filter-panel.collapsed .panel-header {
+        margin: -8px -4px 0 !important;
+        padding: 8px 3px !important;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+      .filter-panel.collapsed .panel-header::before { display: none; }
+      .filter-panel.collapsed .panel-header h4::after { display: none; }
+      .filter-panel.collapsed .collapse-btn {
+        border-color: rgba(210, 178, 117, .88) !important;
+        background: linear-gradient(145deg, #a07c45, #624725) !important;
+      }
+      .filter-panel.collapsed .vertical-title {
+        color: #d6bc8a !important;
+        font: 700 10px/1.25 "Segoe UI Symbol", Georgia, serif !important;
+        letter-spacing: .2em !important;
+      }
+
+      @media (max-width: 700px) {
+        .filter-panel {
+          width: min(274px, calc(100vw - 18px)) !important;
+          max-height: min(70vh, calc(100vh - 18px)) !important;
+          padding: 9px 10px 10px !important;
+        }
+        .filter-panel .panel-header { margin: -9px -10px 8px !important; padding: 9px 10px 8px !important; }
+        .filter-panel.collapsed { width: 39px !important; height: 142px !important; max-height: 142px !important; padding: 8px 4px !important; }
+        .filter-panel.collapsed .panel-header { margin: -8px -4px 0 !important; padding: 8px 3px !important; }
+      }
+      @media (max-width: 420px) {
+        .filter-panel { width: min(264px, calc(100vw - 16px)) !important; max-height: 60vh !important; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .filter-panel *, .filter-panel *::before, .filter-panel *::after { transition-duration: .01ms !important; }
+      }
+    </style>
+
+
+    <style id="winterhold-nordic-global-theme-v2">
+      /* One visual system shared by every floating surface and Leaflet control. */
+      :root {
+        --nordic-slate: rgba(39, 51, 63, .94);
+        --nordic-slate-deep: rgba(25, 34, 43, .96);
+        --nordic-slate-mid: rgba(52, 67, 79, .96);
+        --nordic-slate-inset: rgba(12, 21, 29, .56);
+        --nordic-bronze: #b99a64;
+        --nordic-bronze-bright: #d0b27a;
+        --nordic-bronze-dim: rgba(190, 157, 99, .38);
+        --nordic-ivory: #eee7d9;
+        --nordic-ivory-muted: #c7c3b9;
+        --nordic-shadow: 0 14px 34px rgba(5, 9, 13, .40), 0 3px 9px rgba(5, 9, 13, .23);
+      }
+
+      /* Floating information and history panels now match the filter drawer. */
+      .info-panel,
+      .logs-panel,
+      .auth-card {
+        color: var(--nordic-ivory) !important;
+        background:
+          linear-gradient(145deg, rgba(39, 51, 63, .96), rgba(25, 34, 43, .94)),
+          repeating-linear-gradient(135deg, rgba(205, 178, 124, .025) 0 1px, transparent 1px 9px) !important;
+        border: 1px solid rgba(190, 157, 99, .88) !important;
+        border-radius: 8px !important;
+        box-shadow: var(--nordic-shadow), inset 0 0 0 1px rgba(255,255,255,.075), inset 0 0 0 4px rgba(172,139,83,.055) !important;
+        -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
+        backdrop-filter: blur(15px) saturate(125%) !important;
+      }
+
+      .info-panel .panel-header,
+      .logs-panel .panel-header {
+        background: linear-gradient(180deg, rgba(67,84,98,.98), rgba(35,47,59,.99)) !important;
+        border-bottom: 1px solid rgba(195,160,98,.76) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.11), 0 3px 8px rgba(0,0,0,.17) !important;
+      }
+      .info-panel .panel-header h4,
+      .logs-panel .panel-header h4 {
+        color: #f0e6d1 !important;
+        letter-spacing: .16em !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,.42) !important;
+      }
+      .info-panel .close-btn,
+      .logs-panel .collapse-btn {
+        border: 1px solid rgba(211,178,117,.9) !important;
+        border-radius: 4px !important;
+        color: #fff0d2 !important;
+        background: linear-gradient(145deg, #a07c45, #624725) !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.18) !important;
+      }
+      .info-panel p,
+      .info-panel b { color: var(--nordic-ivory) !important; }
+      .logs-panel .logs-content { color: #d9d4ca !important; }
+      .logs-panel .log-item {
+        color: #e2ddd3 !important;
+        border-bottom: 1px solid rgba(184,151,96,.25) !important;
+      }
+      .logs-panel .log-item span { color: #c6a66e !important; }
+
+      /* Account controls use slate hardware and bronze trim, not brown leather. */
+      .bottom-left-controls {
+        padding: 5px !important;
+        border: 1px solid rgba(190,157,99,.72) !important;
+        border-radius: 7px !important;
+        background: linear-gradient(145deg, rgba(39,51,63,.94), rgba(25,34,43,.95)) !important;
+        box-shadow: 0 8px 20px rgba(5,9,13,.34), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+        backdrop-filter: blur(12px) saturate(120%) !important;
+      }
+      .map-control-btn {
+        border: 1px solid rgba(190,157,99,.78) !important;
+        border-radius: 5px !important;
+        color: #f0e7d8 !important;
+        background: linear-gradient(180deg, rgba(76,91,103,.97), rgba(36,49,60,.98)) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 2px 5px rgba(0,0,0,.22) !important;
+      }
+      .map-control-btn:hover {
+        color: #fff4dc !important;
+        border-color: var(--nordic-bronze-bright) !important;
+        background: linear-gradient(180deg, #6e6047, #3b4b55) !important;
+      }
+
+      /* Zoom, attribution and popups are part of the same in-world interface. */
+      .leaflet-control-zoom {
+        border: 1px solid rgba(190,157,99,.9) !important;
+        border-radius: 7px !important;
+        overflow: hidden !important;
+        background: transparent !important;
+        box-shadow: 0 6px 16px rgba(5,9,13,.34) !important;
+      }
+      .leaflet-control-zoom a {
+        color: #eee7d9 !important;
+        background: linear-gradient(180deg, rgba(67,84,98,.98), rgba(31,43,54,.99)) !important;
+        border: 0 !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,.4) !important;
+      }
+      .leaflet-control-zoom a:hover {
+        color: #fff1cf !important;
+        background: linear-gradient(180deg, #7b6543, #46545c) !important;
+      }
+      .leaflet-control-zoom-in { border-bottom: 1px solid rgba(190,157,99,.42) !important; }
+      .leaflet-control-attribution {
+        color: #d8d2c5 !important;
+        background: rgba(25,34,43,.82) !important;
+        border-top: 1px solid rgba(190,157,99,.48) !important;
+        border-left: 1px solid rgba(190,157,99,.48) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        backdrop-filter: blur(8px) !important;
+      }
+      .leaflet-control-attribution a { color: #d4b77f !important; }
+
+      .leaflet-popup-content-wrapper,
+      .leaflet-popup-tip {
+        color: var(--nordic-ivory) !important;
+        background: linear-gradient(145deg, rgba(43,57,69,.98), rgba(24,34,43,.98)) !important;
+        border: 1px solid rgba(190,157,99,.9) !important;
+        box-shadow: 0 10px 26px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.07) !important;
+      }
+      .leaflet-popup-content { color: var(--nordic-ivory) !important; }
+      .leaflet-popup-content p { color: #d5d0c6 !important; }
+      .popup-title {
+        color: #f1e5cc !important;
+        border-bottom: 1px solid rgba(196,164,105,.58) !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,.3);
+      }
+      .popup-form input,
+      .popup-form select {
+        color: #eee7d9 !important;
+        background: rgba(13,22,30,.82) !important;
+        border: 1px solid rgba(177,151,105,.7) !important;
+        border-radius: 4px !important;
+      }
+      .popup-form input::placeholder { color: #b8b6af !important; }
+      .popup-form button {
+        color: #f2e8d5 !important;
+        border: 1px solid rgba(194,161,106,.72) !important;
+        background: linear-gradient(180deg, #596b76, #2d404d) !important;
+      }
+      .popup-form button:hover { background: linear-gradient(180deg, #7c6847, #43535b) !important; }
+      .btn-delete { border: 1px solid rgba(239,155,142,.45) !important; }
+
+      /* Login and admin windows follow the same dark translucent material. */
+      .auth-card h3 {
+        color: #f0e6d1 !important;
+        border-bottom: 1px solid rgba(195,160,98,.62) !important;
+      }
+      .auth-card p,
+      .auth-card label { color: #ded8cc !important; }
+      .auth-card input,
+      .auth-card select {
+        color: #eee7d9 !important;
+        background: rgba(13,22,30,.78) !important;
+        border: 1px solid rgba(177,151,105,.68) !important;
+        border-radius: 5px !important;
+      }
+      .auth-card input::placeholder { color: #b8b6af !important; }
+      .auth-card button,
+      .auth-btn-tab {
+        color: #f2e8d5 !important;
+        border: 1px solid rgba(194,161,106,.76) !important;
+        background: linear-gradient(180deg, #596b76, #2d404d) !important;
+      }
+      .auth-card button:hover,
+      .auth-btn-tab:hover { background: linear-gradient(180deg, #7c6847, #43535b) !important; }
+      .auth-btn-tab.active {
+        color: #fff2d7 !important;
+        background: linear-gradient(180deg, #876b42, #4b3d2b) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 5px rgba(0,0,0,.2) !important;
+      }
+      .btn-secondary { background: linear-gradient(180deg, #596b76, #2d404d) !important; }
+      .users-list {
+        color: #e5dfd3 !important;
+        background: rgba(10,18,25,.48) !important;
+        border: 1px solid rgba(184,151,96,.34) !important;
+      }
+      .user-row { border-bottom-color: rgba(184,151,96,.24) !important; }
+      .user-role-select {
+        color: #eee4d1 !important;
+        background: rgba(30,42,52,.95) !important;
+        border: 1px solid rgba(188,157,103,.68) !important;
+      }
+
+      /* Center plaque: keep the bronze identity, cool its surrounding surface. */
+      #map::after {
+        border-color: rgba(190,157,99,.84) !important;
+        background: linear-gradient(180deg, rgba(48,65,77,.97), rgba(24,35,44,.98)) !important;
+        color: #f0e3c8 !important;
+        box-shadow: 0 4px 13px rgba(5,9,13,.32), inset 0 1px 0 rgba(255,255,255,.12) !important;
+      }
+
+      /* Preserve the semantic red/green state colors of moderation actions. */
+      .del-user-btn { background: #9f4140 !important; color: #fff !important; }
+      .approve-user-btn { background: #39785c !important; color: #fff !important; }
+
+      @media (max-width: 700px) {
+        .info-panel, .logs-panel, .bottom-left-controls { -webkit-backdrop-filter: blur(12px) !important; backdrop-filter: blur(12px) !important; }
+      }
+    </style>
+
+\n\n    <style id="winterhold-nordic-stone-atmosphere-v3">
+      /* Nordic stone surround: the parchment fallback is replaced by a calm, cool slate. */
+      html, body {
+        background-color: #263640 !important;
+        background-image:
+          radial-gradient(ellipse at 50% 44%, rgba(111, 137, 145, .16) 0%, transparent 58%),
+          radial-gradient(ellipse at 8% 8%, rgba(10, 19, 27, .28) 0%, transparent 48%),
+          radial-gradient(ellipse at 94% 92%, rgba(8, 15, 22, .30) 0%, transparent 45%),
+          repeating-linear-gradient(117deg, rgba(232, 226, 207, .018) 0px, rgba(232, 226, 207, .018) 1px, transparent 1px, transparent 7px),
+          repeating-linear-gradient(17deg, rgba(4, 11, 17, .026) 0px, rgba(4, 11, 17, .026) 2px, transparent 2px, transparent 9px),
+          linear-gradient(145deg, #1b2932 0%, #2b3c45 46%, #202d35 100%) !important;
+        background-attachment: fixed !important;
+        background-size: cover !important;
+      }
+
+      /* Leaflet must stay transparent outside tile coverage so the stone surround remains visible. */
+      #map,
+      .leaflet-container {
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+
+      /* Very faint angular knotwork in the four corners; decorative only, never intercepts clicks. */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        opacity: .34;
+        background-image:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Cg stroke='%23c6a66e' stroke-width='1.35' stroke-linecap='square' stroke-linejoin='miter' opacity='.38'%3E%3Cpath d='M8 42V9h33v8H17v25H8Zm0 16v33h33v-8H17V58H8Zm50-50h33v33h-8V17H58V8Zm0 83h33V58h-8v25H58v8Z'/%3E%3Cpath d='M24 24 50 8l26 16-8 5-18-11-18 11-8-5Zm0 52 26 16 26-16-8-5-18 11-18-11-8 5Z'/%3E%3Cpath d='M8 50h17l8-8 8 8-8 8-8-8m67 0H75l-8-8-8 8 8 8 8-8M50 8v17l-8 8 8 8 8-8-8-8m0 67V75l-8-8 8-8 8 8-8 8'/%3E%3Cpath d='M43 43 50 36l7 7-7 7-7-7Zm0 14 7-7 7 7-7 7-7-7Z' opacity='.65'/%3E%3C/g%3E%3C/svg%3E"),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Cg stroke='%23c6a66e' stroke-width='1.35' stroke-linecap='square' stroke-linejoin='miter' opacity='.38'%3E%3Cpath d='M8 42V9h33v8H17v25H8Zm0 16v33h33v-8H17V58H8Zm50-50h33v33h-8V17H58V8Zm0 83h33V58h-8v25H58v8Z'/%3E%3Cpath d='M24 24 50 8l26 16-8 5-18-11-18 11-8-5Zm0 52 26 16 26-16-8-5-18 11-18-11-8 5Z'/%3E%3Cpath d='M8 50h17l8-8 8 8-8 8-8-8m67 0H75l-8-8-8 8 8 8 8-8M50 8v17l-8 8 8 8 8-8-8-8m0 67V75l-8-8 8-8 8 8-8 8'/%3E%3Cpath d='M43 43 50 36l7 7-7 7-7-7Zm0 14 7-7 7 7-7 7-7-7Z' opacity='.65'/%3E%3C/g%3E%3C/svg%3E"),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Cg stroke='%23c6a66e' stroke-width='1.35' stroke-linecap='square' stroke-linejoin='miter' opacity='.38'%3E%3Cpath d='M8 42V9h33v8H17v25H8Zm0 16v33h33v-8H17V58H8Zm50-50h33v33h-8V17H58V8Zm0 83h33V58h-8v25H58v8Z'/%3E%3Cpath d='M24 24 50 8l26 16-8 5-18-11-18 11-8-5Zm0 52 26 16 26-16-8-5-18 11-18-11-8 5Z'/%3E%3Cpath d='M8 50h17l8-8 8 8-8 8-8-8m67 0H75l-8-8-8 8 8 8 8-8M50 8v17l-8 8 8 8 8-8-8-8m0 67V75l-8-8 8-8 8 8-8 8'/%3E%3Cpath d='M43 43 50 36l7 7-7 7-7-7Zm0 14 7-7 7 7-7 7-7-7Z' opacity='.65'/%3E%3C/g%3E%3C/svg%3E"),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Cg stroke='%23c6a66e' stroke-width='1.35' stroke-linecap='square' stroke-linejoin='miter' opacity='.38'%3E%3Cpath d='M8 42V9h33v8H17v25H8Zm0 16v33h33v-8H17V58H8Zm50-50h33v33h-8V17H58V8Zm0 83h33V58h-8v25H58v8Z'/%3E%3Cpath d='M24 24 50 8l26 16-8 5-18-11-18 11-8-5Zm0 52 26 16 26-16-8-5-18 11-18-11-8 5Z'/%3E%3Cpath d='M8 50h17l8-8 8 8-8 8-8-8m67 0H75l-8-8-8 8 8 8 8-8M50 8v17l-8 8 8 8 8-8-8-8m0 67V75l-8-8 8-8 8 8-8 8'/%3E%3Cpath d='M43 43 50 36l7 7-7 7-7-7Zm0 14 7-7 7 7-7 7-7-7Z' opacity='.65'/%3E%3C/g%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-size: 82px 82px;
+        background-position: 10px 10px, calc(100% - 92px) 10px, 10px calc(100% - 92px), calc(100% - 92px) calc(100% - 92px);
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,.16));
+      }
+
+      /* Keep the existing bronze frame language crisp against the cooler surround. */
+      .filter-panel,
+      .info-panel,
+      .logs-panel,
+      .bottom-left-controls,
+      .leaflet-control-zoom,
+      .leaflet-popup-content-wrapper {
+        border-color: rgba(190, 157, 99, .92) !important;
+      }
+
+      @media (max-width: 700px) {
+        body::after {
+          opacity: .22;
+          background-size: 58px 58px;
+          background-position: 6px 6px, calc(100% - 64px) 6px, 6px calc(100% - 64px), calc(100% - 64px) calc(100% - 64px);
+        }
+      }
+    </style>
+
+
+
+    <style id="winterhold-nordic-filter-navigation-v1">
+      /* Compact rune rail + slide-out filter drawer. Existing filters and IDs stay intact. */
+      .filter-dock {
+        position: absolute;
+        z-index: 1100;
+        top: 14px;
+        left: 14px;
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        max-height: calc(100vh - 28px);
+        pointer-events: none;
+      }
+      body:not(.logged-in) .filter-dock { display: none !important; }
+
+      .filter-rail {
+        box-sizing: border-box;
+        width: 58px;
+        padding: 9px 6px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 58px;
+        border: 1px solid rgba(190,157,99,.9);
+        border-radius: 10px;
+        color: #eee7d9;
+        background:
+          linear-gradient(160deg, rgba(45,61,73,.95), rgba(18,28,37,.96)),
+          repeating-linear-gradient(135deg, rgba(205,178,124,.025) 0 1px, transparent 1px 9px);
+        box-shadow: 0 12px 28px rgba(5,9,13,.38), inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 3px rgba(185,154,100,.045);
+        -webkit-backdrop-filter: blur(15px) saturate(125%);
+        backdrop-filter: blur(15px) saturate(125%);
+        pointer-events: auto;
+      }
+      .filter-rail-crest {
+        width: 34px;
+        height: 34px;
+        margin: 0 0 3px;
+        display: grid;
+        place-items: center;
+        border-bottom: 1px solid rgba(190,157,99,.48);
+        color: #d2b47b;
+        font: 24px/1 "Segoe UI Symbol", "Noto Sans Runic", Georgia, serif;
+        text-shadow: 0 1px 6px rgba(0,0,0,.55);
+      }
+      .filter-rail-btn {
+        appearance: none;
+        box-sizing: border-box;
+        width: 44px;
+        min-height: 49px;
+        padding: 5px 2px 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        color: #c8c7c1;
+        background: rgba(8,16,23,.22);
+        cursor: pointer;
+        font-family: Georgia, serif;
+        transition: color .16s ease, border-color .16s ease, background .16s ease, transform .16s ease, box-shadow .16s ease;
+      }
+      .filter-rail-btn:hover {
+        color: #fff0d2;
+        border-color: rgba(190,157,99,.55);
+        background: rgba(117,91,54,.28);
+        transform: translateY(-1px);
+      }
+      .filter-rail-btn.is-active {
+        color: #fff1d4;
+        border-color: rgba(211,178,117,.86);
+        background: linear-gradient(155deg, rgba(145,112,63,.74), rgba(68,57,43,.82));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 8px rgba(0,0,0,.24), 0 0 12px rgba(185,154,100,.12);
+      }
+      .filter-rail-glyph {
+        font: 20px/1.1 "Segoe UI Symbol", "Noto Sans Runic", Georgia, serif;
+        color: #d5bd8d;
+        text-shadow: 0 1px 3px rgba(0,0,0,.55);
+      }
+      .filter-rail-label {
+        font: 9px/1.1 Georgia, serif;
+        letter-spacing: .01em;
+      }
+      .filter-rail-footer {
+        width: 38px;
+        padding-top: 7px;
+        margin-top: 1px;
+        border-top: 1px solid rgba(190,157,99,.32);
+        color: rgba(208,181,127,.48);
+        font: 10px/1 "Segoe UI Symbol", "Noto Sans Runic", Georgia, serif;
+        letter-spacing: .12em;
+        text-align: center;
+      }
+
+      #filter-panel-box.filter-panel {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        box-sizing: border-box;
+        width: 296px !important;
+        max-width: min(296px, calc(100vw - 90px)) !important;
+        max-height: calc(100vh - 28px) !important;
+        margin: 0 !important;
+        padding: 10px 11px 11px !important;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden !important;
+        pointer-events: auto;
+        opacity: 1;
+        transform: translateX(0);
+        visibility: visible;
+        transition: width .22s ease, max-width .22s ease, opacity .18s ease, transform .22s ease, padding .22s ease, border-color .18s ease;
+      }
+      #filter-panel-box .panel-content {
+        min-height: 0;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+      }
+      #filter-panel-box .panel-header h4 { text-transform: uppercase; }
+      #filter-panel-box .collapse-btn { font-size: 15px !important; line-height: 1 !important; }
+
+      .filter-section-hidden,
+      .filter-legend-hidden { display: none !important; }
+
+      .filter-dock.drawer-closed #filter-panel-box {
+        width: 0 !important;
+        max-width: 0 !important;
+        min-width: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        border-left-width: 0 !important;
+        border-right-width: 0 !important;
+        opacity: 0;
+        transform: translateX(-9px);
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      @media (max-width: 700px) {
+        .filter-dock {
+          top: 8px;
+          left: 8px;
+          gap: 6px;
+          max-height: calc(100vh - 16px);
+        }
+        .filter-rail {
+          width: 50px;
+          flex-basis: 50px;
+          padding: 7px 4px;
+          gap: 5px;
+          border-radius: 8px;
+        }
+        .filter-rail-btn { width: 40px; min-height: 45px; }
+        .filter-rail-glyph { font-size: 18px; }
+        .filter-rail-label { font-size: 8px; }
+        #filter-panel-box.filter-panel {
+          width: min(270px, calc(100vw - 68px)) !important;
+          max-width: min(270px, calc(100vw - 68px)) !important;
+          max-height: min(68vh, calc(100vh - 16px)) !important;
+        }
+      }
+      @media (max-width: 430px) {
+        .filter-dock { top: 7px; left: 7px; gap: 5px; }
+        .filter-rail { width: 46px; flex-basis: 46px; padding: 6px 3px; }
+        .filter-rail-btn { width: 38px; min-height: 43px; }
+        .filter-rail-crest { width: 31px; height: 31px; }
+        #filter-panel-box.filter-panel {
+          width: min(250px, calc(100vw - 61px)) !important;
+          max-width: min(250px, calc(100vw - 61px)) !important;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #filter-panel-box, .filter-rail-btn { transition-duration: .01ms !important; }
+      }
+    </style>
+
+</head>
+<body>
+
+    <div id="auth-modal" class="auth-overlay">
+        <div class="auth-card">
+            <h3>Вход / Регистрация</h3>
+            <div class="auth-buttons-row">
+                <button class="auth-btn-tab active" id="tab-login-btn" onclick="switchTab('login')">Вход</button>
+                <button class="auth-btn-tab" id="tab-reg-btn" onclick="switchTab('reg')">Регистрация</button>
+            </div>
+            
+            <p style="font-size: 11px; margin: 6px 0;" id="auth-instruction">Введите ник и пароль:</p>
+            <input type="text" id="auth-name-input" placeholder="Ваш ник..." onkeydown="checkEnter(event)" />
+            <input type="password" id="auth-pass-input" placeholder="Пароль..." onkeydown="checkEnter(event)" />
+            
+            <div id="reg-fields-box" class="reg-extra-fields">
+                <label style="font-size: 11px; display: block; text-align: left; margin-top: 4px;">Желаемая роль:</label>
+                <select id="auth-role-select">
+                    <option value="reader">📖 Читатель</option>
+                    <option value="editor">✏️ Редактор</option>
+                    <option value="admin">🛡️ Администратор</option>
+                </select>
+            </div>
+            
+            <button id="main-action-btn" onclick="performAction()">Войти</button>
+
+            <p id="auth-error" style="color: #a83232; font-size: 11px; display: none; margin-top: 8px;"></p>
+        </div>
+    </div>
+
+    <div id="admin-users-modal" class="auth-overlay" style="display: none;">
+        <div class="auth-card" style="width: 460px;">
+            <h3>Панель управления</h3>
+            
+            <p style="font-size: 12px; margin-bottom: 4px; font-weight: bold; color: #a83232;">⏳ Заявки на регистрацию:</p>
+            <div class="users-list" id="pending-users-container"></div>
+
+            <p style="font-size: 12px; margin: 8px 0 4px 0; font-weight: bold;">🛡️ Одобренные пользователи:</p>
+            <div class="users-list" id="users-list-container"></div>
+
+            <p style="font-size: 12px; margin: 8px 0 4px 0; font-weight: bold; color: #8c7355;">🗑️ Корзина (Удаленные метки):</p>
+            <div class="users-list" id="deleted-markers-container"></div>
+            
+            <button class="btn-secondary" onclick="closeAdminModal()" style="margin-top: 10px;">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="bottom-left-controls">
+        <button id="admin-panel-btn" class="map-control-btn" style="display: none;" onclick="openAdminModal()">🛡️ Управление доступом</button>
+        <button id="logout-btn" class="map-control-btn" style="display: none;" onclick="logoutUser()">🚪 Сменить аккаунт</button>
+    </div>
+
+    <div class="filter-dock" id="filter-dock">
+        <nav class="filter-rail" aria-label="Разделы атласа">
+            <div class="filter-rail-crest" aria-hidden="true">ᛟ</div>
+            <button class="filter-rail-btn is-active" type="button" data-filter-tab="all" onclick="switchFilterTab('all')" aria-pressed="true" title="Все метки">
+                <span class="filter-rail-glyph" aria-hidden="true">✥</span><span class="filter-rail-label">Все</span>
+            </button>
+            <button class="filter-rail-btn" type="button" data-filter-tab="herbs" onclick="switchFilterTab('herbs')" aria-pressed="false" title="Растения">
+                <span class="filter-rail-glyph" aria-hidden="true">ᛃ</span><span class="filter-rail-label">Травы</span>
+            </button>
+            <button class="filter-rail-btn" type="button" data-filter-tab="animals" onclick="switchFilterTab('animals')" aria-pressed="false" title="Животные">
+                <span class="filter-rail-glyph" aria-hidden="true">ᛉ</span><span class="filter-rail-label">Фауна</span>
+            </button>
+            <button class="filter-rail-btn" type="button" data-filter-tab="ruins" onclick="switchFilterTab('ruins')" aria-pressed="false" title="Руины и аномалии">
+                <span class="filter-rail-glyph" aria-hidden="true">ᛟ</span><span class="filter-rail-label">Руины</span>
+            </button>
+            <button class="filter-rail-btn" type="button" data-filter-tab="cities" onclick="switchFilterTab('cities')" aria-pressed="false" title="Города и дипломатия">
+                <span class="filter-rail-glyph" aria-hidden="true">ᛞ</span><span class="filter-rail-label">Города</span>
+            </button>
+            <div class="filter-rail-footer" aria-hidden="true">ᚠ ᚢ ᚦ</div>
+        </nav>
+        <div class="filter-panel" id="filter-panel-box">
+        <div class="panel-header">
+            <h4 id="filter-panel-title">Все метки</h4>
+            <button class="collapse-btn" id="filter-collapse-btn" onclick="toggleLeftPanel()" aria-label="Свернуть фильтры" title="Свернуть панель">×</button>
+        </div>
+        <div class="panel-content" id="filter-content">
+            <div class="map-tools">
+                <input id="marker-search" class="map-search" type="search" placeholder="⌕ Найти метку по названию..." oninput="renderMarkers()" aria-label="Поиск меток">
+                <div class="map-tools-row">
+                    <button type="button" onclick="setAllResourceFilters(true)">Все ресурсы</button>
+                    <button type="button" onclick="setAllResourceFilters(false)">Скрыть ресурсы</button>
+                </div>
+                <div class="map-result-count" id="map-result-count">Метки: 0</div>
+            </div>
+            <div class="tier-legend" aria-label="Легенда уровней">
+                <span class="tier-legend-item"><i class="tier-dot" style="--tier-color:#477b45"></i>I</span>
+                <span class="tier-legend-item"><i class="tier-dot" style="--tier-color:#278b82"></i>II</span>
+                <span class="tier-legend-item"><i class="tier-dot" style="--tier-color:#3974bd"></i>III</span>
+                <span class="tier-legend-item"><i class="tier-dot" style="--tier-color:#8052a5"></i>IV</span>
+                <span class="tier-legend-item"><i class="tier-dot" style="--tier-color:#b34a35"></i>V</span>
+            </div>
+            <div class="filter-group" data-filter-section="herbs">
+                <div class="filter-group-header">
+                    <label style="margin:0; font-weight:bold; cursor:pointer;">
+                        <input type="checkbox" id="filter-all-herbs" checked onchange="toggleGroup('herb', 5, this.checked)"> 🌿 Травы
+                    </label>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
+                </div>
+                <div class="filter-sublist" id="sublist-herbs">
+                    <label><input type="checkbox" id="filter-herb1" class="sub-herb" checked> <img src="Herbs1.png" class="filter-icon"> Травы 1 ур</label>
+                    <label><input type="checkbox" id="filter-herb2" class="sub-herb" checked> <img src="Herbs2.png" class="filter-icon"> Травы 2 ур</label>
+                    <label><input type="checkbox" id="filter-herb3" class="sub-herb" checked> <img src="Herbs3.png" class="filter-icon"> Травы 3 ур</label>
+                    <label><input type="checkbox" id="filter-herb4" class="sub-herb" checked> <img src="Herbs4.png" class="filter-icon"> Травы 4 ур</label>
+                    <label><input type="checkbox" id="filter-herb5" class="sub-herb" checked> <img src="Herbs5.png" class="filter-icon"> Травы 5 ур</label>
+                </div>
+            </div>
+
+            <div class="filter-group" data-filter-section="animals">
+                <div class="filter-group-header">
+                    <label style="margin:0; font-weight:bold; cursor:pointer;">
+                        <input type="checkbox" id="filter-all-animals" checked onchange="toggleGroup('animal', 4, this.checked)"> 🐾 Животные
+                    </label>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
+                </div>
+                <div class="filter-sublist" id="sublist-animals">
+                    <label><input type="checkbox" id="filter-animal1" class="sub-animal" checked> <img src="Animals1.png" class="filter-icon"> Животные 1 ур</label>
+                    <label><input type="checkbox" id="filter-animal2" class="sub-animal" checked> <img src="Animals2.png" class="filter-icon"> Животные 2 ур</label>
+                    <label><input type="checkbox" id="filter-animal3" class="sub-animal" checked> <img src="Animals3.png" class="filter-icon"> Животные 3 ур</label>
+                    <label><input type="checkbox" id="filter-animal4" class="sub-animal" checked> <img src="Animals4.png" class="filter-icon"> Животные 4 ур</label>
+                </div>
+            </div>
+
+            <div class="filter-group" data-filter-section="ruins">
+                <div class="filter-group-header">
+                    <span style="font-weight:bold; color: #3b2a1a;">📦 Разное</span>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
+                </div>
+                <div class="filter-sublist">
+                    <label><input type="checkbox" id="filter-anomaly" checked> <img src="Magical Anomaly.png" class="filter-icon"> Магические аномалии</label>
+                    <label><input type="checkbox" id="filter-ruins" checked> <img src="Nord Ruins.png" class="filter-icon"> Нордские руины</label>
+                    <label><input type="checkbox" id="filter-dwarven_ruins" checked> <img src="Ruins.svg" class="filter-icon"> Двемерские руины</label>
+                </div>
+            </div>
+
+            <div class="filter-group" data-filter-section="cities" style="border: none; margin-bottom: 0; padding-bottom: 0;">
+                <div class="filter-group-header" style="margin-bottom: 4px;">
+                    <span style="font-weight:bold; color: #3b2a1a;">🏰 Отношения с городами</span>
+                    <span class="toggle-arrow" onclick="toggleSublist(this)" style="cursor:pointer; padding: 2px 6px;">▼</span>
+                </div>
+                <div class="filter-sublist" style="margin-left: 0;">
+                    <div id="diplomacy-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    </div>
+
+    <div class="info-panel" id="info-panel-box">
+        <div class="panel-header">
+            <h4>Карта Скайрима</h4>
+            <button class="close-btn" onclick="closeInfoPanel()">×</button>
+        </div>
+        <p style="margin: 3px 0;">• Пользователь: <b id="current-user-name">-</b></p>
+        <p style="margin: 3px 0;">• Доступ: <b id="current-user-role">-</b></p>
+        <p style="margin: 3px 0;">• Синхронизация в реальном времени.</p>
+    </div>
+
+    <div class="logs-panel" id="logs-panel-box">
+        <div class="panel-header">
+            <h4>📜 История изменений</h4>
+            <button class="collapse-btn" id="logs-collapse-btn" onclick="toggleLogsPanel()">−</button>
+        </div>
+        <div class="logs-content" id="logs-list-container">
+            <div style="color: #666; font-style: italic;">Загрузка истории...</div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAjoA4hScJz8IGH-F_3y22ifZYDwdIpAkY",
+            authDomain: "skyrimmap-6a376.firebaseapp.com",
+            databaseURL: "https://skyrimmap-6a376-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skyrimmap-6a376",
+            storageBucket: "skyrimmap-6a376.firebasestorage.app",
+            messagingSenderId: "836868606277",
+            appId: "1:836868606277:web:fca99b310846f035e4d62c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
+        let currentAuthMode = 'login';
+
+        if (currentUser && currentUser.role === 'admin') {
+            auth.signInAnonymously().catch(err => console.error("Ошибка Auth:", err));
+        }
+
+        function sanitizeKey(str) {
+            return str.replace(/[\.\#\$\[\]]/g, "_").toLowerCase().trim();
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        async function hashPassword(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function logAction(text) {
+            if (!currentUser) return;
+            let logId = Date.now();
+            let timeStr = new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow' });
+            database.ref('skyrim_logs/' + logId).set({
+                text: text,
+                author: currentUser.name,
+                time: timeStr
+            }).catch(err => console.error("Ошибка записи лога:", err));
+        }
+
+        window.switchTab = function(mode) {
+            currentAuthMode = mode;
+            let btnLogin = document.getElementById('tab-login-btn');
+            let btnReg = document.getElementById('tab-reg-btn');
+            let mainBtn = document.getElementById('main-action-btn');
+            let regFieldsBox = document.getElementById('reg-fields-box');
+            let errElem = document.getElementById('auth-error');
+            errElem.style.display = 'none';
+
+            if (mode === 'login') {
+                btnLogin.classList.add('active');
+                btnReg.classList.remove('active');
+                mainBtn.textContent = "Войти";
+                regFieldsBox.style.display = 'none';
+            } else {
+                btnReg.classList.add('active');
+                btnLogin.classList.remove('active');
+                mainBtn.textContent = "Зарегистрироваться";
+                regFieldsBox.style.display = 'block';
+            }
+        };
+
+        window.checkEnter = function(event) {
+            if (event.key === "Enter") {
+                performAction();
+            }
+        };
+
+        window.performAction = function() {
+            if (currentAuthMode === 'login') {
+                loginUser();
+            } else {
+                registerUser();
+            }
+        };
+
+        window.registerUser = async function() {
+            let nameInput = document.getElementById('auth-name-input').value.trim();
+            let passInput = document.getElementById('auth-pass-input').value;
+            let roleInput = document.getElementById('auth-role-select').value;
+            let errElem = document.getElementById('auth-error');
+            let submitBtn = document.getElementById('main-action-btn');
+
+            if (!nameInput || !passInput) {
+                errElem.textContent = "Заполните ник и пароль!";
+                errElem.style.display = "block";
+                return;
+            }
+
+            let key = sanitizeKey(nameInput);
+            submitBtn.disabled = true;
+            let passwordHash = await hashPassword(passInput);
+
+            database.ref('allowed_users/' + key).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    submitBtn.disabled = false;
+                    errElem.textContent = "Такой ник уже занят!";
+                    errElem.style.display = "block";
+                    return;
+                }
+
+                database.ref('pending_users/' + key).once('value').then(pendingSnapshot => {
+                    if (pendingSnapshot.exists()) {
+                        submitBtn.disabled = false;
+                        errElem.textContent = "Заявка с таким ником уже ждет рассмотрения!";
+                        errElem.style.display = "block";
+                        return;
+                    }
+
+                    database.ref('pending_users/' + key).set({
+                        name: nameInput,
+                        passwordHash: passwordHash,
+                        role: roleInput
+                    }).then(() => {
+                        submitBtn.disabled = false;
+                        document.getElementById('auth-name-input').value = '';
+                        document.getElementById('auth-pass-input').value = '';
+                        
+                        alert("Ваша заявка принята, ожидайте подтверждения администратора.");
+                        switchTab('login');
+                    }).catch(err => {
+                        submitBtn.disabled = false;
+                        console.error("Ошибка записи заявки:", err);
+                        errElem.textContent = "Ошибка сети при отправке заявки.";
+                        errElem.style.display = "block";
+                    });
+                });
+            }).catch(err => {
+                submitBtn.disabled = false;
+                console.error("Ошибка проверки пользователя:", err);
+            });
+        };
+
+        window.loginUser = async function() {
+            let inputVal = document.getElementById('auth-name-input').value.trim();
+            let inputPass = document.getElementById('auth-pass-input').value;
+            let key = sanitizeKey(inputVal);
+            let errElem = document.getElementById('auth-error');
+            let submitBtn = document.getElementById('main-action-btn');
+
+            if (!key || !inputPass) {
+                errElem.textContent = "Введите ник и пароль.";
+                errElem.style.display = "block";
+                return;
+            }
+
+            submitBtn.disabled = true;
+            let inputHash = await hashPassword(inputPass);
+
+            database.ref('allowed_users').once('value').then(snapshot => {
+                submitBtn.disabled = false;
+                let users = snapshot.val();
+
+                if (!users) {
+                    database.ref('allowed_users/шалдир').set({ 
+                        name: "Шалдир", 
+                        role: "admin", 
+                        passwordHash: "" 
+                    });
+                    users = { "шалдир": { name: "Шалдир", role: "admin", passwordHash: "" } };
+                }
+
+                if (users[key]) {
+                    let userRecord = users[key];
+                    
+                    if (userRecord.passwordHash && userRecord.passwordHash !== inputHash) {
+                        errElem.textContent = "Неверный пароль!";
+                        errElem.style.display = "block";
+                        return;
+                    }
+
+                    let userRole = (userRecord.role || 'reader').toLowerCase().trim();
+                    if (userRole === 'administrator') userRole = 'admin';
+
+                    currentUser = {
+                        key: key,
+                        name: userRecord.name || inputVal,
+                        role: userRole
+                    };
+                    sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
+
+                    if (currentUser.role === 'admin' || currentUser.role === 'editor') {
+                        auth.signInAnonymously().then(() => {
+                            initUserSession();
+                        }).catch(err => {
+                            initUserSession();
+                        });
+                    } else {
+                        auth.signOut();
+                        initUserSession();
+                    }
+
+                } else {
+                    database.ref('pending_users/' + key).once('value').then(pendingSnap => {
+                        if (pendingSnap.exists()) {
+                            errElem.textContent = "Ваша заявка еще не подтверждена администратором!";
+                        } else {
+                            errElem.textContent = "Аккаунт не найден. Зарегистрируйтесь!";
+                        }
+                        errElem.style.display = "block";
+                    });
+                }
+            }).catch(err => {
+                submitBtn.disabled = false;
+                console.error("Ошибка авторизации:", err);
+            });
+        };
+
+        window.logoutUser = function() {
+            auth.signOut();
+            sessionStorage.removeItem('skyrim_active_user');
+            currentUser = null;
+            location.reload();
+        };
+
+        function initUserSession() {
+            if (!currentUser) {
+                document.body.classList.remove('logged-in');
+                document.body.classList.remove('is-admin');
+                document.getElementById('auth-modal').style.display = 'flex';
+                document.getElementById('logout-btn').style.display = 'none';
+                document.getElementById('admin-panel-btn').style.display = 'none';
+                return;
+            }
+
+            document.body.classList.add('logged-in');
+            document.body.classList.toggle('is-admin', currentUser.role === 'admin');
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'block';
+
+            let roleNameRu = 'Читатель';
+            if (currentUser.role === 'admin') roleNameRu = 'Администратор';
+            if (currentUser.role === 'editor') roleNameRu = 'Редактор';
+
+            document.getElementById('current-user-name').textContent = currentUser.name;
+            document.getElementById('current-user-role').textContent = roleNameRu;
+
+            setTimeout(function() {
+                fitMapToAvailableScreen();
+            }, 100);
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('admin-panel-btn').style.display = 'block';
+                listenLogs();
+            } else {
+                document.getElementById('admin-panel-btn').style.display = 'none';
+            }
+
+            renderDiplomacyPanel();
+            renderMarkers();
+        }
+
+        window.openAdminModal = function() {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            loadUsersLists();
+            document.getElementById('admin-users-modal').style.display = 'flex';
+        };
+
+        window.closeAdminModal = function() {
+            document.getElementById('admin-users-modal').style.display = 'none';
+        };
+
+        function loadUsersLists() {
+            database.ref('allowed_users').once('value').then(snapshot => {
+                let users = snapshot.val() || {};
+                let container = document.getElementById('users-list-container');
+                container.innerHTML = '';
+
+                Object.keys(users).forEach(key => {
+                    let u = users[key];
+                    let uRole = (u.role || '').toLowerCase();
+                    let isProtected = (key === 'шалдир' || (u.name && u.name.toLowerCase() === 'шалдир'));
+
+                    let roleControlHTML = '';
+                    if (isProtected) {
+                        roleControlHTML = `<b>🛡️ Админ (Защищен)</b>`;
+                    } else if (currentUser.role === 'admin') {
+                        roleControlHTML = `
+                            <select class="user-role-select" onchange="updateUserRole('${key}', this.value, '${escapeHTML(u.name)}')">
+                                <option value="reader" ${uRole === 'reader' ? 'selected' : ''}>Читатель</option>
+                                <option value="editor" ${uRole === 'editor' ? 'selected' : ''}>Редактор</option>
+                                <option value="admin" ${uRole === 'admin' ? 'selected' : ''}>Админ</option>
+                            </select>
+                        `;
+                    } else {
+                        roleControlHTML = uRole === 'admin' ? '🛡️ Админ' : (uRole === 'editor' ? '✏️ Редактор' : '📖 Читатель');
+                    }
+
+                    let deleteBtnHTML = (!isProtected && key !== currentUser.key) ? `<button class="del-user-btn" onclick="removeUser('${key}', '${escapeHTML(u.name)}')">Удалить</button>` : '';
+
+                    let row = document.createElement('div');
+                    row.className = 'user-row';
+                    row.innerHTML = `
+                        <span><b>${escapeHTML(u.name)}</b></span>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            ${roleControlHTML}
+                            ${deleteBtnHTML}
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            });
+
+            database.ref('pending_users').once('value').then(snapshot => {
+                let pending = snapshot.val() || {};
+                let container = document.getElementById('pending-users-container');
+                container.innerHTML = '';
+
+                let keys = Object.keys(pending);
+                if (keys.length === 0) {
+                    container.innerHTML = '<div style="color: #666; font-style: italic; padding: 4px;">Нет новых заявок</div>';
+                    return;
+                }
+
+                keys.forEach(key => {
+                    let u = pending[key];
+                    let rLabel = '📖 Читатель';
+                    if (u.role === 'editor') rLabel = '✏️ Редактор';
+                    if (u.role === 'admin') rLabel = '🛡️ Админ';
+
+                    let row = document.createElement('div');
+                    row.className = 'user-row';
+                    row.innerHTML = `
+                        <span><b>${escapeHTML(u.name)}</b> <span style="font-size: 10px; color: #555;">(${rLabel})</span></span>
+                        <div>
+                            <button class="approve-user-btn" onclick="approveUser('${key}', '${escapeHTML(u.name)}')">Принять</button>
+                            <button class="del-user-btn" onclick="rejectUser('${key}')">Отклонить</button>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            });
+
+            database.ref('deleted_markers').once('value').then(snapshot => {
+                let deleted = snapshot.val() || {};
+                let container = document.getElementById('deleted-markers-container');
+                container.innerHTML = '';
+
+                let keys = Object.keys(deleted);
+                if (keys.length === 0) {
+                    container.innerHTML = '<div style="color: #666; font-style: italic; padding: 4px;">Корзина пуста</div>';
+                    return;
+                }
+
+                keys.forEach(key => {
+                    let m = deleted[key];
+                    let row = document.createElement('div');
+                    row.className = 'user-row';
+                    row.innerHTML = `
+                        <span><b>${escapeHTML(m.name)}</b> <span style="font-size: 10px; color: #555;">(X:${m.x}, Y:${m.y})</span></span>
+                        <div>
+                            <button class="approve-user-btn" onclick="restoreMarker('${key}')">Восстановить</button>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            });
+        }
+
+        window.updateUserRole = function(key, newRole, userName) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            if (key === 'шалдир') {
+                alert("Нельзя изменять роль главного администратора «Шалдир»!");
+                loadUsersLists();
+                return;
+            }
+            database.ref('allowed_users/' + key + '/role').set(newRole).then(() => {
+                let roleRu = newRole === 'admin' ? 'Администратор' : (newRole === 'editor' ? 'Редактор' : 'Читатель');
+                logAction(`изменил(а) роль пользователя "${userName}" на "${roleRu}"`);
+            });
+        };
+
+        window.approveUser = function(key, userName) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            database.ref('pending_users/' + key).once('value').then(snapshot => {
+                let userData = snapshot.val();
+                if (userData) {
+                    database.ref('allowed_users/' + key).set(userData).then(() => {
+                        database.ref('pending_users/' + key).remove().then(() => {
+                            loadUsersLists();
+                            logAction(`одобрил(а) заявку пользователя: ${userName}`);
+                        });
+                    });
+                }
+            });
+        };
+
+        window.rejectUser = function(key) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            if (confirm("Отклонить и удалить эту заявку?")) {
+                database.ref('pending_users/' + key).remove().then(() => {
+                    loadUsersLists();
+                });
+            }
+        };
+
+        window.removeUser = function(key, userName) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            if (key === 'шалдир') {
+                alert("Нельзя удалить главного администратора «Шалдир»!");
+                return;
+            }
+            if (confirm(`Точно удалить пользователя "${userName}"?`)) {
+                database.ref('allowed_users/' + key).remove().then(() => {
+                    loadUsersLists();
+                    logAction(`удалил(а) пользователя: ${userName}`);
+                });
+            }
+        };
+
+        // НАСТРОЙКИ НОВОЙ ГЛОБАЛЬНОЙ КАРТЫ
+        // Старая карта занимала 4096 × 3072 условных единиц.
+        // Новая тайловая сетка целиком занимает X: 0..4096 и Y: 0..-4096.
+        // Используем весь её extent, чтобы не обрезать края карты при первом открытии.
+        // Показываем полную область новой тайловой сетки.
+        // Прежний crop (512..4096, -3712..-1024) отрезал часть внешней рамки карты.
+        var tileExtent = [0.00000000, -4096.00000000, 4096.00000000, 0.00000000];
+        var mapExtent = tileExtent.slice();
+        var mapMinZoom = 0;
+        var mapMaxZoom = 7;
+        var mapMaxResolution = 1.00000000;
+        var mapMinResolution = Math.pow(2, 4) * mapMaxResolution;
+        var crs = L.CRS.Simple;
+        crs.transformation = new L.Transformation(1, -tileExtent[0], -1, tileExtent[3]);
+        crs.scale = function(zoom) {
+            return Math.pow(2, zoom) / mapMinResolution;
+        };
+        crs.zoom = function(scale) {
+            return Math.log(scale * mapMinResolution) / Math.LN2;
+        };
+
+        var mapBounds = [
+            crs.unproject(L.point(mapExtent[2], mapExtent[3])),
+            crs.unproject(L.point(mapExtent[0], mapExtent[1]))
+        ];
+
+        var map = new L.Map('map', {
+            maxZoom: mapMaxZoom,
+            minZoom: mapMinZoom,
+            crs: crs,
+            maxBounds: mapBounds,
+            maxBoundsViscosity: 1.0,
+            zoomControl: false,
+            zoomSnap: 0.25,
+            zoomDelta: 0.5
+        });
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // Видимая область атласа немного уже исходной квадратной сетки тайлов.
+        // Подрезаем только внешние поля, где на краях проявляются отдельные
+        // синие/пустые фрагменты тайлов. Координатная сетка и координаты меток
+        // при этом НЕ меняются: crop влияет только на область просмотра и панорамирование.
+        // Консервативные границы: X 288..4000, Y -320..-3440.
+        var mapContentBounds = [
+            crs.unproject(L.point(4000, -320)),
+            crs.unproject(L.point(288, -3440))
+        ];
+
+        // Не позволяем перетаскивать карту в обрезанные внешние поля.
+        map.setMaxBounds(mapContentBounds);
+
+        var isAutoFittingMap = false;
+        var userHasMovedMap = false;
+        map.on('dragstart', function() { userHasMovedMap = true; });
+        map.on('zoomstart', function() {
+            if (!isAutoFittingMap) userHasMovedMap = true;
+        });
+
+        function fitMapToAvailableScreen() {
+            var compactViewport = window.innerWidth <= 700;
+            var paddingTopLeft = compactViewport ? [8, 42] : [226, 14];
+            var paddingBottomRight = compactViewport ? [8, 12] : [210, 14];
+            isAutoFittingMap = true;
+            map.invalidateSize({ animate: false });
+            map.fitBounds(mapContentBounds, {
+                paddingTopLeft: paddingTopLeft,
+                paddingBottomRight: paddingBottomRight,
+                animate: false
+            });
+            isAutoFittingMap = false;
+        }
+
+        // Единый базовый слой: глобальная карта Скайрима.
+        // Единая мозаика global + детальные фрагменты places.
+        // Нативные тайлы global доступны до z7; поселения встроены в global на z4–z7.
+        var tileOptions = {
+            minZoom: mapMinZoom,
+            maxZoom: mapMaxZoom,
+            maxNativeZoom: 7,
+            attribution: 'Skyrim Map',
+            noWrap: true,
+            tms: false,
+            bounds: mapContentBounds
+        };
+
+        var globalTilesLayer = L.tileLayer('tiles/global/{z}/{x}_{y}.webp', tileOptions);
+        globalTilesLayer.on('tileerror', function(e) {
+            console.warn('Не удалось загрузить тайл карты:', e && e.tile ? e.tile.src : e);
+        });
+        globalTilesLayer.addTo(map);
+
+        // Переключатель базовых слоев удален: карта работает в одном слое.
+        fitMapToAvailableScreen();
+
+        window.addEventListener('resize', function() {
+            if (userHasMovedMap) {
+                map.invalidateSize();
+            } else {
+                fitMapToAvailableScreen();
+            }
+        });
+
+        function latLngToXY(lat, lng) {
+            return { x: Math.round(lng), y: Math.round(lat) };
+        }
+
+        // Версия 1 (без coordinateVersion): координаты старой карты.
+        // Старая область 4096 × 3072 геопривязана в новой сетке с масштабом 7/8,
+        // смещением +512 по X и -1024 по Y.
+        // Версия 2: метки, созданные на промежуточном варианте карты, уже хранятся
+        // в координатах исходной новой тайловой сетки — оставляем их как есть.
+        // Версия 3: метки, созданные после этой коррекции.
+        const OLD_TO_NEW_SCALE = 0.875;
+        const OLD_TO_NEW_OFFSET_X = 512;
+        const OLD_TO_NEW_OFFSET_Y = -1024;
+
+        function xyToLatLng(x, y, coordinateVersion) {
+            const px = Number(x);
+            const py = Number(y);
+            const version = Number(coordinateVersion || 1);
+
+            if (version >= 2) return [py, px];
+
+            const newX = px * OLD_TO_NEW_SCALE + OLD_TO_NEW_OFFSET_X;
+            const newY = py * OLD_TO_NEW_SCALE + OLD_TO_NEW_OFFSET_Y;
+            return [newY, newX];
+        }
+
+        const citiesList = [
+            { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.svg' },
+            { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath_undiscovered.svg' },
+            { type: 'markarth', name: 'Маркарт', icon: 'Markarth.svg' },
+            { type: 'morthal', name: 'Морфал', icon: 'Morthal.svg' },
+            { type: 'riften', name: 'Рифтен', icon: 'Riften_undiscovered.svg' },
+            { type: 'solitude', name: 'Солитьюд', icon: 'Solitude_undiscovered.svg' },
+            { type: 'whiterun', name: 'Вайтран', icon: 'Whiterun.svg' },
+            { type: 'windhelm', name: 'Виндхельм', icon: 'Windhelm.svg' },
+            { type: 'winterhold', name: 'Винтерхолд', icon: 'Winterhold.svg' }
+        ];
+
+        const categoriesList = [
+            { type: 'herb1', name: '🌿 Травы 1 ур', icon: 'Herbs1.png' },
+            { type: 'herb2', name: '🌿 Травы 2 ур', icon: 'Herbs2.png' },
+            { type: 'herb3', name: '🌿 Травы 3 ур', icon: 'Herbs3.png' },
+            { type: 'herb4', name: '🌿 Травы 4 ур', icon: 'Herbs4.png' },
+            { type: 'herb5', name: '🌿 Травы 5 ур', icon: 'Herbs5.png' },
+            { type: 'animal1', name: '🐾 Животные 1 ур', icon: 'Animals1.png' },
+            { type: 'animal2', name: '🐾 Животные 2 ур', icon: 'Animals2.png' },
+            { type: 'animal3', name: '🐾 Животные 3 ур', icon: 'Animals3.png' },
+            { type: 'animal4', name: '🐾 Животные 4 ур', icon: 'Animals4.png' },
+            { type: 'anomaly', name: '✨ Магические аномалии', icon: 'Magical Anomaly.png' },
+            { type: 'ruins', name: '🏛️ Нордские руины', icon: 'Nord Ruins.png' },
+            { type: 'dwarven_ruins', name: '⚙️ Двемерские руины', icon: 'Ruins.svg' }
+        ];
+
+        var cityStatuses = {};
+        var markersData = [];
+        var leafletMarkers = {};
+        var currentCreationPopup = null;
+
+        database.ref('skyrim_markers').on('value', snapshot => {
+            let data = snapshot.val();
+            let loadedMarkers = [];
+            if (data) {
+                Object.values(data).forEach(categoryObj => {
+                    if (typeof categoryObj === 'object' && categoryObj !== null) {
+                        loadedMarkers = loadedMarkers.concat(Object.values(categoryObj));
+                    }
+                });
+            }
+            markersData = loadedMarkers;
+            renderMarkers();
+        });
+
+        database.ref('city_statuses').on('value', snapshot => {
+            cityStatuses = snapshot.val() || {};
+            renderDiplomacyPanel();
+            renderMarkers();
+        });
+
+        function listenLogs() {
+            database.ref('skyrim_logs').limitToLast(20).on('value', snapshot => {
+                let logs = snapshot.val() || {};
+                let container = document.getElementById('logs-list-container');
+                container.innerHTML = '';
+
+                let logKeys = Object.keys(logs);
+                if (logKeys.length === 0) {
+                    container.innerHTML = '<div style="color: #666; font-style: italic;">Нет записей в истории</div>';
+                    return;
+                }
+
+                logKeys.sort((a, b) => b - a).forEach(k => {
+                    let log = logs[k];
+                    let div = document.createElement('div');
+                    div.className = 'log-item';
+                    div.innerHTML = `<span style="color: #73592c; font-size: 9px;">[${log.time}]</span> <b>${escapeHTML(log.author)}</b> ${escapeHTML(log.text)}`;
+                    container.appendChild(div);
+                });
+                container.scrollTop = container.scrollHeight;
+            }, error => {
+                console.error("Ошибка чтения логов:", error);
+                let container = document.getElementById('logs-list-container');
+                if (container) container.innerHTML = '<div style="color: #a83232;">Нет доступа к логам</div>';
+            });
+        }
+
+        map.on('zoomend', function() {
+            renderMarkers();
+        });
+
+        window.closeInfoPanel = function() {
+            var panel = document.getElementById('info-panel-box');
+            if (panel) panel.style.display = 'none';
+        };
+
+        window.toggleLeftPanel = function() {
+            var dock = document.getElementById('filter-dock');
+            var btn = document.getElementById('filter-collapse-btn');
+            if (!dock) return;
+            var closed = dock.classList.toggle('drawer-closed');
+            if (btn) {
+                btn.textContent = closed ? '☰' : '×';
+                btn.setAttribute('aria-label', closed ? 'Открыть фильтры' : 'Свернуть фильтры');
+                btn.title = closed ? 'Открыть панель' : 'Свернуть панель';
+            }
+        };
+
+        window.switchFilterTab = function(tab) {
+            var dock = document.getElementById('filter-dock');
+            var panel = document.getElementById('filter-panel-box');
+            if (!dock || !panel) return;
+            var config = {
+                all:     { title: 'Все метки', sections: ['herbs', 'animals', 'ruins', 'cities'], legend: true },
+                herbs:   { title: 'Растения', sections: ['herbs'], legend: true },
+                animals: { title: 'Животные', sections: ['animals'], legend: true },
+                ruins:   { title: 'Руины и аномалии', sections: ['ruins'], legend: false },
+                cities:  { title: 'Города и дипломатия', sections: ['cities'], legend: false }
+            };
+            var selected = config[tab] || config.all;
+            panel.querySelectorAll('[data-filter-section]').forEach(function(section) {
+                section.classList.toggle('filter-section-hidden', selected.sections.indexOf(section.dataset.filterSection) === -1);
+            });
+            var legend = panel.querySelector('.tier-legend');
+            if (legend) legend.classList.toggle('filter-legend-hidden', !selected.legend);
+            var title = document.getElementById('filter-panel-title');
+            if (title) title.textContent = selected.title;
+            dock.querySelectorAll('[data-filter-tab]').forEach(function(button) {
+                var active = button.dataset.filterTab === tab;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+            dock.classList.remove('drawer-closed');
+            var closeButton = document.getElementById('filter-collapse-btn');
+            if (closeButton) {
+                closeButton.textContent = '×';
+                closeButton.setAttribute('aria-label', 'Свернуть фильтры');
+                closeButton.title = 'Свернуть панель';
+            }
+        };
+
+        window.toggleLogsPanel = function() {
+            var panel = document.getElementById('logs-panel-box');
+            var btn = document.getElementById('logs-collapse-btn');
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                btn.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                btn.textContent = '+';
+            }
+        };
+
+        window.toggleSublist = function(arrowElement) {
+            var sublist = arrowElement.parentElement.nextElementSibling;
+            if (sublist.classList.contains('collapsed')) {
+                sublist.classList.remove('collapsed');
+                arrowElement.textContent = '▼';
+            } else {
+                sublist.classList.add('collapsed');
+                arrowElement.textContent = '▶';
+            }
+        };
+
+        window.toggleGroup = function(prefix, count, isChecked) {
+            for (let i = 1; i <= count; i++) {
+                let cb = document.getElementById('filter-' + prefix + i);
+                if (cb) cb.checked = isChecked;
+            }
+            renderMarkers();
+        };
+
+        function renderDiplomacyPanel() {
+            if (!currentUser) return;
+
+            var container = document.getElementById('diplomacy-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            citiesList.forEach(city => {
+                var currentStatus = cityStatuses[city.type] || 'neutral';
+                let cardGlowClass = 'diplo-card-' + currentStatus;
+                let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
+
+                let controlHTML = (currentUser.role === 'admin') ? `
+                    <select onchange="updateCityStatus('${city.type}', this.value, '${city.name}')">
+                        <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
+                        <option value='neutral' ${currentStatus === 'neutral' ? 'selected' : ''}>🟡 Нейтрал</option>
+                        <option value='enemy' ${currentStatus === 'enemy' ? 'selected' : ''}>🔴 Враг</option>
+                    </select>
+                ` : `<span style="font-size: 11px; font-weight: bold;">${statusText}</span>`;
+
+                var div = document.createElement('div');
+                div.className = 'city-diplo-item ' + cardGlowClass;
+                div.innerHTML = `
+                    <div class="city-info">
+                        <img src="${city.icon}" class="filter-icon" style="width: 14px; height: 14px;">
+                        <span><b>${city.name}</b></span>
+                    </div>
+                    ${controlHTML}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.updateCityStatus = function(cityType, newStatus, cityName) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            database.ref('city_statuses/' + cityType).set(newStatus).then(() => {
+                let statusRu = newStatus === 'ally' ? 'Союзник' : (newStatus === 'enemy' ? 'Враг' : 'Нейтрал');
+                logAction(`изменил(а) статус города "${cityName}" на "${statusRu}"`);
+            }).catch(err => console.error("Ошибка обновления статуса города:", err));
+        };
+
+        function getCustomIcon(type, status) {
+            let iconUrl = 'Herbs1.png';
+            let tierMatch = type && type.match(/^(herb|animal)([1-5])$/);
+            if (tierMatch) {
+                const family = tierMatch[1], level = Number(tierMatch[2]);
+                iconUrl = (family === 'herb' ? 'Herbs' : 'Animals') + level + '.png';
+                const html = `<div class="tier-marker tier-${family}-${level}"><img src="${iconUrl}" alt=""><span class="tier-number">${level}</span></div>`;
+                return L.divIcon({ className: 'tier-marker-wrap', html, iconSize: [38, 38], iconAnchor: [19, 30], popupAnchor: [0, -28] });
+            }
+            if (type === 'anomaly') iconUrl = 'Magical Anomaly.png';
+            else if (type === 'ruins') iconUrl = 'Nord Ruins.png';
+            else if (type === 'dwarven_ruins') iconUrl = 'Ruins.svg';
+            else {
+                let foundCity = citiesList.find(c => c.type === type);
+                if (foundCity) iconUrl = foundCity.icon;
+            }
+            let currentStatus = status;
+            if (citiesList.some(c => c.type === type)) currentStatus = cityStatuses[type] || 'neutral';
+            let className = currentStatus ? 'color-' + currentStatus : '';
+            let currentZoom = map.getZoom();
+            let baseSize = Math.min(40, Math.max(14, 16 + (currentZoom * 6)));
+            let anchor = Math.round(baseSize / 2);
+            return L.icon({ iconUrl, className, iconSize: [baseSize, baseSize], iconAnchor: [anchor, anchor], popupAnchor: [0, -anchor] });
+        }
+
+        function renderMarkers() {
+            Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
+            leafletMarkers = {};
+
+            if (!currentUser) return;
+
+            const searchTerm = (document.getElementById('marker-search')?.value || '').trim().toLocaleLowerCase('ru');
+            let visibleCount = 0;
+            markersData.forEach(loc => {
+                var filterCheckbox = document.getElementById('filter-' + loc.type);
+                if (filterCheckbox && !filterCheckbox.checked) return;
+                if (searchTerm && !(`${loc.name || ''} ${loc.desc || ''} ${loc.author || ''}`).toLocaleLowerCase('ru').includes(searchTerm)) return;
+                visibleCount++;
+                let latLng = xyToLatLng(loc.x, loc.y, loc.coordinateVersion);
+
+                var marker = L.marker(latLng, { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
+                
+                var deleteBtnHTML = (currentUser.role === 'admin' || currentUser.role === 'editor') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${loc.type}', '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
+
+                var popupContent = `
+                    <div class='popup-title'>${escapeHTML(loc.name)}</div>
+                    <p style="margin: 4px 0;">${escapeHTML(loc.desc || '')}</p>
+                    <p style="font-size: 10px; color: #555; margin: 2px 0 4px 0;">👤 Поставил: <b>${escapeHTML(loc.author || 'Неизвестно')}</b></p>
+                    ${deleteBtnHTML}
+                `;
+                marker.bindPopup(popupContent);
+                leafletMarkers[loc.id] = marker;
+            });
+            const countNode = document.getElementById('map-result-count');
+            if (countNode) countNode.textContent = `Показано меток: ${visibleCount} из ${markersData.length}`;
+        }
+
+        window.setAllResourceFilters = function(enabled) {
+            document.querySelectorAll('.sub-herb, .sub-animal').forEach(cb => cb.checked = enabled);
+            const herbs = document.getElementById('filter-all-herbs');
+            const animals = document.getElementById('filter-all-animals');
+            if (herbs) herbs.checked = enabled;
+            if (animals) animals.checked = enabled;
+            renderMarkers();
+        };
+
+        const categoryTypes = [
+            'herb1', 'herb2', 'herb3', 'herb4', 'herb5', 
+            'animal1', 'animal2', 'animal3', 'animal4', 
+            'anomaly', 'ruins', 'dwarven_ruins'
+        ];
+
+        categoryTypes.forEach(type => {
+            var cb = document.getElementById('filter-' + type);
+            if (cb) cb.addEventListener('change', () => {
+                if (type.startsWith('herb')) { const all = [...document.querySelectorAll('.sub-herb')].every(x => x.checked); document.getElementById('filter-all-herbs').checked = all; }
+                if (type.startsWith('animal')) { const all = [...document.querySelectorAll('.sub-animal')].every(x => x.checked); document.getElementById('filter-all-animals').checked = all; }
+                renderMarkers();
+            });
+        });
+
+        map.on('click', function(e) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) return;
+
+            var lat = e.latlng.lat, lng = e.latlng.lng;
+            let coords = latLngToXY(lat, lng);
+
+            if (coords.x < 512 || coords.x > 4096 || coords.y < -3712 || coords.y > -1024) {
+                return;
+            }
+
+            if (currentCreationPopup && map.hasLayer(currentCreationPopup)) {
+                map.closePopup(currentCreationPopup);
+                currentCreationPopup = null;
+                return;
+            }
+
+            let optionsHTML = '';
+            categoriesList.forEach(cat => {
+                optionsHTML += `<option value="${cat.type}" data-name="${cat.name}">${cat.name}</option>`;
+            });
+
+            var formContent = `
+                <div class='popup-title'>Новая метка (X: ${coords.x}, Y: ${coords.y})</div>
+                <div class='popup-form'>
+                    <label>Категория:</label>
+                    <select id='new-type'>${optionsHTML}</select>
+                    <label>Описание:</label>
+                    <input type='text' id='new-desc' placeholder='Примечания...' />
+                    <button onclick='addNewMarker(${coords.x}, ${coords.y})'>Сохранить метку</button>
+                </div>
+            `;
+
+            currentCreationPopup = L.popup({ closeOnClick: false })
+                .setLatLng([lat, lng])
+                .setContent(formContent)
+                .openOn(map);
+        });
+
+        map.on('popupclose', function(e) {
+            if (e.popup === currentCreationPopup) {
+                currentCreationPopup = null;
+            }
+        });
+
+        window.addNewMarker = function(x, y) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) {
+                alert("Отказано в доступе: у вас нет прав для создания меток.");
+                return;
+            }
+
+            if (auth.currentUser === null && currentUser.role === 'admin') {
+                auth.signInAnonymously().then(() => {
+                    executeSaveMarker(x, y);
+                }).catch(err => {
+                    executeSaveMarker(x, y);
+                });
+            } else {
+                executeSaveMarker(x, y);
+            }
+        };
+
+        function executeSaveMarker(x, y) {
+            var selectElement = document.getElementById('new-type');
+            var type = selectElement.value;
+            var selectedOption = selectElement.options[selectElement.selectedIndex];
+            var name = selectedOption.getAttribute('data-name');
+            var desc = document.getElementById('new-desc').value;
+
+            var newId = Date.now();
+            var newObj = {
+                id: newId,
+                name: name,
+                type: type,
+                x: x,
+                y: y,
+                coordinateVersion: 3,
+                desc: desc,
+                author: currentUser.name
+            };
+
+            database.ref('skyrim_markers/' + type + '/' + newId).set(newObj).then(() => {
+                map.closePopup();
+                currentCreationPopup = null;
+                logAction(`поставил(а) метку "${name}"`);
+            }).catch(err => {
+                console.error("Ошибка сохранения метки:", err);
+                alert("Не удалось сохранить метку! Проверьте правила Firebase.");
+            });
+        }
+
+        window.deleteMarker = function(id, type, markerName) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) return;
+            
+            database.ref('skyrim_markers/' + type + '/' + id).once('value').then(snapshot => {
+                let markerData = snapshot.val();
+                if (markerData) {
+                    database.ref('deleted_markers/' + id).set(markerData).then(() => {
+                        database.ref('skyrim_markers/' + type + '/' + id).remove().then(() => {
+                            map.closePopup();
+                            logAction(`удалил(а) метку "${markerName}"`);
+                        });
+                    });
+                }
+            }).catch(err => {
+                console.error("Ошибка удаления метки:", err);
+                alert("Отказано в доступе.");
+            });
+        };
+
+        window.restoreMarker = function(id) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+
+            database.ref('deleted_markers/' + id).once('value').then(snapshot => {
+                let markerData = snapshot.val();
+                if (markerData) {
+                    let type = markerData.type;
+                    database.ref('skyrim_markers/' + type + '/' + id).set(markerData).then(() => {
+                        database.ref('deleted_markers/' + id).remove().then(() => {
+                            loadUsersLists();
+                            logAction(`восстановил(а) метку "${markerData.name}"`);
+                        });
+                    });
+                }
+            });
+        };
+
+        window.switchFilterTab('all');
+        initUserSession();
+    </script>
+</body>
+</html>
