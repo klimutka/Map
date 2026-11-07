@@ -2404,10 +2404,399 @@
       @media (prefers-reduced-motion: reduce) {
         #filter-panel-box, .filter-rail-btn { transition-duration: .01ms !important; }
       }
+
+        /* WINTERHOLD ATLAS — Nordic user and synchronization header */
+        .atlas-topbar {
+            position: fixed;
+            z-index: 1250;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 66px;
+            box-sizing: border-box;
+            display: none;
+            align-items: center;
+            gap: 18px;
+            padding: 7px 18px;
+            color: #f0e6d0;
+            background:
+                linear-gradient(110deg, rgba(35,49,59,.985), rgba(20,30,38,.985) 58%, rgba(31,39,42,.985)),
+                repeating-linear-gradient(135deg, rgba(213,185,133,.025) 0 1px, transparent 1px 8px);
+            border-bottom: 1px solid rgba(190,157,99,.78);
+            box-shadow: 0 7px 22px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.07);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+        }
+        body.logged-in .atlas-topbar { display: flex; }
+        .bottom-left-controls #logout-btn { display: none !important; }
+        body:not(.logged-in) .info-panel { display: none !important; }
+        .atlas-brand { display:flex; align-items:center; gap:11px; min-width:0; }
+        .atlas-crest-frame {
+            width:46px; height:46px; flex:0 0 46px; display:grid; place-items:center;
+            box-sizing:border-box; border:1px solid rgba(205,174,117,.9); border-radius:7px;
+            background:linear-gradient(145deg,rgba(91,108,112,.75),rgba(27,40,47,.95));
+            box-shadow:inset 0 0 0 3px rgba(205,174,117,.10),0 2px 7px rgba(0,0,0,.28);
+        }
+        .atlas-crest { display:block; width:35px; height:35px; object-fit:contain; filter:drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+        .atlas-brand-copy,.atlas-account-copy,.atlas-sync-copy { display:flex; flex-direction:column; min-width:0; }
+        .atlas-brand-title { color:#f4e8cd; font:bold 13px/1.25 Georgia,serif; letter-spacing:.075em; text-transform:uppercase; white-space:nowrap; }
+        .atlas-brand-subtitle { margin-top:3px; color:#c2ad86; font:10px/1.2 Georgia,serif; letter-spacing:.08em; text-transform:uppercase; }
+        .atlas-topbar-divider { width:1px; height:38px; flex:0 0 1px; background:linear-gradient(transparent,rgba(204,174,119,.65),transparent); }
+        .atlas-sync { display:flex; align-items:center; gap:9px; min-width:0; }
+        .atlas-sync-orb { width:9px; height:9px; flex:0 0 9px; border-radius:50%; background:#c3a66e; box-shadow:0 0 0 4px rgba(195,166,110,.12),0 0 9px rgba(195,166,110,.45); }
+        .atlas-sync[data-state="online"] .atlas-sync-orb { background:#8ebc88; box-shadow:0 0 0 4px rgba(142,188,136,.12),0 0 10px rgba(142,188,136,.55); }
+        .atlas-sync[data-state="offline"] .atlas-sync-orb { background:#cf8069; box-shadow:0 0 0 4px rgba(207,128,105,.12),0 0 10px rgba(207,128,105,.45); }
+        .atlas-sync-label { color:#b9aa8c; font:9px/1.2 Georgia,serif; letter-spacing:.12em; text-transform:uppercase; }
+        .atlas-sync-value { margin-top:3px; color:#eee2c9; font:11px/1.2 Georgia,serif; font-weight:normal; white-space:nowrap; }
+        .atlas-sync[data-state="online"] .atlas-sync-value { color:#c4dfb7; }
+        .atlas-sync[data-state="offline"] .atlas-sync-value { color:#e5a18b; }
+        .atlas-account { display:flex; align-items:center; gap:9px; min-width:0; margin-left:auto; padding:5px 7px 5px 10px; border:1px solid rgba(190,157,99,.34); border-radius:7px; background:rgba(7,15,21,.24); }
+        .atlas-account-seal { width:30px; height:30px; flex:0 0 30px; display:grid; place-items:center; border:1px solid rgba(196,164,105,.58); border-radius:50%; color:#dfc18a; background:rgba(127,99,57,.22); font:19px/1 "Segoe UI Symbol","Noto Sans Runic",Georgia,serif; }
+        .atlas-account-name { max-width:190px; overflow:hidden; text-overflow:ellipsis; color:#f4e8d0; font:bold 12px/1.25 Georgia,serif; white-space:nowrap; }
+        .atlas-account-role { margin-top:3px; color:#c5b18a; font:10px/1.2 Georgia,serif; }
+        .atlas-logout { width:30px; height:30px; flex:0 0 30px; margin-left:4px; border:1px solid rgba(196,164,105,.58); border-radius:5px; color:#e8d7b6; background:linear-gradient(145deg,#52616a,#293a44); cursor:pointer; font:20px/1 Georgia,serif; transition:filter .15s,transform .15s; }
+        .atlas-logout:hover { filter:brightness(1.2); transform:translateY(-1px); }
+        .atlas-logout:focus-visible { outline:2px solid #e0bd7d; outline-offset:2px; }
+        /* Keep map tools clear of the fixed header. */
+        .filter-dock { top:80px !important; max-height:calc(100vh - 94px) !important; }
+        #filter-panel-box.filter-panel { max-height:calc(100vh - 94px) !important; }
+        @media (max-width:700px) {
+            .atlas-topbar { height:58px; gap:9px; padding:6px 9px; }
+            .atlas-crest-frame { width:38px; height:38px; flex-basis:38px; }
+            .atlas-crest { width:29px; height:29px; }
+            .atlas-brand { gap:7px; }
+            .atlas-brand-title { font-size:10px; letter-spacing:.035em; }
+            .atlas-brand-subtitle { font-size:8px; letter-spacing:.04em; }
+            .atlas-topbar-divider { height:31px; }
+            .atlas-sync { gap:6px; }
+            .atlas-sync-label { font-size:7px; letter-spacing:.07em; }
+            .atlas-sync-value { font-size:9px; }
+            .atlas-account { gap:6px; padding:4px 5px; }
+            .atlas-account-seal { display:none; }
+            .atlas-account-name { max-width:94px; font-size:10px; }
+            .atlas-account-role { font-size:8px; }
+            .atlas-logout { width:26px; height:26px; flex-basis:26px; margin-left:0; font-size:17px; }
+            .filter-dock { top:68px !important; max-height:calc(100vh - 76px) !important; }
+            #filter-panel-box.filter-panel { max-height:calc(100vh - 76px) !important; }
+        }
+        @media (max-width:430px) {
+            .atlas-topbar { gap:6px; padding-left:7px; padding-right:7px; }
+            .atlas-brand-title { max-width:116px; overflow:hidden; text-overflow:ellipsis; }
+            .atlas-brand-subtitle { max-width:116px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+            .atlas-sync-label { display:none; }
+            .atlas-sync-value { max-width:74px; overflow:hidden; text-overflow:ellipsis; }
+            .atlas-account-name { max-width:70px; }
+            .atlas-topbar-divider { display:none; }
+            .filter-dock { top:65px !important; }
+        }
     </style>
+
+
+    <style id="winterhold-diplomacy-register-v1">
+      /* Diplomatic register — three statuses only, in the existing parchment/brass atlas language. */
+      #diplomacy-list { display:flex; flex-direction:column; gap:0; padding:2px 1px 7px; }
+      .diplomacy-overview {
+        padding:11px 10px 9px; border:1px solid rgba(137,105,57,.42); border-radius:8px;
+        background:linear-gradient(145deg,rgba(255,250,235,.94),rgba(224,207,166,.70));
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 3px 9px rgba(68,48,20,.08);
+      }
+      .diplomacy-overview-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+      .diplomacy-kicker { color:#92764b; font:700 8px/1.3 Georgia,serif; letter-spacing:.19em; }
+      .diplomacy-heading { margin-top:3px; color:#3d2d1b; font:700 15px/1.2 Georgia,serif; }
+      .diplomacy-total { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:39px; height:39px; border:1px solid rgba(148,115,62,.55); border-radius:50%; background:rgba(255,249,230,.75); color:#72552d; }
+      .diplomacy-total strong { font:700 16px/16px Georgia,serif; }
+      .diplomacy-total span { margin-top:2px; font:8px Georgia,serif; }
+      .diplomacy-summary { display:grid; grid-template-columns:1fr; gap:4px; margin-top:9px; }
+      .diplo-summary-chip { display:flex; align-items:center; gap:7px; min-height:22px; padding:3px 7px; border-radius:4px; font:10px Georgia,serif; }
+      .diplo-summary-chip i { width:7px; height:7px; flex:0 0 7px; border-radius:50%; box-shadow:0 0 0 2px rgba(255,255,255,.45); }
+      .diplo-summary-chip.trade { color:#6b512c; background:rgba(170,132,65,.13); }
+      .diplo-summary-chip.trade i { background:#a9854c; }
+      .diplo-summary-chip.neutral { color:#4d5e68; background:rgba(104,129,143,.13); }
+      .diplo-summary-chip.neutral i { background:#718996; }
+      .diplo-summary-chip.tension { color:#824b3e; background:rgba(166,91,69,.12); }
+      .diplo-summary-chip.tension i { background:#b36a52; }
+      .diplomacy-note { margin-top:8px; padding-top:7px; border-top:1px solid rgba(132,100,53,.22); color:#826c4b; font:italic 9px/1.35 Georgia,serif; }
+      .diplomacy-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
+      .diplomacy-filters button { display:flex; justify-content:space-between; align-items:center; gap:4px; min-height:28px; padding:5px 7px; border:1px solid rgba(143,111,61,.35); border-radius:5px; background:rgba(255,248,229,.55); color:#665238; font:9px Georgia,serif; cursor:pointer; transition:background .15s,border-color .15s,transform .15s; }
+      .diplomacy-filters button b { min-width:16px; padding:2px 4px; border-radius:9px; background:rgba(126,98,55,.12); font-size:9px; text-align:center; }
+      .diplomacy-filters button:hover { transform:translateY(-1px); border-color:#a9854c; }
+      .diplomacy-filters button.active { border-color:#9b7844; background:linear-gradient(145deg,#806039,#4d361d); color:#fff4db; box-shadow:0 2px 5px rgba(57,39,17,.18); }
+      .diplomacy-filters button.active b { background:rgba(255,255,255,.17); }
+      .diplomacy-city-list { display:flex; flex-direction:column; gap:6px; }
+      .diplomacy-city-card { position:relative; display:flex; align-items:center; gap:8px; min-height:52px; box-sizing:border-box; padding:7px 8px; overflow:hidden; border:1px solid rgba(139,106,57,.34); border-left:3px solid var(--diplo-accent); border-radius:6px; background:linear-gradient(120deg,rgba(255,250,237,.88),rgba(224,207,166,.48)); box-shadow:0 2px 6px rgba(57,39,17,.07),inset 0 1px 0 rgba(255,255,255,.72); }
+      .diplomacy-city-card:after { content:""; position:absolute; right:-15px; top:-23px; width:58px; height:58px; border:1px solid color-mix(in srgb,var(--diplo-accent) 22%,transparent); border-radius:50%; pointer-events:none; }
+      .diplomacy-city-card.status-trade { --diplo-accent:#a9854c; }
+      .diplomacy-city-card.status-neutral { --diplo-accent:#718996; }
+      .diplomacy-city-card.status-tension { --diplo-accent:#b36a52; }
+      .diplomacy-city-crest { display:grid; place-items:center; width:34px; height:34px; flex:0 0 34px; border:1px solid color-mix(in srgb,var(--diplo-accent) 52%,#b49a6c); border-radius:5px; background:rgba(255,251,239,.72); box-shadow:inset 0 1px 2px rgba(80,56,23,.08); }
+      .diplomacy-city-crest img { width:24px; height:24px; object-fit:contain; filter:drop-shadow(0 1px 1px rgba(60,42,18,.15)); }
+      .diplomacy-city-main { min-width:0; flex:1; }
+      .diplomacy-city-name { color:#3f2e1b; font:700 11px/1.25 Georgia,serif; }
+      .diplomacy-city-subtitle { margin-top:3px; color:#806b4b; font:italic 9px/1.2 Georgia,serif; }
+      .diplomacy-city-control { display:flex; align-items:center; gap:4px; position:relative; z-index:1; }
+      .diplomacy-status-mark { color:var(--diplo-accent); font:16px/1 Georgia,serif; }
+      .diplomacy-city-control select { max-width:112px; min-height:27px; padding:4px 5px; border:1px solid color-mix(in srgb,var(--diplo-accent) 48%,#c1ad84); border-radius:4px; background:rgba(255,250,236,.96); color:#4a3823; font:9px Georgia,serif; cursor:pointer; }
+      .diplomacy-status-label { max-width:88px; color:var(--diplo-accent); font:700 9px/1.2 Georgia,serif; text-align:right; }
+      .diplomacy-empty { padding:16px 9px; border:1px dashed rgba(139,106,57,.4); border-radius:6px; color:#826c4b; font:italic 10px Georgia,serif; text-align:center; }
+      .color-trade { filter:invert(55%) sepia(26%) saturate(685%) hue-rotate(2deg) brightness(91%) contrast(88%); }
+      .color-neutral { filter:invert(54%) sepia(13%) saturate(655%) hue-rotate(157deg) brightness(91%) contrast(86%); }
+      .color-tension { filter:invert(47%) sepia(22%) saturate(1115%) hue-rotate(327deg) brightness(89%) contrast(88%); }
+      @media(max-width:700px) {
+        #diplomacy-list { gap:7px; }
+        .diplomacy-heading { font-size:14px; }
+        .diplomacy-city-card { min-height:49px; padding:6px; gap:6px; }
+        .diplomacy-city-crest { width:30px; height:30px; flex-basis:30px; }
+        .diplomacy-city-crest img { width:21px; height:21px; }
+        .diplomacy-city-control select { max-width:104px; font-size:8px; }
+      }
+    
+      /* RPG-style information cards for map markers */
+      .leaflet-popup.rpg-marker-popup .leaflet-popup-content-wrapper {
+        background: linear-gradient(145deg, #eee4c8 0%, #d8c9a5 100%) !important;
+        border: 2px solid #80633a !important; border-radius: 8px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,.48), inset 0 0 0 1px rgba(255,255,255,.48) !important; overflow:hidden;
+      }
+      .leaflet-popup.rpg-marker-popup .leaflet-popup-tip { background:#d8c9a5 !important; border:1px solid #80633a !important; }
+      .rpg-popup-card { min-width:218px; max-width:290px; color:#30251b; font-family:Georgia,serif; }
+      .rpg-popup-head { display:flex; align-items:center; gap:10px; padding:0 0 9px; border-bottom:1px solid rgba(105,78,39,.42); }
+      .rpg-popup-emblem { width:42px; height:42px; flex:0 0 42px; display:flex; align-items:center; justify-content:center; border:1px solid #9b7b49; border-radius:6px; background:rgba(255,250,232,.7); box-shadow:inset 0 0 0 2px rgba(255,255,255,.45); }
+      .rpg-popup-emblem img { width:30px; height:30px; object-fit:contain; }
+      .rpg-popup-heading { min-width:0; }
+      .rpg-popup-kicker { font:bold 9px/1.3 Georgia,serif; letter-spacing:1.1px; text-transform:uppercase; color:#82643a; margin-bottom:3px; }
+      .rpg-popup-title { font:bold 16px/1.15 Georgia,serif; color:#392918; overflow-wrap:anywhere; }
+      .rpg-popup-description { margin:10px 0 !important; padding:9px 10px; border-left:3px solid #a7834e; border-radius:0 4px 4px 0; background:rgba(255,250,232,.52); color:#493a29 !important; font:12px/1.5 Georgia,serif; white-space:pre-wrap; overflow-wrap:anywhere; }
+      .rpg-popup-description.is-empty { color:#88785e !important; font-style:italic; }
+      .rpg-popup-meta { display:flex; justify-content:space-between; gap:8px; padding-top:7px; border-top:1px solid rgba(105,78,39,.25); color:#776548; font:10px/1.35 Georgia,serif; }
+      .rpg-popup-meta b { color:#51402a; font-weight:bold; }
+      .rpg-popup-delete { width:100%; margin-top:10px; padding:7px 10px; border:1px solid #8d493b; border-radius:4px; background:linear-gradient(180deg,#a65c49,#74392f); color:#fff1df; font:bold 11px Georgia,serif; cursor:pointer; }
+      .rpg-popup-delete:hover { background:linear-gradient(180deg,#b96a55,#854438); }
+      @media(max-width:700px) { .rpg-popup-card { min-width:190px; max-width:245px; } .rpg-popup-title { font-size:15px; } }
+
+</style>
+
+
+    <style id="winterhold-nordic-map-controls-v1">
+      /* Custom Skyrim-style compass and map controls */
+      .nordic-map-controls {
+        display:flex; flex-direction:column; align-items:center; gap:7px;
+        padding:8px; border:1px solid rgba(198,166,110,.88); border-radius:9px;
+        background:linear-gradient(145deg,rgba(48,65,77,.97),rgba(22,33,42,.98));
+        box-shadow:0 7px 19px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.10);
+        -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
+      }
+      .nordic-map-controls button {
+        box-sizing:border-box; display:flex; align-items:center; justify-content:center;
+        color:#eee3ca; border:1px solid rgba(194,161,106,.78);
+        background:linear-gradient(180deg,#526572,#293b47);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 5px rgba(0,0,0,.28);
+        cursor:pointer; -webkit-tap-highlight-color:transparent;
+      }
+      .nordic-map-controls button:hover { color:#fff1ce; border-color:#e0bd7d; background:linear-gradient(180deg,#796544,#3c4d56); }
+      .nordic-map-controls button:active { transform:translateY(1px); }
+      .nordic-compass { width:54px; height:54px; padding:3px; border-radius:50% !important; background:radial-gradient(circle,#697983 0%,#354955 65%,#1c2b34 100%) !important; }
+      .nordic-compass-ring { position:relative; display:block; width:43px; height:43px; border:1px solid #c6a66e; border-radius:50%; box-shadow:inset 0 0 0 2px rgba(198,166,110,.18); }
+      .nordic-compass-n { position:absolute; top:-3px; left:50%; transform:translateX(-50%); z-index:2; color:#e7c78d; font:bold 9px Georgia,serif; text-shadow:0 1px 2px #17232b; }
+      .nordic-compass svg { width:100%; height:100%; overflow:visible; }
+      .needle-north { fill:#d9b477; stroke:#f2dfb9; stroke-width:.8; }
+      .needle-south { fill:#263944; stroke:#c6a66e; stroke-width:.8; }
+      .needle-center { fill:#e9d5ad; stroke:#6e5634; stroke-width:1; }
+      .nordic-zoom-group { display:flex; flex-direction:column; width:42px; overflow:hidden; border:1px solid rgba(194,161,106,.78); border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,.25); }
+      .nordic-map-controls .nordic-control-btn { width:40px; height:37px; border:0; border-radius:0; font:22px/1 Georgia,serif; }
+      .nordic-control-divider { height:1px; background:rgba(198,166,110,.48); }
+      .nordic-map-controls .nordic-overview-btn { width:42px; height:38px; border-radius:6px; }
+      .nordic-overview-btn svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+      @media(max-width:700px) {
+        .nordic-map-controls { gap:6px; padding:6px; margin:0 3px 3px 0; }
+        .nordic-compass { width:48px; height:48px; }
+        .nordic-compass-ring { width:38px; height:38px; }
+        .nordic-zoom-group { width:39px; }
+        .nordic-map-controls .nordic-control-btn { width:37px; height:35px; }
+        .nordic-map-controls .nordic-overview-btn { width:39px; height:36px; }
+      }
+    </style>
+<style id="winterhold-mobile-layout-v1">
+/* Dedicated phone layout: bottom navigation, full-width filter sheet and touch-friendly controls. */
+@media (max-width:700px) {
+  html,body,#map { width:100%; height:100%; height:100dvh; }
+  body { overscroll-behavior:none; }
+  .atlas-topbar { height:56px !important; min-height:56px; padding:5px 9px !important; gap:8px !important; }
+  .atlas-crest-frame { width:38px !important; height:38px !important; flex-basis:38px !important; }
+  .atlas-crest { width:29px !important; height:29px !important; }
+  .atlas-brand { gap:7px !important; flex:1 1 auto; }
+  .atlas-brand-title { font-size:10px !important; letter-spacing:.035em !important; white-space:normal !important; }
+  .atlas-brand-subtitle { display:none !important; }
+  .atlas-topbar-divider { display:none !important; }
+  .atlas-account { gap:6px !important; min-width:0; }
+  .atlas-account-copy { max-width:105px; }
+  .atlas-account-name { max-width:105px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px !important; }
+  .atlas-account-role { font-size:9px !important; }
+  .atlas-sync-copy { display:none !important; }
+  .atlas-sync { gap:5px !important; }
+  .atlas-topbar button { min-height:36px; padding:5px 8px !important; font-size:10px !important; }
+
+  .filter-dock {
+    position:fixed !important; top:auto !important; left:8px !important; right:8px !important;
+    bottom:max(8px, env(safe-area-inset-bottom)) !important; z-index:1400 !important;
+    display:flex !important; flex-direction:column-reverse !important; align-items:stretch !important;
+    gap:7px !important; max-height:none !important; pointer-events:none;
+  }
+  .filter-rail {
+    width:100% !important; flex:0 0 auto !important; box-sizing:border-box;
+    min-height:58px; padding:5px 7px !important; flex-direction:row !important;
+    justify-content:space-around !important; align-items:center !important; gap:4px !important;
+    border-radius:12px !important; box-shadow:0 5px 22px rgba(0,0,0,.48), inset 0 0 0 2px rgba(185,154,100,.06) !important;
+  }
+  .filter-rail-crest,.filter-rail-footer { display:none !important; }
+  .filter-rail-btn {
+    width:auto !important; min-width:0; min-height:46px !important; flex:1 1 0;
+    padding:4px 2px !important; gap:2px !important; border-radius:8px !important;
+    touch-action:manipulation;
+  }
+  .filter-rail-glyph { font-size:19px !important; }
+  .filter-rail-label { font-size:9px !important; }
+
+  #filter-panel-box.filter-panel {
+    position:relative !important; width:100% !important; max-width:100% !important;
+    max-height:min(56dvh, 460px) !important; margin:0 !important;
+    border-radius:12px !important; box-shadow:0 8px 28px rgba(0,0,0,.5) !important;
+  }
+  .filter-dock.drawer-closed #filter-panel-box {
+    width:100% !important; max-width:100% !important; max-height:0 !important;
+    min-height:0 !important; padding-top:0 !important; padding-bottom:0 !important;
+    border-top-width:0 !important; border-bottom-width:0 !important;
+    transform:translateY(8px) !important;
+  }
+  #filter-panel-box .panel-content { -webkit-overflow-scrolling:touch; }
+  #filter-panel-box input,.filter-panel select,.filter-panel button { min-height:34px; }
+
+  .bottom-left-controls { left:8px !important; bottom:78px !important; z-index:1200 !important; max-width:52vw; }
+  .map-control-btn { min-height:38px !important; padding:7px 9px !important; font-size:10px !important; }
+  .logs-panel { right:8px !important; bottom:78px !important; width:min(190px,44vw) !important; max-height:30vh !important; z-index:1190 !important; }
+  .logs-panel.collapsed { width:auto !important; max-width:44vw !important; }
+  .logs-panel:not(.collapsed) .logs-content { max-height:20vh !important; overflow:auto; }
+  .info-panel { display:none !important; }
+  .leaflet-control-zoom { margin:8px 8px 0 0 !important; }
+  .leaflet-bottom { bottom:70px !important; }
+  .leaflet-right { right:0 !important; }
+  .leaflet-popup { max-width:calc(100vw - 34px) !important; }
+  .leaflet-popup-content { margin:10px 12px !important; max-width:calc(100vw - 70px) !important; }
+  .rpg-popup-card { min-width:0 !important; width:min(250px, calc(100vw - 76px)) !important; }
+  .auth-overlay { padding:14px !important; box-sizing:border-box; overflow-y:auto; }
+  .auth-modal,.login-modal,.admin-modal-content { width:min(100%, 440px) !important; max-width:100% !important; max-height:calc(100dvh - 28px) !important; overflow-y:auto !important; box-sizing:border-box; }
+  button,select,input[type=checkbox] { touch-action:manipulation; }
+}
+@media (max-width:430px) {
+  .atlas-topbar { height:52px !important; min-height:52px; padding-left:7px !important; padding-right:7px !important; }
+  .atlas-brand-title { font-size:9px !important; }
+  .atlas-crest-frame { width:34px !important; height:34px !important; flex-basis:34px !important; }
+  .atlas-crest { width:26px !important; height:26px !important; }
+  .atlas-account-copy { max-width:78px; }
+  .atlas-account-name { max-width:78px; font-size:10px !important; }
+  .atlas-account-role { font-size:8px !important; }
+  .atlas-topbar button { min-width:34px; padding:4px 6px !important; }
+  .filter-dock { left:6px !important; right:6px !important; }
+  .filter-rail { min-height:55px; padding:4px !important; }
+  .filter-rail-btn { min-height:44px !important; }
+  .filter-rail-glyph { font-size:17px !important; }
+  .filter-rail-label { font-size:8px !important; }
+  .bottom-left-controls { bottom:72px !important; }
+  .logs-panel { bottom:72px !important; }
+}
+@media (max-height:520px) and (max-width:900px) {
+  .filter-dock { bottom:5px !important; }
+  .filter-rail { min-height:46px !important; }
+  .filter-rail-btn { min-height:38px !important; }
+  #filter-panel-box.filter-panel { max-height:42dvh !important; }
+  .atlas-topbar { height:48px !important; min-height:48px; }
+}
+</style>
+
+
+<style id="winterhold-history-and-controls-layout-v2">
+  /* История вынесена в отдельную компактную панель слева от управления картой. */
+  .logs-panel {
+    position:fixed !important;
+    right:92px !important; bottom:16px !important;
+    z-index:1250 !important;
+    box-sizing:border-box !important;
+    width:min(330px, calc(100vw - 430px)) !important;
+    min-width:250px;
+    max-height:min(46vh, 360px) !important;
+    display:flex !important; flex-direction:column !important;
+    padding:10px 12px !important;
+    overflow:hidden !important;
+    transition:width .22s ease, max-height .22s ease, padding .22s ease, transform .22s ease !important;
+  }
+  .logs-panel:not(.collapsed) { box-shadow:0 14px 34px rgba(5,9,13,.48), inset 0 0 0 1px rgba(255,255,255,.075) !important; }
+  .logs-panel:not(.collapsed) .logs-content { max-height: min(37vh, 290px) !important; overflow-y:auto !important; }
+  .logs-panel.collapsed {
+    width:44px !important; min-width:44px !important;
+    height:44px !important; max-height:44px !important;
+    padding:5px !important;
+    border-radius:9px !important;
+  }
+  .logs-panel .panel-header { display:flex !important; align-items:center !important; justify-content:space-between !important; gap:8px !important; }
+  .logs-panel .collapse-btn { min-width:30px !important; min-height:28px !important; cursor:pointer !important; }
+  .logs-panel.collapsed .panel-header { margin:0 !important; padding:0 !important; border:0 !important; justify-content:center !important; }
+  .logs-panel.collapsed .panel-header h4,
+  .logs-panel.collapsed .logs-content { display:none !important; }
+  .logs-panel.collapsed .collapse-btn { width:32px !important; height:32px !important; min-width:32px !important; min-height:32px !important; padding:0 !important; font-size:17px !important; }
+  .nordic-map-controls { gap:7px !important; }
+  @media (max-width:700px) {
+    .logs-panel {
+      right:58px !important; bottom:78px !important;
+      width:min(270px, calc(100vw - 82px)) !important;
+      min-width:0 !important;
+      max-height:42vh !important;
+      padding:9px !important;
+    }
+    .logs-panel:not(.collapsed) .logs-content { max-height:32vh !important; }
+    .logs-panel.collapsed { right:58px !important; bottom:78px !important; width:40px !important; min-width:40px !important; height:40px !important; max-height:40px !important; padding:4px !important; }
+    .logs-panel.collapsed .collapse-btn { width:30px !important; height:30px !important; min-width:30px !important; min-height:30px !important; }
+    .nordic-map-controls { gap:6px !important; }
+  }
+  @media (max-width:430px) {
+    .logs-panel { right:54px !important; bottom:72px !important; width:calc(100vw - 70px) !important; }
+    .logs-panel.collapsed { right:54px !important; bottom:72px !important; }
+  }
+</style>
 
 </head>
 <body>
+
+    <header class="atlas-topbar" id="atlas-topbar" aria-label="Панель пользователя и состояния атласа">
+        <div class="atlas-brand">
+            <div class="atlas-crest-frame">
+                <img src="CollegeofWinterhold.png" alt="Герб Коллегии Винтерхолда" class="atlas-crest">
+            </div>
+            <div class="atlas-brand-copy">
+                <div class="atlas-brand-title">Коллегия Винтерхолда</div>
+                <div class="atlas-brand-subtitle">Атлас земель Скайрима</div>
+            </div>
+        </div>
+
+        <div class="atlas-topbar-divider" aria-hidden="true"></div>
+
+        <div class="atlas-sync" id="atlas-sync" data-state="checking" role="status" aria-live="polite">
+            <span class="atlas-sync-orb" aria-hidden="true"></span>
+            <span class="atlas-sync-copy">
+                <span class="atlas-sync-label">Связь с архивом</span>
+                <strong class="atlas-sync-value" id="atlas-sync-text">Проверка соединения…</strong>
+            </span>
+        </div>
+
+        <div class="atlas-account" id="atlas-account">
+            <div class="atlas-account-seal" aria-hidden="true">ᛟ</div>
+            <div class="atlas-account-copy">
+                <strong class="atlas-account-name" id="atlas-topbar-user">Гость</strong>
+                <span class="atlas-account-role" id="atlas-topbar-role">Не авторизован</span>
+            </div>
+            <button type="button" class="atlas-logout" onclick="logoutUser()" title="Сменить аккаунт" aria-label="Сменить аккаунт">
+                <span aria-hidden="true">⇥</span>
+            </button>
+        </div>
+    </header>
+
 
     <div id="auth-modal" class="auth-overlay">
         <div class="auth-card">
@@ -2557,7 +2946,7 @@
     
     </div>
 
-    <div class="info-panel" id="info-panel-box">
+    <div class="info-panel" id="info-panel-box" aria-hidden="true" style="display:none !important;">
         <div class="panel-header">
             <h4>Карта Скайрима</h4>
             <button class="close-btn" onclick="closeInfoPanel()">×</button>
@@ -2567,10 +2956,10 @@
         <p style="margin: 3px 0;">• Синхронизация в реальном времени.</p>
     </div>
 
-    <div class="logs-panel" id="logs-panel-box">
+    <div class="logs-panel collapsed" id="logs-panel-box" aria-label="История изменений">
         <div class="panel-header">
             <h4>📜 История изменений</h4>
-            <button class="collapse-btn" id="logs-collapse-btn" onclick="toggleLogsPanel()">−</button>
+            <button class="collapse-btn" id="logs-collapse-btn" onclick="toggleLogsPanel()" title="Открыть историю" aria-label="Открыть историю">📜</button>
         </div>
         <div class="logs-content" id="logs-list-container">
             <div style="color: #666; font-style: italic;">Загрузка истории...</div>
@@ -2598,6 +2987,25 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const auth = firebase.auth();
+
+        // Реальное состояние соединения с Firebase Realtime Database.
+        (function initAtlasSyncIndicator() {
+            const indicator = document.getElementById('atlas-sync');
+            const label = document.getElementById('atlas-sync-text');
+            if (!indicator || !label) return;
+            database.ref('.info/connected').on('value', function(snapshot) {
+                const isConnected = snapshot.val() === true;
+                indicator.dataset.state = isConnected ? 'online' : 'offline';
+                label.textContent = isConnected ? 'Синхронизировано' : 'Нет соединения';
+                indicator.title = isConnected
+                    ? 'Соединение с Firebase активно'
+                    : 'Нет активного соединения с Firebase';
+            }, function(error) {
+                indicator.dataset.state = 'offline';
+                label.textContent = 'Ошибка соединения';
+                console.warn('Не удалось проверить состояние Firebase:', error);
+            });
+        })();
 
         let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
         let currentAuthMode = 'login';
@@ -2834,6 +3242,10 @@
 
             document.getElementById('current-user-name').textContent = currentUser.name;
             document.getElementById('current-user-role').textContent = roleNameRu;
+            const topbarName = document.getElementById('atlas-topbar-user');
+            const topbarRole = document.getElementById('atlas-topbar-role');
+            if (topbarName) topbarName.textContent = currentUser.name;
+            if (topbarRole) topbarRole.textContent = roleNameRu;
 
             setTimeout(function() {
                 fitMapToAvailableScreen();
@@ -3016,7 +3428,7 @@
         // Прежний crop (512..4096, -3712..-1024) отрезал часть внешней рамки карты.
         var tileExtent = [0.00000000, -4096.00000000, 4096.00000000, 0.00000000];
         var mapExtent = tileExtent.slice();
-        var mapMinZoom = 0;
+        var mapMinZoom = 3;
         var mapMaxZoom = 7;
         var mapMaxResolution = 1.00000000;
         var mapMinResolution = Math.pow(2, 4) * mapMaxResolution;
@@ -3045,8 +3457,6 @@
             zoomDelta: 0.5
         });
 
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
         // Видимая область атласа немного уже исходной квадратной сетки тайлов.
         // Подрезаем только внешние поля, где на краях проявляются отдельные
         // синие/пустые фрагменты тайлов. Координатная сетка и координаты меток
@@ -3060,6 +3470,45 @@
         // Не позволяем перетаскивать карту в обрезанные внешние поля.
         map.setMaxBounds(mapContentBounds);
 
+        // Компактная панель управления картой: масштаб и общий обзор.
+        // Компас убран: карта не вращается, поэтому отдельный указатель севера не нужен.
+        var NordicMapControl = L.Control.extend({
+            options: { position: 'bottomright' },
+            onAdd: function() {
+                var container = L.DomUtil.create('div', 'nordic-map-controls');
+                container.innerHTML = `
+                    <div class="nordic-zoom-group">
+                        <button type="button" class="nordic-control-btn" data-map-action="in" title="Приблизить" aria-label="Приблизить">＋</button>
+                        <span class="nordic-control-divider"></span>
+                        <button type="button" class="nordic-control-btn" data-map-action="out" title="Отдалить" aria-label="Отдалить">−</button>
+                    </div>
+                    <button type="button" class="nordic-overview-btn" data-map-action="overview" title="Показать всю карту" aria-label="Показать всю карту"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M4 4l6 6M20 4l-6 6M20 20l-6-6M4 20l6-6"/></svg></button>
+                `;
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.disableScrollPropagation(container);
+                var buttons = container.querySelectorAll('button');
+                buttons.forEach(function(button) {
+                    L.DomEvent.on(button, 'click', function(e) {
+                        L.DomEvent.stop(e);
+                        var action = button.getAttribute('data-map-action');
+                        if (action === 'in') map.zoomIn();
+                        else if (action === 'out') map.zoomOut();
+                        else if (action === 'overview') {
+                            isAutoFittingMap = true;
+                            map.fitBounds(mapContentBounds, {
+                                paddingTopLeft: window.innerWidth <= 700 ? [8, 42] : [226, 14],
+                                paddingBottomRight: window.innerWidth <= 700 ? [8, 12] : [210, 14],
+                                animate: true, duration: 0.45
+                            });
+                            isAutoFittingMap = false;
+                        }
+                    });
+                });
+                return container;
+            }
+        });
+        new NordicMapControl().addTo(map);
+
         var isAutoFittingMap = false;
         var userHasMovedMap = false;
         map.on('dragstart', function() { userHasMovedMap = true; });
@@ -3069,8 +3518,8 @@
 
         function fitMapToAvailableScreen() {
             var compactViewport = window.innerWidth <= 700;
-            var paddingTopLeft = compactViewport ? [8, 42] : [226, 14];
-            var paddingBottomRight = compactViewport ? [8, 12] : [210, 14];
+            var paddingTopLeft = compactViewport ? [8, 68] : [226, 82];
+            var paddingBottomRight = compactViewport ? [8, 68] : [210, 82];
             isAutoFittingMap = true;
             map.invalidateSize({ animate: false });
             map.fitBounds(mapContentBounds, {
@@ -3273,13 +3722,12 @@
         window.toggleLogsPanel = function() {
             var panel = document.getElementById('logs-panel-box');
             var btn = document.getElementById('logs-collapse-btn');
-            if (panel.classList.contains('collapsed')) {
-                panel.classList.remove('collapsed');
-                btn.textContent = '−';
-            } else {
-                panel.classList.add('collapsed');
-                btn.textContent = '+';
-            }
+            var isOpening = panel.classList.contains('collapsed');
+            panel.classList.toggle('collapsed', !isOpening);
+            btn.textContent = isOpening ? '×' : '📜';
+            btn.title = isOpening ? 'Закрыть историю' : 'Открыть историю';
+            btn.setAttribute('aria-label', btn.title);
+            panel.setAttribute('aria-expanded', isOpening ? 'true' : 'false');
         };
 
         window.toggleSublist = function(arrowElement) {
@@ -3301,6 +3749,23 @@
             renderMarkers();
         };
 
+        // Дипломатические статусы: поддерживаем старые значения из Firebase,
+        // но показываем и записываем только три актуальных статуса.
+        function normalizeCityStatus(rawStatus) {
+            if (rawStatus === 'ally' || rawStatus === 'trade') return 'trade';
+            if (rawStatus === 'enemy' || rawStatus === 'tension') return 'tension';
+            return 'neutral';
+        }
+
+        function getCityStatusMeta(status) {
+            const meta = {
+                trade:   { label: 'Торговля', icon: '⚖', short: 'Торговые связи' },
+                neutral: { label: 'Нейтралитет', icon: '◇', short: 'Сдержанные отношения' },
+                tension: { label: 'Напряжённость', icon: '⚔', short: 'Есть разногласия' }
+            };
+            return meta[status] || meta.neutral;
+        }
+
         function renderDiplomacyPanel() {
             if (!currentUser) return;
 
@@ -3308,36 +3773,46 @@
             if (!container) return;
             container.innerHTML = '';
 
-            citiesList.forEach(city => {
-                var currentStatus = cityStatuses[city.type] || 'neutral';
-                let cardGlowClass = 'diplo-card-' + currentStatus;
-                let statusText = currentStatus === 'ally' ? '🟢 Союзник' : (currentStatus === 'enemy' ? '🔴 Враг' : '🟡 Нейтрал');
+            const cities = citiesList.map(city => ({
+                ...city,
+                status: normalizeCityStatus(cityStatuses[city.type] || 'neutral')
+            }));
 
-                let controlHTML = (currentUser.role === 'admin') ? `
-                    <select onchange="updateCityStatus('${city.type}', this.value, '${city.name}')">
-                        <option value='ally' ${currentStatus === 'ally' ? 'selected' : ''}>🟢 Союзник</option>
-                        <option value='neutral' ${currentStatus === 'neutral' ? 'selected' : ''}>🟡 Нейтрал</option>
-                        <option value='enemy' ${currentStatus === 'enemy' ? 'selected' : ''}>🔴 Враг</option>
+            const cards = document.createElement('div');
+            cards.className = 'diplomacy-city-list';
+            cities.forEach(city => {
+                const meta = getCityStatusMeta(city.status);
+                const controlHTML = currentUser.role === 'admin' ? `
+                    <select aria-label="Дипломатический статус: ${city.name}" onchange="updateCityStatus('${city.type}', this.value, '${city.name}')">
+                        <option value="trade" ${city.status === 'trade' ? 'selected' : ''}>Торговля</option>
+                        <option value="neutral" ${city.status === 'neutral' ? 'selected' : ''}>Нейтралитет</option>
+                        <option value="tension" ${city.status === 'tension' ? 'selected' : ''}>Напряжённость</option>
                     </select>
-                ` : `<span style="font-size: 11px; font-weight: bold;">${statusText}</span>`;
+                ` : `<span class="diplomacy-status-label">${meta.label}</span>`;
 
-                var div = document.createElement('div');
-                div.className = 'city-diplo-item ' + cardGlowClass;
-                div.innerHTML = `
-                    <div class="city-info">
-                        <img src="${city.icon}" class="filter-icon" style="width: 14px; height: 14px;">
-                        <span><b>${city.name}</b></span>
+                const card = document.createElement('article');
+                card.className = `diplomacy-city-card status-${city.status}`;
+                card.innerHTML = `
+                    <div class="diplomacy-city-crest"><img src="${city.icon}" alt=""></div>
+                    <div class="diplomacy-city-main">
+                        <div class="diplomacy-city-name">${city.name}</div>
                     </div>
-                    ${controlHTML}
+                    <div class="diplomacy-city-control">
+                        <span class="diplomacy-status-mark" aria-hidden="true">${meta.icon}</span>
+                        ${controlHTML}
+                    </div>
                 `;
-                container.appendChild(div);
+                cards.appendChild(card);
             });
+
+            container.appendChild(cards);
         }
 
         window.updateCityStatus = function(cityType, newStatus, cityName) {
             if (!currentUser || currentUser.role !== 'admin') return;
+            if (!['trade', 'neutral', 'tension'].includes(newStatus)) return;
             database.ref('city_statuses/' + cityType).set(newStatus).then(() => {
-                let statusRu = newStatus === 'ally' ? 'Союзник' : (newStatus === 'enemy' ? 'Враг' : 'Нейтрал');
+                const statusRu = getCityStatusMeta(newStatus).label;
                 logAction(`изменил(а) статус города "${cityName}" на "${statusRu}"`);
             }).catch(err => console.error("Ошибка обновления статуса города:", err));
         };
@@ -3359,7 +3834,7 @@
                 if (foundCity) iconUrl = foundCity.icon;
             }
             let currentStatus = status;
-            if (citiesList.some(c => c.type === type)) currentStatus = cityStatuses[type] || 'neutral';
+            if (citiesList.some(c => c.type === type)) currentStatus = normalizeCityStatus(cityStatuses[type] || 'neutral');
             let className = currentStatus ? 'color-' + currentStatus : '';
             let currentZoom = map.getZoom();
             let baseSize = Math.min(40, Math.max(14, 16 + (currentZoom * 6)));
@@ -3384,15 +3859,34 @@
 
                 var marker = L.marker(latLng, { icon: getCustomIcon(loc.type, loc.status) }).addTo(map);
                 
-                var deleteBtnHTML = (currentUser.role === 'admin' || currentUser.role === 'editor') ? `<button class="btn-delete" onclick="deleteMarker(${loc.id}, '${loc.type}', '${escapeHTML(loc.name)}')">Удалить метку</button>` : '';
-
-                var popupContent = `
-                    <div class='popup-title'>${escapeHTML(loc.name)}</div>
-                    <p style="margin: 4px 0;">${escapeHTML(loc.desc || '')}</p>
-                    <p style="font-size: 10px; color: #555; margin: 2px 0 4px 0;">👤 Поставил: <b>${escapeHTML(loc.author || 'Неизвестно')}</b></p>
-                    ${deleteBtnHTML}
+                const categoryMeta = categoriesList.find(cat => cat.type === loc.type);
+                const cityMeta = citiesList.find(city => city.type === loc.type);
+                const popupCategory = categoryMeta ? categoryMeta.name.replace(/^[^ ]+\s*/, '') : (cityMeta ? 'Город' : 'Особая локация');
+                const popupIcon = categoryMeta ? categoryMeta.icon : (cityMeta ? cityMeta.icon : (loc.type === 'anomaly' ? 'Magical Anomaly.png' : (loc.type === 'ruins' ? 'Nord Ruins.png' : (loc.type === 'dwarven_ruins' ? 'Ruins.svg' : 'Herbs1.png'))));
+                const safeType = String(loc.type || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const safeName = String(loc.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const deleteBtnHTML = (currentUser.role === 'admin' || currentUser.role === 'editor')
+                    ? `<button class="rpg-popup-delete" onclick="deleteMarker(${Number(loc.id)}, '${safeType}', '${safeName}')">Удалить метку</button>`
+                    : '';
+                const popupDescription = loc.desc ? escapeHTML(loc.desc) : 'Для этой находки пока нет описания.';
+                const popupContent = `
+                    <article class="rpg-popup-card">
+                        <header class="rpg-popup-head">
+                            <div class="rpg-popup-emblem"><img src="${escapeHTML(popupIcon)}" alt=""></div>
+                            <div class="rpg-popup-heading">
+                                <div class="rpg-popup-kicker">${escapeHTML(popupCategory)}</div>
+                                <div class="rpg-popup-title">${escapeHTML(loc.name || 'Без названия')}</div>
+                            </div>
+                        </header>
+                        <p class="rpg-popup-description ${loc.desc ? '' : 'is-empty'}">${popupDescription}</p>
+                        <div class="rpg-popup-meta">
+                            <span>Добавил: <b>${escapeHTML(loc.author || 'Неизвестно')}</b></span>
+                            <span>X ${Math.round(Number(loc.x) || 0)} · Y ${Math.round(Number(loc.y) || 0)}</span>
+                        </div>
+                        ${deleteBtnHTML}
+                    </article>
                 `;
-                marker.bindPopup(popupContent);
+                marker.bindPopup(popupContent, { className: 'rpg-marker-popup', maxWidth: 320, minWidth: 220, closeButton: true, autoPan: true });
                 leafletMarkers[loc.id] = marker;
             });
             const countNode = document.getElementById('map-result-count');
@@ -3429,7 +3923,8 @@
             var lat = e.latlng.lat, lng = e.latlng.lng;
             let coords = latLngToXY(lat, lng);
 
-            if (coords.x < 512 || coords.x > 4096 || coords.y < -3712 || coords.y > -1024) {
+            // Проверяем координаты по фактической видимой области карты (включая верхний край).
+            if (coords.x < 288 || coords.x > 4000 || coords.y < -3440 || coords.y > -320) {
                 return;
             }
 
