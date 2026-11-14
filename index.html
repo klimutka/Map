@@ -3984,25 +3984,20 @@
                 iconUrl = (family === 'herb' ? 'Herbs' : 'Animals') + level + '.png';
                 markerClasses.push(`tier-${family}-${level}`);
                 tierBadge = `<span class="atlas-marker-level">${level}</span>`;
-            } else if (type === 'anomaly') {
-                iconUrl = 'Magical Anomaly.png';
-                markerClasses.push('atlas-anomaly');
-            } else if (type === 'ruins') {
-                iconUrl = 'Nord Ruins.png';
-                markerClasses.push('atlas-nord-ruins');
-            } else if (type === 'dwarven_ruins') {
-                iconUrl = 'Ruins.svg';
-                markerClasses.push('atlas-dwarven-ruins');
             } else {
-                const foundCity = citiesList.find(c => c.type === type);
-                if (foundCity) {
-                    iconUrl = foundCity.icon;
-                    const currentStatus = normalizeCityStatus(cityStatuses[type] || status || 'neutral');
-                    markerClasses.push('atlas-city', 'status-' + currentStatus);
-                } else {
-                    markerClasses.push('atlas-special');
-                }
-            }
+        const foundCity = citiesList.find(c => c.type === type);
+        const foundCategory = categoriesList.find(cat => cat.type === type);
+        if (foundCity) {
+            iconUrl = foundCity.icon;
+            const currentStatus = normalizeCityStatus(cityStatuses[type] || status || 'neutral');
+            markerClasses.push('atlas-city', 'status-' + currentStatus);
+        } else if (foundCategory) {
+            iconUrl = foundCategory.icon;
+            markerClasses.push('atlas-special');
+        } else {
+            markerClasses.push('atlas-special');
+        }
+    }
 
             // Все категории используют один общий «пин-медальон» в северном фэнтези-стиле.
             // Изображение внутри не растягивается: это также исправляет пропорции двемерской эмблемы.
