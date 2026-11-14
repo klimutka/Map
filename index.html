@@ -2983,7 +2983,7 @@
                 <span class="filter-rail-glyph" aria-hidden="true">ᛉ</span><span class="filter-rail-label">Фауна</span>
             </button>
             <button class="filter-rail-btn" type="button" data-filter-tab="ruins" onclick="switchFilterTab('ruins')" aria-pressed="false" title="Руины и аномалии">
-                <span class="filter-rail-glyph" aria-hidden="true">ᛟ</span><span class="filter-rail-label">Руины</span>
+                <span class="filter-rail-glyph" aria-hidden="true">ᛟ</span><span class="filter-rail-label">Разное</span>
             </button>
             <button class="filter-rail-btn" type="button" data-filter-tab="cities" onclick="switchFilterTab('cities')" aria-pressed="false" title="Города и дипломатия">
                 <span class="filter-rail-glyph" aria-hidden="true">ᛞ</span><span class="filter-rail-label">Города</span>
@@ -3051,6 +3051,23 @@
                     <label><input type="checkbox" id="filter-anomaly" checked> <img src="Magical Anomaly.png" class="filter-icon"> Магические аномалии</label>
                     <label><input type="checkbox" id="filter-ruins" checked> <img src="Nord Ruins.png" class="filter-icon"> Нордские руины</label>
                     <label><input type="checkbox" id="filter-dwarven_ruins" checked> <img src="Ruins.svg" class="filter-icon"> Двемерские руины</label>
+                    <!-- Новые значки -->
+                    <label><input type="checkbox" id="filter-alchemy_shop" checked> <img src="Алхимическкая лавка.png" class="filter-icon"> Алхимическая лавка</label>
+                    <label><input type="checkbox" id="filter-auction" checked> <img src="Аукцион.png" class="filter-icon"> Аукцион</label>
+                    <label><input type="checkbox" id="filter-notice_board" checked> <img src="Доска объявлений .png" class="filter-icon"> Доска объявлений</label>
+                    <label><input type="checkbox" id="filter-tanning_rack" checked> <img src="Дубильный станок.png" class="filter-icon"> Дубильный станок</label>
+                    <label><input type="checkbox" id="filter-stable" checked> <img src="Конюшня.png" class="filter-icon"> Конюшня</label>
+                    <label><input type="checkbox" id="filter-forge" checked> <img src="Кузня.png" class="filter-icon"> Кузня</label>
+                    <label><input type="checkbox" id="filter-armorer_shop" checked> <img src="Лавка броника.png" class="filter-icon"> Лавка броника</label>
+                    <label><input type="checkbox" id="filter-infirmary" checked> <img src="Лазарет.png" class="filter-icon"> Лазарет</label>
+                    <label><input type="checkbox" id="filter-sawmill" checked> <img src="Лесопилка.png" class="filter-icon"> Лесопилка</label>
+                    <label><input type="checkbox" id="filter-barbershop" checked> <img src="Цирюльня.png" class="filter-icon"> Цирюльня</label>
+                    <label><input type="checkbox" id="filter-mine" checked> <img src="Шахта.png" class="filter-icon"> Шахта</label>
+                    <label><input type="checkbox" id="filter-fishing_spot" checked> <img src="Место ловли.png" class="filter-icon"> Место ловли</label>
+                    <label><input type="checkbox" id="filter-weapon_shop" checked> <img src="Оружейная лавка.png" class="filter-icon"> Оружейная лавка</label>
+                    <label><input type="checkbox" id="filter-tavern" checked> <img src="Таверна.png" class="filter-icon"> Таверна</label>
+                    <label><input type="checkbox" id="filter-general_store" checked> <img src="Торговая лавка.png" class="filter-icon"> Торговая лавка</label>
+                    <label><input type="checkbox" id="filter-meadery" checked> <img src="Медоварня.png" class="filter-icon"> Медоварня</label>
                 </div>
             </div>
 
@@ -3710,15 +3727,15 @@
         }
 
         const citiesList = [
-            { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.svg' },
-            { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath_undiscovered.svg' },
-            { type: 'markarth', name: 'Маркарт', icon: 'Markarth.svg' },
-            { type: 'morthal', name: 'Морфал', icon: 'Morthal.svg' },
-            { type: 'riften', name: 'Рифтен', icon: 'Riften_undiscovered.svg' },
-            { type: 'solitude', name: 'Солитьюд', icon: 'Solitude_undiscovered.svg' },
-            { type: 'whiterun', name: 'Вайтран', icon: 'Whiterun.svg' },
-            { type: 'windhelm', name: 'Виндхельм', icon: 'Windhelm.svg' },
-            { type: 'winterhold', name: 'Винтерхолд', icon: 'Winterhold.svg' }
+            { type: 'dawnstar', name: 'Данстар', icon: 'Dawnstar.png' },
+            { type: 'falkreath', name: 'Фолкрит', icon: 'Falkreath.png' },
+            { type: 'markarth', name: 'Маркарт', icon: 'Markarth.png' },
+            { type: 'morthal', name: 'Морфал', icon: 'Morthal.png' },
+            { type: 'riften', name: 'Рифтен', icon: 'Riften.png' },
+            { type: 'solitude', name: 'Солитьюд', icon: 'Solitude.png' },
+            { type: 'whiterun', name: 'Вайтран', icon: 'Whiterun.png' },
+            { type: 'windhelm', name: 'Виндхельм', icon: 'Windhelm.png' },
+            { type: 'winterhold', name: 'Винтерхолд', icon: 'Winterhold.png' }
         ];
 
         const categoriesList = [
@@ -3733,7 +3750,23 @@
             { type: 'animal4', name: '🐾 Животные 4 ур', icon: 'Animals4.png' },
             { type: 'anomaly', name: '✨ Магические аномалии', icon: 'Magical Anomaly.png' },
             { type: 'ruins', name: '🏛️ Нордские руины', icon: 'Nord Ruins.png' },
-            { type: 'dwarven_ruins', name: '⚙️ Двемерские руины', icon: 'Ruins.svg' }
+            { type: 'dwarven_ruins', name: '⚙️ Двемерские руины', icon: 'Ruins.svg' },
+            { type: 'alchemy_shop', name: '🧪 Алхимическая лавка', icon: 'Алхимическая лавка.png' },
+            { type: 'auction', name: '⚖️ Аукцион', icon: 'Аукцион.png' },
+            { type: 'notice_board', name: '📜 Доска объявлений', icon: 'Доска объявлений.png' },
+            { type: 'tanning_rack', name: '🛡️ Дубильный станок', icon: 'Дубильный станок.png' },
+            { type: 'stable', name: '🐎 Конюшня', icon: 'Конюшня.png' },
+            { type: 'forge', name: '⚒️ Кузня', icon: 'Кузня.png' },
+            { type: 'armorer_shop', name: '🎽 Лавка броника', icon: 'Лавка броника.png' },
+            { type: 'infirmary', name: '🏥 Лазарет', icon: 'Лазарет.png' },
+            { type: 'sawmill', name: '🪵 Лесопилка', icon: 'Лесопилка.png' },
+            { type: 'barbershop', name: '🪒 Цирюльня', icon: 'Цирюльня.png' },
+            { type: 'mine', name: '⛏️ Шахта', icon: 'Шахта.png' },
+            { type: 'fishing_spot', name: '🎣 Место ловли', icon: 'Место ловли.png' },
+            { type: 'weapon_shop', name: '⚔️ Оружейная лавка', icon: 'Оружейная лавка.png' },
+            { type: 'tavern', name: '🍺 Таверна', icon: 'Таверна.png' },
+            { type: 'general_store', name: '🍎 Торговая лавка', icon: 'Торговая лавка.png' },
+            { type: 'meadery', name: '🐝 Медоварня', icon: 'Медоварня.png' }
         ];
 
         var cityStatuses = {};
@@ -4050,7 +4083,9 @@
         const categoryTypes = [
             'herb1', 'herb2', 'herb3', 'herb4', 'herb5', 
             'animal1', 'animal2', 'animal3', 'animal4', 
-            'anomaly', 'ruins', 'dwarven_ruins'
+            'anomaly', 'ruins', 'dwarven_ruins',
+            'alchemy_shop', 'auction', 'notice_board', 'tanning_rack',
+            'stable', 'forge', 'armorer_shop', 'infirmary', 'sawmill'
         ];
 
         categoryTypes.forEach(type => {
