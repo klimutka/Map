@@ -3064,7 +3064,7 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
                 <select id="auth-role-select">
                     <option value="reader">📖 Читатель</option>
                     <option value="editor">✏️ Редактор</option>
-                    <option value="admin">🛡️ Администратор</option>
+                    
                 </select>
             </div>
             
@@ -3277,16 +3277,27 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
             });
         })();
 
-        let currentUser = JSON.parse(sessionStorage.getItem('skyrim_active_user')) || null;
+        // Authentication V2: Firebase Auth + server-side roles in Realtime Database.
+        // Никнейм остаётся единственным полем логина в интерфейсе.
+        let currentUser = null;
         let currentAuthMode = 'login';
+        let authFlowBusy = false;
+        let authStateReady = false;
 
-        if (currentUser && currentUser.role === 'admin') {
-            auth.signInAnonymously().catch(err => console.error("Ошибка Auth:", err));
+        function normalizeNickname(value) {
+            return String(value || '').trim().toLowerCase().replace(/[.#$\[\]\/]/g, '_');
         }
 
-        function sanitizeKey(str) {
-            return str.replace(/[\.\#\$\[\]]/g, "_").toLowerCase().trim();
+        async function nicknameToAuthEmail(value) {
+            const normalized = normalizeNickname(value);
+            if (!normalized) throw new Error('Введите никнейм.');
+            const bytes = new TextEncoder().encode(normalized);
+            const digest = await crypto.subtle.digest('SHA-256', bytes);
+            const hex = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+            return hex + '@login.srpmap.invalid';
         }
+
+        function sanitizeKey(str) { return normalizeNickname(str); }
 
         function escapeHTML(str) {
             if (!str) return '';
@@ -3296,13 +3307,6 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
-        }
-
-        async function hashPassword(password) {
-            const msgBuffer = new TextEncoder().encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
         function logAction(text) {
@@ -3318,216 +3322,209 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
 
         window.switchTab = function(mode) {
             currentAuthMode = mode;
-            let btnLogin = document.getElementById('tab-login-btn');
-            let btnReg = document.getElementById('tab-reg-btn');
-            let mainBtn = document.getElementById('main-action-btn');
-            let regFieldsBox = document.getElementById('reg-fields-box');
-            let errElem = document.getElementById('auth-error');
+            const btnLogin = document.getElementById('tab-login-btn');
+            const btnReg = document.getElementById('tab-reg-btn');
+            const mainBtn = document.getElementById('main-action-btn');
+            const regFieldsBox = document.getElementById('reg-fields-box');
+            const errElem = document.getElementById('auth-error');
             errElem.style.display = 'none';
-
             if (mode === 'login') {
-                btnLogin.classList.add('active');
-                btnReg.classList.remove('active');
-                mainBtn.textContent = "Войти";
-                regFieldsBox.style.display = 'none';
+                btnLogin.classList.add('active'); btnReg.classList.remove('active');
+                mainBtn.textContent = 'Войти'; regFieldsBox.style.display = 'none';
             } else {
-                btnReg.classList.add('active');
-                btnLogin.classList.remove('active');
-                mainBtn.textContent = "Зарегистрироваться";
-                regFieldsBox.style.display = 'block';
+                btnReg.classList.add('active'); btnLogin.classList.remove('active');
+                mainBtn.textContent = 'Зарегистрироваться'; regFieldsBox.style.display = 'block';
             }
         };
 
         window.checkEnter = function(event) {
-            if (event.key === "Enter") {
-                performAction();
-            }
+            if (event.key === 'Enter') { event.preventDefault(); performAction(); }
         };
 
         window.performAction = function() {
-            if (currentAuthMode === 'login') {
-                loginUser();
-            } else {
-                registerUser();
-            }
+            if (currentAuthMode === 'login') loginUser(); else registerUser();
         };
 
+        function showAuthError(message) {
+            const el = document.getElementById('auth-error');
+            if (el) { el.textContent = message; el.style.display = 'block'; }
+        }
+
         window.registerUser = async function() {
-            let nameInput = document.getElementById('auth-name-input').value.trim();
-            let passInput = document.getElementById('auth-pass-input').value;
-            let roleInput = document.getElementById('auth-role-select').value;
-            let errElem = document.getElementById('auth-error');
-            let submitBtn = document.getElementById('main-action-btn');
+            const name = document.getElementById('auth-name-input').value.trim();
+            const password = document.getElementById('auth-pass-input').value;
+            const requestedRole = document.getElementById('auth-role-select').value;
+            const button = document.getElementById('main-action-btn');
+            if (!name || !password) return showAuthError('Заполните ник и пароль.');
+            if (password.length < 6) return showAuthError('Пароль должен содержать не менее 6 символов.');
+            if (!['reader', 'editor'].includes(requestedRole)) return showAuthError('Можно запросить только роль читателя или редактора.');
 
-            if (!nameInput || !passInput) {
-                errElem.textContent = "Заполните ник и пароль!";
-                errElem.style.display = "block";
-                return;
-            }
-
-            let key = sanitizeKey(nameInput);
-            submitBtn.disabled = true;
-            let passwordHash = await hashPassword(passInput);
-
-            database.ref('allowed_users/' + key).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    submitBtn.disabled = false;
-                    errElem.textContent = "Такой ник уже занят!";
-                    errElem.style.display = "block";
-                    return;
+            button.disabled = true; authFlowBusy = true;
+            try {
+                const email = await nicknameToAuthEmail(name);
+                let credential;
+                try {
+                    credential = await auth.createUserWithEmailAndPassword(email, password);
+                } catch (createError) {
+                    if (createError.code !== 'auth/email-already-in-use') throw createError;
+                    // Повторная отправка заявки после неполной регистрации: войти в созданный Auth-аккаунт.
+                    credential = await auth.signInWithEmailAndPassword(email, password);
                 }
-
-                database.ref('pending_users/' + key).once('value').then(pendingSnapshot => {
-                    if (pendingSnapshot.exists()) {
-                        submitBtn.disabled = false;
-                        errElem.textContent = "Заявка с таким ником уже ждет рассмотрения!";
-                        errElem.style.display = "block";
-                        return;
-                    }
-
-                    database.ref('pending_users/' + key).set({
-                        name: nameInput,
-                        passwordHash: passwordHash,
-                        role: roleInput
-                    }).then(() => {
-                        submitBtn.disabled = false;
-                        document.getElementById('auth-name-input').value = '';
-                        document.getElementById('auth-pass-input').value = '';
-                        
-                        alert("Ваша заявка принята, ожидайте подтверждения администратора.");
-                        switchTab('login');
-                    }).catch(err => {
-                        submitBtn.disabled = false;
-                        console.error("Ошибка записи заявки:", err);
-                        errElem.textContent = "Ошибка сети при отправке заявки.";
-                        errElem.style.display = "block";
+                const uid = credential.user.uid;
+                const profileRef = database.ref('user_profiles/' + uid);
+                const existingProfile = await profileRef.once('value');
+                if (!existingProfile.exists()) {
+                    await profileRef.set({ name: name, nickname: normalizeNickname(name), createdAt: firebase.database.ServerValue.TIMESTAMP });
+                }
+                const roleSnap = await database.ref('user_roles/' + uid).once('value');
+                if (roleSnap.exists() && roleSnap.val() && roleSnap.val().active === true) {
+                    throw new Error('Этот аккаунт уже активирован. Перейдите во вкладку «Вход».');
+                }
+                const pendingRef = database.ref('pending_users/' + uid);
+                const pendingSnap = await pendingRef.once('value');
+                if (!pendingSnap.exists()) {
+                    await pendingRef.set({
+                        uid: uid,
+                        name: name,
+                        nickname: normalizeNickname(name),
+                        requestedRole: requestedRole,
+                        role: requestedRole,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
                     });
-                });
-            }).catch(err => {
-                submitBtn.disabled = false;
-                console.error("Ошибка проверки пользователя:", err);
-            });
+                }
+                document.getElementById('auth-name-input').value = '';
+                document.getElementById('auth-pass-input').value = '';
+                await auth.signOut();
+                alert('Заявка отправлена. Дождитесь подтверждения администратора.');
+                switchTab('login');
+            } catch (err) {
+                console.error('Ошибка регистрации:', err);
+                showAuthError(firebaseAuthErrorMessage(err));
+                if (auth.currentUser) await auth.signOut().catch(() => {});
+            } finally {
+                authFlowBusy = false; button.disabled = false;
+            }
         };
 
         window.loginUser = async function() {
-            let inputVal = document.getElementById('auth-name-input').value.trim();
-            let inputPass = document.getElementById('auth-pass-input').value;
-            let key = sanitizeKey(inputVal);
-            let errElem = document.getElementById('auth-error');
-            let submitBtn = document.getElementById('main-action-btn');
+            const name = document.getElementById('auth-name-input').value.trim();
+            const password = document.getElementById('auth-pass-input').value;
+            const button = document.getElementById('main-action-btn');
+            if (!name || !password) return showAuthError('Введите ник и пароль.');
+            button.disabled = true; authFlowBusy = true;
+            try {
+                const email = await nicknameToAuthEmail(name);
+                await auth.signInWithEmailAndPassword(email, password);
+                // onAuthStateChanged проверит user_roles/<uid> и включит интерфейс только при active=true.
+            } catch (err) {
+                console.error('Ошибка авторизации:', err);
+                showAuthError(firebaseAuthErrorMessage(err));
+            } finally {
+                authFlowBusy = false; button.disabled = false;
+            }
+        };
 
-            if (!key || !inputPass) {
-                errElem.textContent = "Введите ник и пароль.";
-                errElem.style.display = "block";
+        function firebaseAuthErrorMessage(err) {
+            const code = err && err.code;
+            if (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/wrong-password') return 'Неверный ник или пароль.';
+            if (code === 'auth/email-already-in-use') return 'Аккаунт с таким ником уже зарегистрирован.';
+            if (code === 'auth/weak-password') return 'Пароль слишком короткий: минимум 6 символов.';
+            if (code === 'auth/invalid-email') return 'Не удалось сформировать логин. Проверьте никнейм.';
+            if (err && err.message) return err.message;
+            return 'Не удалось выполнить запрос. Проверьте соединение и настройки Firebase Authentication.';
+        }
+
+        window.logoutUser = async function() {
+            try { await auth.signOut(); } catch (err) { console.error('Ошибка выхода:', err); }
+            currentUser = null;
+            initUserSession();
+        };
+
+        async function activateAuthenticatedUser(firebaseUser) {
+            if (!firebaseUser) {
+                currentUser = null;
+                initUserSession();
                 return;
             }
-
-            submitBtn.disabled = true;
-            let inputHash = await hashPassword(inputPass);
-
-            database.ref('allowed_users').once('value').then(snapshot => {
-                submitBtn.disabled = false;
-                let users = snapshot.val();
-
-                if (!users) {
-                    database.ref('allowed_users/шалдир').set({ 
-                        name: "Шалдир", 
-                        role: "admin", 
-                        passwordHash: "" 
-                    });
-                    users = { "шалдир": { name: "Шалдир", role: "admin", passwordHash: "" } };
+            try {
+                const uid = firebaseUser.uid;
+                const results = await Promise.all([
+                    database.ref('user_profiles/' + uid).once('value'),
+                    database.ref('user_roles/' + uid).once('value'),
+                    database.ref('pending_users/' + uid).once('value')
+                ]);
+                const profile = results[0].val();
+                const roleData = results[1].val();
+                const pending = results[2].val();
+                if (!profile || !roleData || roleData.active !== true || !['admin', 'editor', 'reader'].includes(String(roleData.role || '').toLowerCase())) {
+                    currentUser = null;
+                    initUserSession();
+                    if (pending) showAuthError('Заявка ожидает подтверждения администратора.');
+                    else showAuthError('У аккаунта пока нет активной роли. Обратитесь к администратору.');
+                    await auth.signOut();
+                    return;
                 }
-
-                if (users[key]) {
-                    let userRecord = users[key];
-                    
-                    if (userRecord.passwordHash && userRecord.passwordHash !== inputHash) {
-                        errElem.textContent = "Неверный пароль!";
-                        errElem.style.display = "block";
-                        return;
-                    }
-
-                    let userRole = (userRecord.role || 'reader').toLowerCase().trim();
-                    if (userRole === 'administrator') userRole = 'admin';
-
-                    currentUser = {
-                        key: key,
-                        name: userRecord.name || inputVal,
-                        role: userRole
-                    };
-                    sessionStorage.setItem('skyrim_active_user', JSON.stringify(currentUser));
-
-                    if (currentUser.role === 'admin' || currentUser.role === 'editor') {
-                        auth.signInAnonymously().then(() => {
-                            initUserSession();
-                        }).catch(err => {
-                            initUserSession();
-                        });
-                    } else {
+                currentUser = {
+                    uid: uid,
+                    key: uid,
+                    name: profile.name || profile.nickname || 'Пользователь',
+                    role: String(roleData.role).toLowerCase(),
+                    isRoot: roleData.isRoot === true
+                };
+                initUserSession();
+                // Слежение за отзывом/сменой роли администратором.
+                if (window.__winterholdRoleMonitor) database.ref('user_roles/' + uid).off('value', window.__winterholdRoleMonitor);
+                window.__winterholdRoleMonitor = function(snap) {
+                    const latest = snap.val();
+                    if (!latest || latest.active !== true || latest.role !== currentUser?.role) {
+                        currentUser = null;
                         auth.signOut();
                         initUserSession();
+                        showAuthError('Доступ к аккаунту был отключён или изменён.');
                     }
+                };
+                database.ref('user_roles/' + uid).on('value', window.__winterholdRoleMonitor);
+            } catch (err) {
+                console.error('Не удалось загрузить профиль и роль:', err);
+                currentUser = null; initUserSession();
+                showAuthError('Не удалось проверить права пользователя. Проверьте Firebase Rules.');
+                await auth.signOut().catch(() => {});
+            }
+        }
 
-                } else {
-                    database.ref('pending_users/' + key).once('value').then(pendingSnap => {
-                        if (pendingSnap.exists()) {
-                            errElem.textContent = "Ваша заявка еще не подтверждена администратором!";
-                        } else {
-                            errElem.textContent = "Аккаунт не найден. Зарегистрируйтесь!";
-                        }
-                        errElem.style.display = "block";
-                    });
-                }
-            }).catch(err => {
-                submitBtn.disabled = false;
-                console.error("Ошибка авторизации:", err);
-            });
-        };
-
-        window.logoutUser = function() {
-            auth.signOut();
-            sessionStorage.removeItem('skyrim_active_user');
-            currentUser = null;
-            location.reload();
-        };
+        auth.onAuthStateChanged(function(firebaseUser) {
+            if (authFlowBusy && currentAuthMode === 'reg') return;
+            authStateReady = true;
+            activateAuthenticatedUser(firebaseUser);
+        });
 
         function initUserSession() {
+            const authModal = document.getElementById('auth-modal');
             if (!currentUser) {
-                document.body.classList.remove('logged-in');
-                document.body.classList.remove('is-admin');
-                document.getElementById('auth-modal').style.display = 'flex';
+                document.body.classList.remove('logged-in', 'is-admin');
+                authModal.style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'none';
                 document.getElementById('admin-panel-btn').style.display = 'none';
+                const topbarName = document.getElementById('atlas-topbar-user');
+                const topbarRole = document.getElementById('atlas-topbar-role');
+                if (topbarName) topbarName.textContent = 'Гость';
+                if (topbarRole) topbarRole.textContent = 'Не авторизован';
                 return;
             }
-
             document.body.classList.add('logged-in');
             document.body.classList.toggle('is-admin', currentUser.role === 'admin');
-            document.getElementById('auth-modal').style.display = 'none';
+            authModal.style.display = 'none';
             document.getElementById('logout-btn').style.display = 'block';
-
-            let roleNameRu = 'Читатель';
-            if (currentUser.role === 'admin') roleNameRu = 'Администратор';
-            if (currentUser.role === 'editor') roleNameRu = 'Редактор';
-
+            let roleNameRu = currentUser.role === 'admin' ? 'Администратор' : (currentUser.role === 'editor' ? 'Редактор' : 'Читатель');
             document.getElementById('current-user-name').textContent = currentUser.name;
             document.getElementById('current-user-role').textContent = roleNameRu;
             const topbarName = document.getElementById('atlas-topbar-user');
             const topbarRole = document.getElementById('atlas-topbar-role');
             if (topbarName) topbarName.textContent = currentUser.name;
             if (topbarRole) topbarRole.textContent = roleNameRu;
-
-            setTimeout(function() {
-                fitMapToAvailableScreen();
-            }, 100);
-
-            if (currentUser.role === 'admin') {
-                document.getElementById('admin-panel-btn').style.display = 'block';
-                listenLogs();
-            } else {
-                document.getElementById('admin-panel-btn').style.display = 'none';
-            }
-
+            setTimeout(function() { fitMapToAvailableScreen(); }, 100);
+            document.getElementById('admin-panel-btn').style.display = currentUser.role === 'admin' ? 'block' : 'none';
+            if (currentUser.role === 'admin') listenLogs();
             renderDiplomacyPanel();
             renderMarkers();
         }
@@ -3537,157 +3534,105 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
             loadUsersLists();
             document.getElementById('admin-users-modal').style.display = 'flex';
         };
+        window.closeAdminModal = function() { document.getElementById('admin-users-modal').style.display = 'none'; };
 
-        window.closeAdminModal = function() {
-            document.getElementById('admin-users-modal').style.display = 'none';
-        };
-
-        function loadUsersLists() {
-            database.ref('allowed_users').once('value').then(snapshot => {
-                let users = snapshot.val() || {};
-                let container = document.getElementById('users-list-container');
-                container.innerHTML = '';
-
-                Object.keys(users).forEach(key => {
-                    let u = users[key];
-                    let uRole = (u.role || '').toLowerCase();
-                    let isProtected = (key === 'шалдир' || (u.name && u.name.toLowerCase() === 'шалдир'));
-
-                    let roleControlHTML = '';
-                    if (isProtected) {
-                        roleControlHTML = `<b>🛡️ Админ (Защищен)</b>`;
-                    } else if (currentUser.role === 'admin') {
-                        roleControlHTML = `
-                            <select class="user-role-select" onchange="updateUserRole('${key}', this.value, '${escapeHTML(u.name)}')">
-                                <option value="reader" ${uRole === 'reader' ? 'selected' : ''}>Читатель</option>
-                                <option value="editor" ${uRole === 'editor' ? 'selected' : ''}>Редактор</option>
-                                <option value="admin" ${uRole === 'admin' ? 'selected' : ''}>Админ</option>
-                            </select>
-                        `;
-                    } else {
-                        roleControlHTML = uRole === 'admin' ? '🛡️ Админ' : (uRole === 'editor' ? '✏️ Редактор' : '📖 Читатель');
-                    }
-
-                    let deleteBtnHTML = (!isProtected && key !== currentUser.key) ? `<button class="del-user-btn" onclick="removeUser('${key}', '${escapeHTML(u.name)}')">Удалить</button>` : '';
-
-                    let row = document.createElement('div');
-                    row.className = 'user-row';
-                    row.innerHTML = `
-                        <span><b>${escapeHTML(u.name)}</b></span>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            ${roleControlHTML}
-                            ${deleteBtnHTML}
-                        </div>
-                    `;
-                    container.appendChild(row);
+        async function loadUsersLists() {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            const usersContainer = document.getElementById('users-list-container');
+            const pendingContainer = document.getElementById('pending-users-container');
+            try {
+                const [profilesSnap, rolesSnap, pendingSnap, deletedSnap] = await Promise.all([
+                    database.ref('user_profiles').once('value'),
+                    database.ref('user_roles').once('value'),
+                    database.ref('pending_users').once('value'),
+                    database.ref('deleted_markers').once('value')
+                ]);
+                const profiles = profilesSnap.val() || {};
+                const roles = rolesSnap.val() || {};
+                const pending = pendingSnap.val() || {};
+                usersContainer.innerHTML = '';
+                Object.keys(roles).forEach(uid => {
+                    const role = roles[uid] || {};
+                    const profile = profiles[uid] || {};
+                    const name = profile.name || profile.nickname || 'Без имени';
+                    const isRoot = role.isRoot === true;
+                    const row = document.createElement('div'); row.className = 'user-row';
+                    const roleHtml = isRoot ? '<b>🛡️ Главный администратор</b>' : `
+                        <select class="user-role-select" onchange="updateUserRole('${uid}', this.value, '${escapeHTML(name)}')">
+                            <option value="reader" ${role.role === 'reader' ? 'selected' : ''}>Читатель</option>
+                            <option value="editor" ${role.role === 'editor' ? 'selected' : ''}>Редактор</option>
+                            <option value="admin" ${role.role === 'admin' ? 'selected' : ''}>Админ</option>
+                        </select>`;
+                    const status = role.active === true ? '' : ' <span style="color:#a83232">(отключён)</span>';
+                    const remove = (!isRoot && uid !== currentUser.uid) ? `<button class="del-user-btn" onclick="removeUser('${uid}', '${escapeHTML(name)}')">Отключить</button>` : '';
+                    row.innerHTML = `<span><b>${escapeHTML(name)}</b>${status}</span><div style="display:flex;align-items:center;gap:6px">${roleHtml}${remove}</div>`;
+                    usersContainer.appendChild(row);
                 });
-            });
-
-            database.ref('pending_users').once('value').then(snapshot => {
-                let pending = snapshot.val() || {};
-                let container = document.getElementById('pending-users-container');
-                container.innerHTML = '';
-
-                let keys = Object.keys(pending);
-                if (keys.length === 0) {
-                    container.innerHTML = '<div style="color: #666; font-style: italic; padding: 4px;">Нет новых заявок</div>';
-                    return;
-                }
-
-                keys.forEach(key => {
-                    let u = pending[key];
-                    let rLabel = '📖 Читатель';
-                    if (u.role === 'editor') rLabel = '✏️ Редактор';
-                    if (u.role === 'admin') rLabel = '🛡️ Админ';
-
-                    let row = document.createElement('div');
-                    row.className = 'user-row';
-                    row.innerHTML = `
-                        <span><b>${escapeHTML(u.name)}</b> <span style="font-size: 10px; color: #555;">(${rLabel})</span></span>
-                        <div>
-                            <button class="approve-user-btn" onclick="approveUser('${key}', '${escapeHTML(u.name)}')">Принять</button>
-                            <button class="del-user-btn" onclick="rejectUser('${key}')">Отклонить</button>
-                        </div>
-                    `;
-                    container.appendChild(row);
+                if (!usersContainer.children.length) usersContainer.innerHTML = '<div style="color:#666">Нет активированных пользователей</div>';
+                pendingContainer.innerHTML = '';
+                Object.keys(pending).forEach(uid => {
+                    const u = pending[uid] || {};
+                    const label = u.requestedRole === 'editor' ? '✏️ Редактор' : '📖 Читатель';
+                    const row = document.createElement('div'); row.className = 'user-row';
+                    row.innerHTML = `<span><b>${escapeHTML(u.name || 'Без имени')}</b> <span style="font-size:10px;color:#555">(${label})</span></span><div><button class="approve-user-btn" onclick="approveUser('${uid}', '${escapeHTML(u.name || '')}')">Принять</button><button class="del-user-btn" onclick="rejectUser('${uid}')">Отклонить</button></div>`;
+                    pendingContainer.appendChild(row);
                 });
-            });
-
-            database.ref('deleted_markers').once('value').then(snapshot => {
-                let deleted = snapshot.val() || {};
-                let container = document.getElementById('deleted-markers-container');
-                container.innerHTML = '';
-
-                let keys = Object.keys(deleted);
-                if (keys.length === 0) {
-                    container.innerHTML = '<div style="color: #666; font-style: italic; padding: 4px;">Корзина пуста</div>';
-                    return;
-                }
-
-                keys.forEach(key => {
-                    let m = deleted[key];
-                    let row = document.createElement('div');
-                    row.className = 'user-row';
-                    row.innerHTML = `
-                        <span><b>${escapeHTML(m.name)}</b> <span style="font-size: 10px; color: #555;">(X:${m.x}, Y:${m.y})</span></span>
-                        <div>
-                            <button class="approve-user-btn" onclick="restoreMarker('${key}')">Восстановить</button>
-                        </div>
-                    `;
-                    container.appendChild(row);
+                if (!pendingContainer.children.length) pendingContainer.innerHTML = '<div style="color:#666;font-style:italic;padding:4px">Нет новых заявок</div>';
+                const deleted = deletedSnap.val() || {};
+                const deletedContainer = document.getElementById('deleted-markers-container');
+                deletedContainer.innerHTML = '';
+                Object.keys(deleted).forEach(id => {
+                    const m = deleted[id] || {}; const row = document.createElement('div'); row.className = 'user-row';
+                    row.innerHTML = `<span><b>${escapeHTML(m.name || 'Метка')}</b> <span style="font-size:10px;color:#555">(X:${m.x}, Y:${m.y})</span></span><div><button class="approve-user-btn" onclick="restoreMarker('${id}')">Восстановить</button></div>`;
+                    deletedContainer.appendChild(row);
                 });
-            });
+                if (!deletedContainer.children.length) deletedContainer.innerHTML = '<div style="color:#666;font-style:italic;padding:4px">Корзина пуста</div>';
+            } catch (err) {
+                console.error('Ошибка загрузки панели пользователей:', err);
+                usersContainer.textContent = 'Не удалось загрузить пользователей. Проверьте права администратора в Firebase Rules.';
+            }
         }
 
-        window.updateUserRole = function(key, newRole, userName) {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            if (key === 'шалдир') {
-                alert("Нельзя изменять роль главного администратора «Шалдир»!");
+        window.updateUserRole = async function(uid, newRole, userName) {
+            if (!currentUser || currentUser.role !== 'admin' || uid === currentUser.uid) return;
+            if (!['reader', 'editor', 'admin'].includes(newRole)) return;
+            try {
+                const target = await database.ref('user_roles/' + uid).once('value');
+                if (target.val() && target.val().isRoot === true) throw new Error('Нельзя изменить роль главного администратора.');
+                await database.ref('user_roles/' + uid).update({ role: newRole, active: true, grantedAt: firebase.database.ServerValue.TIMESTAMP, grantedBy: currentUser.uid });
+                logAction(`изменил(а) роль пользователя "${userName}" на "${newRole}"`);
                 loadUsersLists();
-                return;
-            }
-            database.ref('allowed_users/' + key + '/role').set(newRole).then(() => {
-                let roleRu = newRole === 'admin' ? 'Администратор' : (newRole === 'editor' ? 'Редактор' : 'Читатель');
-                logAction(`изменил(а) роль пользователя "${userName}" на "${roleRu}"`);
-            });
+            } catch (err) { alert(err.message || 'Не удалось изменить роль.'); loadUsersLists(); }
         };
 
-        window.approveUser = function(key, userName) {
+        window.approveUser = async function(uid, userName) {
             if (!currentUser || currentUser.role !== 'admin') return;
-            database.ref('pending_users/' + key).once('value').then(snapshot => {
-                let userData = snapshot.val();
-                if (userData) {
-                    database.ref('allowed_users/' + key).set(userData).then(() => {
-                        database.ref('pending_users/' + key).remove().then(() => {
-                            loadUsersLists();
-                            logAction(`одобрил(а) заявку пользователя: ${userName}`);
-                        });
-                    });
-                }
-            });
+            try {
+                const snap = await database.ref('pending_users/' + uid).once('value');
+                const request = snap.val(); if (!request) return;
+                const requestedRole = request.requestedRole || request.role;
+                const role = requestedRole === 'editor' ? 'editor' : 'reader';
+                await database.ref('user_roles/' + uid).set({ role: role, active: true, isRoot: false, grantedAt: firebase.database.ServerValue.TIMESTAMP, grantedBy: currentUser.uid });
+                await database.ref('pending_users/' + uid).remove();
+                loadUsersLists(); logAction(`одобрил(а) заявку пользователя: ${userName}`);
+            } catch (err) { console.error(err); alert('Не удалось одобрить пользователя. Проверьте Firebase Rules.'); }
         };
 
-        window.rejectUser = function(key) {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            if (confirm("Отклонить и удалить эту заявку?")) {
-                database.ref('pending_users/' + key).remove().then(() => {
-                    loadUsersLists();
-                });
-            }
+        window.rejectUser = async function(uid) {
+            if (!currentUser || currentUser.role !== 'admin' || !confirm('Отклонить и удалить эту заявку?')) return;
+            try { await database.ref('pending_users/' + uid).remove(); loadUsersLists(); }
+            catch (err) { alert('Не удалось отклонить заявку.'); }
         };
 
-        window.removeUser = function(key, userName) {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            if (key === 'шалдир') {
-                alert("Нельзя удалить главного администратора «Шалдир»!");
-                return;
-            }
-            if (confirm(`Точно удалить пользователя "${userName}"?`)) {
-                database.ref('allowed_users/' + key).remove().then(() => {
-                    loadUsersLists();
-                    logAction(`удалил(а) пользователя: ${userName}`);
-                });
-            }
+        window.removeUser = async function(uid, userName) {
+            if (!currentUser || currentUser.role !== 'admin' || uid === currentUser.uid) return;
+            if (!confirm(`Отключить доступ пользователя "${userName}"?`)) return;
+            try {
+                const target = await database.ref('user_roles/' + uid).once('value');
+                if (target.val() && target.val().isRoot === true) throw new Error('Нельзя отключить главного администратора.');
+                await database.ref('user_roles/' + uid).update({ active: false });
+                loadUsersLists(); logAction(`отключил(а) пользователя: ${userName}`);
+            } catch (err) { alert(err.message || 'Не удалось отключить пользователя.'); }
         };
 
         // НАСТРОЙКИ НОВОЙ ГЛОБАЛЬНОЙ КАРТЫ
@@ -4322,15 +4267,8 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
                 return;
             }
 
-            if (auth.currentUser === null && currentUser.role === 'admin') {
-                auth.signInAnonymously().then(() => {
-                    executeSaveMarker(x, y);
-                }).catch(err => {
-                    executeSaveMarker(x, y);
-                });
-            } else {
-                executeSaveMarker(x, y);
-            }
+            if (!auth.currentUser) { alert('Сессия Firebase завершена. Войдите заново.'); return; }
+            executeSaveMarker(x, y);
         };
 
         function executeSaveMarker(x, y) {
@@ -4399,7 +4337,7 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
         };
 
         window.switchFilterTab('all');
-        initUserSession();
+        // Состояние пользователя устанавливается только через auth.onAuthStateChanged.
     </script>
 
 
