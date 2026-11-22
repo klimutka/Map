@@ -3314,9 +3314,11 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
             let logId = Date.now();
             let timeStr = new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow' });
             database.ref('skyrim_logs/' + logId).set({
-                text: text,
+                uid: currentUser.uid,
+                text: String(text || '').slice(0, 500),
                 author: currentUser.name,
-                time: timeStr
+                time: timeStr,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
             }).catch(err => console.error("Ошибка записи лога:", err));
         }
 
@@ -3367,14 +3369,36 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
                     credential = await auth.createUserWithEmailAndPassword(email, password);
                 } catch (createError) {
                     if (createError.code !== 'auth/email-already-in-use') throw createError;
-                    // Повторная отправка заявки после неполной регистрации: войти в созданный Auth-аккаунт.
-                    credential = await auth.signInWithEmailAndPassword(email, password);
+                    // Аккаунт с этим ником уже создан на предыдущей попытке.
+                    // Входим в него тем же паролем и завершаем недостающие шаги регистрации.
+                    try {
+                        credential = await auth.signInWithEmailAndPassword(email, password);
+                    } catch (signInError) {
+                        if (signInError.code === 'auth/wrong-password' || signInError.code === 'auth/invalid-credential') {
+                            throw new Error('Аккаунт с таким ником уже существует, но пароль не совпадает. Перейдите во вкладку «Вход» и проверьте пароль.');
+                        }
+                        throw signInError;
+                    }
                 }
                 const uid = credential.user.uid;
                 const profileRef = database.ref('user_profiles/' + uid);
                 const existingProfile = await profileRef.once('value');
                 if (!existingProfile.exists()) {
-                    await profileRef.set({ name: name, nickname: normalizeNickname(name), createdAt: firebase.database.ServerValue.TIMESTAMP });
+                    // Поля строго соответствуют текущим Realtime Database Rules.
+                    // emailAlias — внутренний технический адрес; пользователь его не вводит и не видит.
+                    await profileRef.set({
+                        uid: uid,
+                        name: name,
+                        nameKey: normalizeNickname(name),
+                        emailAlias: email,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } else {
+                    // Проверяем, что существующий профиль создан по актуальной схеме.
+                    const existing = existingProfile.val() || {};
+                    if (existing.uid !== uid || !existing.name || !existing.nameKey || !existing.emailAlias) {
+                        throw new Error('Профиль этого аккаунта имеет неполные данные. Обратитесь к администратору для восстановления.');
+                    }
                 }
                 const roleSnap = await database.ref('user_roles/' + uid).once('value');
                 if (roleSnap.exists() && roleSnap.val() && roleSnap.val().active === true) {
@@ -3386,9 +3410,9 @@ body:not(.is-admin) .road-admin-control{display:none!important;}
                     await pendingRef.set({
                         uid: uid,
                         name: name,
-                        nickname: normalizeNickname(name),
+                        nameKey: normalizeNickname(name),
                         requestedRole: requestedRole,
-                        role: requestedRole,
+                        status: 'pending',
                         createdAt: firebase.database.ServerValue.TIMESTAMP
                     });
                 }
